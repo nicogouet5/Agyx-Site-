@@ -1,0 +1,32 @@
+{
+  "name": "Agyx - Software Logístico Pymes-Fletes",
+  "short_name": "Agyx",
+  "description": "Copiloto Logístico Operacional con IA y Memoria Viva para Pymes de Fletes y Carga en Santiago",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#020617",
+  "theme_color": "#0f172a",
+  "lang": "es",
+  "categories": ["logistics", "business", "productivity"],
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

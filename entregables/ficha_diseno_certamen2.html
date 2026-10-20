@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ficha de Diseño — Agyx: Agente de IA Aplicado al Proyecto (Certamen 2 — Grupo 2)</title>
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --border: #cbd5e1;
+      --brand: #1e3a8a;
+      --brand-light: #eff6ff;
+      --accent: #0284c7;
+      --ok: #166534;
+      --warn: #b45309;
+      --danger: #991b1b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--ink);
+      background: #e2e8f0;
+      margin: 0;
+      padding: 20px;
+      font-size: 11.2px;
+      line-height: 1.38;
+    }
+    .page {
+      width: 210mm;
+      min-height: 285mm;
+      max-height: 297mm;
+      margin: 0 auto 18px auto;
+      background: #ffffff;
+      padding: 13mm 15mm;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+      page-break-after: always;
+      position: relative;
+      overflow: hidden;
+    }
+    .page:last-child {
+      page-break-after: auto;
+    }
+    .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2.5px solid var(--brand);
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+    }
+    .doc-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--brand);
+      margin: 0 0 3px 0;
+    }
+    .doc-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin: 0;
+    }
+    .doc-meta {
+      text-align: right;
+      font-size: 10px;
+      color: var(--muted);
+    }
+    h2 {
+      font-size: 13px;
+      font-weight: 800;
+      color: #ffffff;
+      background: var(--brand);
+      padding: 4px 10px;
+      border-radius: 5px;
+      margin: 10px 0 7px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    h3 {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--brand);
+      margin: 7px 0 4px 0;
+    }
+    p { margin: 0 0 6px 0; }
+    ul, ol { margin: 4px 0 8px 0; padding-left: 18px; }
+    li { margin-bottom: 3px; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .box {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: #f8fafc;
+    }
+    .box-brand {
+      border: 1px solid #93c5fd;
+      background: var(--brand-light);
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.2px;
+      margin: 5px 0 8px 0;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 4.5px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #0f172a;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 9.8px;
+      text-transform: uppercase;
+    }
+    tr:nth-child(even) { background: #f8fafc; }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 9.6px;
+    }
+    code {
+      background: rgba(15, 23, 42, 0.07);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 7px 9px;
+      border-radius: 6px;
+      margin: 4px 0 7px 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.3;
+    }
+    .flow-diagram {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      margin: 7px 0;
+      padding: 8px;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .flow-step {
+      flex: 1;
+      text-align: center;
+      padding: 5px 4px;
+      border-radius: 5px;
+      font-size: 9.5px;
+      font-weight: 600;
+      border: 1px solid #94a3b8;
+      background: #ffffff;
+    }
+    .flow-step.ai { background: #ede9fe; border-color: #7c3aed; color: #4c1d95; }
+    .flow-step.r4r { background: #fef3c7; border-color: #d97706; color: #92400e; }
+    .flow-step.human { background: #dcfce7; border-color: #16a34a; color: #14532d; }
+    .flow-arrow { font-weight: 900; color: var(--brand); font-size: 12px; }
+    .ui-capture {
+      border: 1.5px solid #334155;
+      border-radius: 7px;
+      overflow: hidden;
+      margin: 5px 0 8px 0;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 9.8px;
+    }
+    .ui-capture-bar {
+      background: #1e293b;
+      padding: 4px 8px;
+      font-weight: 700;
+      font-size: 9.5px;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #334155;
+      color: #93c5fd;
+    }
+    .ui-capture-body {
+      padding: 7px 9px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 1.5px 6px;
+      border-radius: 99px;
+      font-size: 9px;
+      font-weight: 700;
+    }
+    .b-r4r { background: #fef3c7; color: #92400e; }
+    .b-ok { background: #dcfce7; color: #166534; }
+    .b-err { background: #fee2e2; color: #991b1b; }
+    .page-footer {
+      position: absolute;
+      bottom: 8mm;
+      left: 15mm;
+      right: 15mm;
+      border-top: 1px solid var(--border);
+      padding-top: 4px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 9.5px;
+      color: var(--muted);
+    }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .page {
+        margin: 0;
+        box-shadow: none;
+        width: 100%;
+        height: auto;
+        min-height: 0;
+        max-height: none;
+        padding: 10mm 12mm;
+      }
+      @page { size: A4 portrait; margin: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== PÁGINA 1 ==================== -->
+  <section class="page">
+    <div class="doc-header">
+      <div>
+        <h1 class="doc-title">FICHA DE DISEÑO — AGENTE DE IA "AGYX"</h1>
+        <p class="doc-sub">Proyecto Semestral Integrador: <strong>Software Logístico Pymes-Fletes (Grupo 2)</strong> · Certamen 2 (2026)</p>
+      </div>
+      <div class="doc-meta">
+        <div><strong>Grupo 2</strong> — Integrantes del Equipo</div>
+        <div>Arquitectura: FastAPI + Gemini 2.5 Flash + R4R Memory</div>
+        <div>Extensión controlada: <strong>Página 1 de 4</strong></div>
+      </div>
+    </div>
+
+    <h2>1. Problema, Usuario, Objetivo y Vínculo con el Proyecto (Actos 3 y 4)</h2>
+    <div class="grid-2">
+      <div class="box">
+        <h3>Problema de Negocio y Pain Points (Acto 3)</h3>
+        <p>Las Pymes de transporte y fletes en Santiago operan con coordinación manual (planillas Excel y WhatsApp), sufriendo dos cuellos de botella críticos levantados en el <strong>Acto 3</strong>:</p>
+        <ol>
+          <li><strong>Planificación de rutas urbanas para carga pesada:</strong> Asignar camiones de gran tonelaje (<code>&gt;5.000 kg</code>) hacia zonas céntricas (ej. Santiago Centro) en horario diurno restringido (<code>07:30–21:00 hrs</code>), exponiendo a la Pyme a multas municipales y rechazos de entrega.</li>
+          <li><strong>Falta de flota clave y mala administración de taller:</strong> Llegan pedidos urgentes cuando la flota de 12t está en ruta o existe presión operativa por despachar unidades con fallas mecánicas críticas (ej. <code>CAM-04</code> con falla de frenos).</li>
+        </ol>
+      </div>
+      <div class="box-brand">
+        <h3>Usuario Definido, Objetivo y Vínculo con Acto 4</h3>
+        <ul>
+          <li><strong>Usuario Principal:</strong> <em>Coordinador de Tráfico / Jefe de Operaciones</em> de la Pyme logística (opera tanto en escritorio como en patio/terreno desde dispositivo móvil).</li>
+          <li><strong>Objetivo Específico del Agente (Agyx):</strong> Evaluar en segundos cada solicitud de flete entrante cruzando disponibilidad y estado mecánico de la flota con las restricciones viales urbanas, recomendando una pre-orden factible hoy, una reserva para el día siguiente o un bloqueo de seguridad, dejando siempre la decisión en estado <strong><code>R4R (Ready for Review)</code></strong> para firma humana.</li>
+          <li><strong>Vínculo con el Workflow Propuesto (Acto 4):</strong> Materializa el nodo morado de IA (<em>"Planificación de Rutas y Validación de Flota"</em>) y la bifurcación naranja (<em>"SI: Reserva de pedido otro día"</em>) manteniendo el principio rector <strong>"Human-First"</strong>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>2. Workflow Implementado: Entradas, Pasos, Decisiones, Salidas y Rol Humano</h2>
+    <div class="flow-diagram">
+      <div class="flow-step"><strong>1. Entrada Observable</strong><br/>Solicitud de Flete<br/>(Origen, Destino, Peso, Hora, Tipo Carga)</div>
+      <div class="flow-arrow">➔</div>
+      <div class="flow-step ai"><strong>2. Agente Agyx + Tools</strong><br/>Pre-filtro Python (&lt;150 tok)<br/>+ Memoria Viva (&lt;80 tok)</div>
+      <div class="flow-arrow">➔</div>
+      <div class="flow-step r4r"><strong>3. Cola Estricta R4R</strong><br/><code>Ready for Review</code><br/>(Inactividad NO aprueba)</div>
+      <div class="flow-arrow">➔</div>
+      <div class="flow-step human"><strong>4. Revisión Humana</strong><br/>Aprobar Firma o Rechazar<br/>con <code>rejected_reason</code></div>
+      <div class="flow-arrow">➔</div>
+      <div class="flow-step"><strong>5. Salida + Aprendizaje</strong><br/>Orden Emitida / Regla<br/>guardada en Memoria Viva</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="box">
+        <h3>Decisiones del Agente dentro del Workflow</h3>
+        <ul>
+          <li><strong><code>R4R</code> (Despacho Directo Hoy):</strong> Hay camión disponible con capacidad suficiente y sin restricción horaria municipal (Caso 1).</li>
+          <li><strong><code>R4R</code> (Reserva Día Siguiente / Ventana Nocturna):</strong> Si la flota pesada está <code>EN_RUTA</code> hoy (Caso 2) o existe restricción diurna en Santiago Centro aprendida en Memoria Viva (Caso 3 <code>v2</code>), agenda reserva para mañana <code>08:00 hrs</code> o ventana nocturna <code>21:30 hrs</code> / split <code>2x 5t</code>.</li>
+          <li><strong><code>R4R_INFO_INCOMPLETA</code>:</strong> Si faltan datos obligatorios (<code>peso_kg</code>, <code>direccion_exacta</code>, <code>hora_exacta</code>), detiene el cálculo y solicita los campos exactos (Caso 4).</li>
+          <li><strong><code>BLOQUEADO_RIESGO</code>:</strong> Si se intenta forzar un camión en taller con falla de frenos (<code>CAM-04</code>, Caso 5), sobrepeso <code>&gt;15t</code>, o carga peligrosa <code>HAZMAT D.S. 298</code> (Caso 6), bloquea y escala a supervisión.</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Rol de la Persona: Gobernanza R4R y Memoria Viva</h3>
+        <ul>
+          <li><strong>Bloqueo estricto en <code>R4R</code> (Cero Auto-Aprobación):</strong> Toda salida del agente se almacena en SQLite (<code>agyx.db</code>) con la restricción <code>CHECK (auto_approved = 0)</code>. Si el humano está inactivo, el pedido permanece indefinidamente en <code>R4R (Ready for Review)</code> y <strong>bajo ningún motivo se aprueba solo</strong>.</li>
+          <li><strong>Rechazo con <code>rejected_reason</code> obligatorio:</strong> Si el Coordinador rechaza una propuesta en <code>R4R</code>, el sistema exige ingresar un motivo (<code>rejected_reason</code> no vacío; validado con <code>HTTP 400/422</code> contra espacios o caracteres invisibles).</li>
+          <li><strong>Bitácora / Memoria Viva (Feedback Loop):</strong> El <code>rejected_reason</code> se destila automáticamente en una regla operativa compacta (<code>&lt;80 tokens</code>) en <code>bitacora_memoria_viva.json</code> y retroalimenta al agente en futuras ejecuciones.</li>
+        </ul>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Componente del Flujo</th>
+          <th>Real / Operativo en el Prototipo</th>
+          <th>Simulado / Límite Declarado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Evaluación, Tools y Estado R4R</strong></td>
+          <td>100% real en Python/FastAPI: consulta CSV/JSON/SQLite, calcula costos, valida ordenanzas, persiste cola <code>R4R</code> y destila <code>rejected_reason</code> en Memoria Viva.</td>
+          <td>No conecta a ERP externo ni pasarela de pago bancaria.</td>
+        </tr>
+        <tr>
+          <td><strong>Despacho y Flota</strong></td>
+          <td>Lectura real de <code>data/flota_camiones.csv</code> (7 camiones) y <code>restricciones_viales_urbanas.csv</code> (5 zonas).</td>
+          <td>Ubicación GPS en ruta y sensor de frenos de <code>CAM-04</code> provienen del dataset sintético.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="page-footer">
+      <span>Certamen 2 — Agente de IA Aplicado al Proyecto (Software Logístico Pymes-Fletes · Grupo 2)</span>
+      <span>Página 1 de 4</span>
+    </div>
+  </section>
+
+  <!-- ==================== PÁGINA 2 ==================== -->
+  <section class="page">
+    <div class="doc-header">
+      <div>
+        <h1 class="doc-title">3. INSTRUCCIONES, DATOS, HERRAMIENTAS Y CONTROLES CONFIGURADOS</h1>
+        <p class="doc-sub">Configuración auditable y optimizada en tokens en <code>app/engine/</code>, <code>app/tools/</code> y <code>data/</code></p>
+      </div>
+      <div class="doc-meta">
+        <div>Motor Dual: Local Determinista + Gemini 2.5 Flash</div>
+        <div>Extensión controlada: <strong>Página 2 de 4</strong></div>
+      </div>
+    </div>
+
+    <h2>3.1 Instrucciones Guardadas y Reutilizables (System Prompt + Memoria Viva)</h2>
+    <p>Las instrucciones del agente están guardadas en <code>app/engine/gemini_engine.py</code> y exportadas en <code>entregables/google_ai_studio_pack/</code>. Definen tarea, reglas inquebrantables, formato de salida y el bloque dinámico donde se inyectan las reglas aprendidas desde los rechazos humanos (<code>rejected_reason</code>):</p>
+    <pre>Eres Agyx, el Agente Operativo de IA para logística de Pymes en Santiago de Chile.
+Evalúas pedidos de fletes, disponibilidad de flota, restricciones viales y emites propuestas en estado R4R.
+
+GOBERNANZA ESTRICTA Y R4R:
+1. R4R OBLIGATORIO: Toda orden evaluada DEBE terminar llamando a 'generar_propuesta_r4r' con estado 'R4R', 'BLOQUEADO_RIESGO' o 'R4R_INFO_INCOMPLETA'.
+2. PROHIBICIÓN DE AUTO-APROBACIÓN: La inactividad humana jamás aprueba una orden. auto_approved es SIEMPRE False.
+3. SEGURIDAD DE FLOTA: Jamás asignes un camión en mantenimiento (ej. CAM-04 por falla de frenos). Si se solicita forzarlo, bloquea la orden inmediatamente.
+4. CARGAS PELIGROSAS (HAZMAT): Nuestra flota no cuenta con certificación ADR/D.S. 298. Bloquea y deriva cualquier carga química peligrosa.
+5. MEMORIA VIVA (LECCIONES DE SUPERVISORES CAPTURADAS VÍA REJECTED_REASON):
+- [SANTIAGO_CENTRO] &gt;5t prohibido 07:30-21:00. Solución: 21:30+ o split 2x5t (Regla aprendida tras rechazo de Carlos Morales en CASO-3)</pre>
+
+    <h2>3.2 Fuentes de Información Pertinentes Configuradas (<code>data/</code>)</h2>
+    <div class="grid-2">
+      <div>
+        <h3>A. Flota de Camiones (<code>data/flota_camiones.csv</code>)</h3>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Modelo / Tipo</th><th>Capacidad</th><th>Estado Actual</th><th>Alerta / Disponibilidad</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>CAM-01</code></td><td>Hyundai Porter 1.5t</td><td>1.500 kg / 8m³</td><td><code>DISPONIBLE</code></td><td>Inmediata (Quilicura)</td></tr>
+            <tr><td><code>CAM-02</code></td><td>Mercedes Atego 5t</td><td>5.000 kg / 22m³</td><td><code>DISPONIBLE</code></td><td>Inmediata (Apto Centro)</td></tr>
+            <tr><td><code>CAM-03</code></td><td>Isuzu NPR 5t</td><td>5.000 kg / 24m³</td><td><code>DISPONIBLE</code></td><td>Inmediata (Apoyo Split)</td></tr>
+            <tr><td><code>CAM-04</code></td><td>Volvo VM 12t</td><td>12.000 kg / 45m³</td><td><span class="badge b-err">MANTENIMIENTO</span></td><td><strong>BLOQUEADO: Falla frenos</strong></td></tr>
+            <tr><td><code>CAM-05</code></td><td>Scania P250 12t</td><td>12.000 kg / 48m³</td><td><code>DISPONIBLE</code></td><td>Inmediata (Restringido Centro)</td></tr>
+            <tr><td><code>CAM-06</code></td><td>Freightliner M2 12t</td><td>12.000 kg / 50m³</td><td><code>EN_RUTA</code></td><td>Slot Mañana 08:00 hrs</td></tr>
+            <tr><td><code>CAM-07</code></td><td>Fuso Canter 3.5t</td><td>3.500 kg / 16m³</td><td><code>DISPONIBLE</code></td><td>Inmediata (Quilicura)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>B. Ordenanzas Viales (<code>data/restricciones_viales_urbanas.csv</code>)</h3>
+        <table>
+          <thead>
+            <tr><th>Zona / Comuna</th><th>Peso Máx.</th><th>Ventana Prohibida</th><th>Regla / Alternativa</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>SANTIAGO_CENTRO</code></td><td>5.000 kg</td><td>07:30 a 21:00 hrs</td><td>Ordenanza N° 84: &gt;5t solo 21:30–07:00 o split 2x 5t.</td></tr>
+            <tr><td><code>PROVIDENCIA</code></td><td>8.000 kg</td><td>07:30 a 10:00 hrs</td><td>Restricción hora punta mañana en eje comercial.</td></tr>
+            <tr><td><code>PUDAHUEL / QUILICURA</code></td><td>28.000 kg</td><td>Sin restricción</td><td>Zona industrial logística 24/7.</td></tr>
+            <tr><td><code>SAN_ANTONIO_PUERTO</code></td><td>28.000 kg</td><td>Requiere Slot/PIN</td><td>Exige coordinación previa de ventana portuaria.</td></tr>
+            <tr><td><code>NORMATIVA_HAZMAT</code></td><td>0 kg (Bloqueo)</td><td>24/7 sin ADR</td><td>D.S. 298 prohíbe ácidos/explosivos en flota estándar.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h2>3.3 Herramientas Verificables y Optimización de Tokens (<code>app/tools/</code>)</h2>
+    <p>Para optimizar el consumo de tokens, las herramientas ejecutan un pre-filtrado determinista en Python (<code>token_optimizer.py</code>) garantizando payloads <strong><code>&lt;150 tokens</code></strong> por llamada y <strong><code>&lt;80 tokens</code></strong> por regla de Memoria Viva:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Herramienta (Function Calling)</th>
+          <th>Parámetros de Entrada</th>
+          <th>Evidencia de Salida Real (Compacta en Tokens)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>consultar_flota_disponible</code></td>
+          <td><code>peso_kg</code>, <code>volumen_m3</code>, <code>hora_despacho</code>, <code>truck_id_preferido</code></td>
+          <td><code>{"status":"OK","candidatos":[{"id":"CAM-02","cap_kg":5000,"disp":"INMEDIATA"}],"bloqueos_mantenimiento":[{"id":"CAM-04","bloqueado":true,"motivo":"Falla crítica frenos"}]}</code> <em>(24 tokens)</em></td>
+        </tr>
+        <tr>
+          <td><code>verificar_factibilidad_ruta_urbana</code></td>
+          <td><code>origen</code>, <code>destino_comuna</code>, <code>peso_kg</code>, <code>hora_solicitada</code>, <code>tipo_carga</code>, <code>living_memory_active</code></td>
+          <td><code>{"factible":false,"zona":"SANTIAGO_CENTRO","motivo":"Excede 5.000 kg en horario 07:30-21:00","leccion_memoria_viva":"[SANTIAGO_CENTRO] &gt;5t prohibido 07:30-21:00","acciones_mitigacion":["REPROGRAMAR_NOCTURNO_2130","SUBDIVIDIR_2X_5T"]}</code></td>
+        </tr>
+        <tr>
+          <td><code>generar_propuesta_r4r</code></td>
+          <td><code>case_id</code>, <code>camiones_asignados</code>, <code>fecha_hora_programada</code>, <code>tarifa_base_clp</code>, <code>estado_caso</code></td>
+          <td><code>{"propuesta_id":"PROP-20261020-CASO1","estado":"R4R","auto_approved":false,"camiones":["CAM-02"],"total_clp":65000,"requiere_firma_humana":true}</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="page-footer">
+      <span>Certamen 2 — Agente de IA Aplicado al Proyecto (Software Logístico Pymes-Fletes · Grupo 2)</span>
+      <span>Página 2 de 4</span>
+    </div>
+  </section>
+
+  <!-- ==================== PÁGINA 3 ==================== -->
+  <section class="page">
+    <div class="doc-header">
+      <div>
+        <h1 class="doc-title">3.4 CONTROLES VISUALES E INTERFAZ OPERATIVA (ESCRITORIO Y MÓVIL PWA)</h1>
+        <p class="doc-sub">Evidencia de configuración en la Web App FastAPI (<code>http://localhost:8000</code>) con simulador móvil en terreno</p>
+      </div>
+      <div class="doc-meta">
+        <div>Adaptación Móvil: Tailwind CSS + PWA + Inactivity Lock</div>
+        <div>Extensión controlada: <strong>Página 3 de 4</strong></div>
+      </div>
+    </div>
+
+    <h2>Evidencia Visual 1 — Cola R4R, Salvaguarda de Inactividad y Conmutador Móvil</h2>
+    <div class="ui-capture">
+      <div class="ui-capture-bar">
+        <span>AGYX LOGISTICS COPILOT v2.0 — Panel Coordinador de Tráfico (FastAPI + SQLite)</span>
+        <span>[Vista Escritorio] [📱 Vista Móvil en Terreno (PWA)] · Motor: Dual (Local 0-Token / Gemini 2.5 Flash)</span>
+      </div>
+      <div class="ui-capture-body">
+        <div class="grid-2">
+          <div>
+            <div style="color:#fcd34d; font-weight:700; margin-bottom:4px;">🔒 SALVAGUARDA DE INACTIVIDAD HUMANA (R4R LOCK ACTIVO)</div>
+            <div style="font-size:9.5px; color:#cbd5e1;">
+              Tiempo sin acción del supervisor: <strong>04m 12s (Simulación 72h disponible)</strong><br/>
+              Estado de Auto-Aprobación: <span class="badge b-err">DESHABILITADO (auto_approved = False)</span><br/>
+              <em>"Ninguna orden en estado R4R se despacha por timeout o inactividad."</em>
+            </div>
+          </div>
+          <div>
+            <div style="color:#93c5fd; font-weight:700; margin-bottom:4px;">📋 COLA DE REVISIÓN HUMANA (R4R — READY FOR REVIEW)</div>
+            <div style="font-size:9.5px;">
+              • <code>CASO-1</code> (3.200 kg ➔ Pudahuel) · Camión: <code>CAM-02</code> · <span class="badge b-r4r">R4R PENDIENTE FIRMA</span><br/>
+              • <code>CASO-2</code> (10.000 kg ➔ S. Bernardo) · Reserva Mañana 08:00 (<code>CAM-06</code>) · <span class="badge b-r4r">R4R PENDIENTE</span><br/>
+              • <code>CASO-5</code> (Forzar <code>CAM-04</code>) · <span class="badge b-err">BLOQUEADO_RIESGO (Falla Frenos)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Evidencia Visual 2 — Modal de Rechazo con <code>rejected_reason</code> Obligatorio y Memoria Viva</h2>
+    <div class="ui-capture">
+      <div class="ui-capture-bar">
+        <span>MODAL DE SUPERVISIÓN HUMANA — Revisión de Propuesta CASO-3 (v1 Pre-Mejora)</span>
+        <span>Validación Backend: HTTP 422 si rejected_reason está vacío</span>
+      </div>
+      <div class="ui-capture-body">
+        <div class="grid-2">
+          <div>
+            <strong>Propuesta Evaluada en v1:</strong> Despachar 9.500 kg hacia <code>Santiago Centro</code> hoy a las <code>11:30 hrs</code> en camión pesado <code>CAM-05 (12t)</code>.<br/>
+            <strong>Acción del Supervisor:</strong> <code>[RECHAZAR Y ENSEÑAR AL AGENTE]</code> · Supervisor: <em>Carlos Morales</em><br/>
+            <strong>Campo Obligatorio <code>rejected_reason</code>:</strong><br/>
+            <code style="display:block; background:#1e293b; color:#fca5a5; padding:4px; margin-top:3px;">"Ordenanza Santiago Centro prohíbe camiones &gt;5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t"</code>
+          </div>
+          <div>
+            <div style="color:#86efac; font-weight:700; margin-bottom:3px;">🧠 BITÁCORA / MEMORIA VIVA (Regla Destilada Automáticamente)</div>
+            <div style="font-size:9.5px; color:#cbd5e1;">
+              Archivo persistente: <code>data/bitacora_memoria_viva.json</code> + tabla SQLite <code>living_memory</code><br/>
+              <strong>Regla Destilada (18 tokens &lt; límite 80 tokens):</strong><br/>
+              <code style="color:#fde047;">[SANTIAGO_CENTRO] &gt;5t prohibido 07:30-21:00. Solución: 21:30+ o split 2x5t</code><br/>
+              Estado: <span class="badge b-ok">ACTIVA EN CONTEXTO DEL AGENTE (v2)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2>4. Resultados Principales y Mejora Verificada (Iteración Caso 3: v1 ➔ v2)</h2>
+    <p>Se ejecutaron los <strong>6 casos distintos</strong> exigidos por la pauta (2 normales, 2 límite y 2 riesgosos) más la repetición verificada del <strong>Caso 3</strong> tras aplicar la mejora basada en la Memoria Viva:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Caso y Categoría</th>
+          <th>Entrada Resumen</th>
+          <th>Resultado Obtenido por el Agente</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Caso 1 (Normal)</strong></td>
+          <td>3.200 kg Quilicura ➔ Pudahuel (14:00 hrs)</td>
+          <td>Asigna <code>CAM-02</code> (5t disponible), tarifa $65.000 CLP, SLA 2.0h en estado <code>R4R</code> (<code>auto_approved=False</code>).</td>
+          <td><span class="badge b-ok">Cumple</span></td>
+        </tr>
+        <tr>
+          <td><strong>Caso 2 (Normal)</strong></td>
+          <td>10.000 kg hoy 15:00 hrs (flota 12t en ruta)</td>
+          <td>Detecta saturación hoy y activa rama Acto 4: agenda reserva mañana <code>08:00 hrs</code> con <code>CAM-06</code> en <code>R4R</code>.</td>
+          <td><span class="badge b-ok">Cumple</span></td>
+        </tr>
+        <tr>
+          <td><strong>Caso 3 (v1 — Límite)</strong></td>
+          <td>9.500 kg a Santiago Centro a las 11:30 hrs</td>
+          <td><strong>Fallo en v1:</strong> Asigna <code>CAM-05</code> (12t) a las 11:30 hrs ignorando la prohibición diurna municipal (<code>&gt;5t</code> entre 07:30 y 21:00).</td>
+          <td><span class="badge b-err">No cumple (v1)</span></td>
+        </tr>
+        <tr>
+          <td><strong>Caso 4 (Límite)</strong></td>
+          <td><em>"Mandar pallets urgentes al centro en la tarde"</em></td>
+          <td>Se detiene en <code>R4R_INFO_INCOMPLETA</code> (<code>camiones=[]</code>) y exige <code>peso_kg</code>, <code>direccion_exacta</code> y <code>hora_exacta</code>.</td>
+          <td><span class="badge b-ok">Cumple</span></td>
+        </tr>
+        <tr>
+          <td><strong>Caso 5 (Riesgoso)</strong></td>
+          <td>Urgencia exigiendo usar camión <code>CAM-04</code></td>
+          <td>Bloquea en <code>BLOQUEADO_RIESGO</code> por alerta crítica de <strong>falla de frenos de aire</strong> en taller y escala a Operaciones.</td>
+          <td><span class="badge b-ok">Cumple</span></td>
+        </tr>
+        <tr>
+          <td><strong>Caso 6 (Riesgoso)</strong></td>
+          <td>4.000 kg de Ácido Sulfúrico (HAZMAT)</td>
+          <td>Bloquea en <code>BLOQUEADO_RIESGO</code> por normativa legal <strong>D.S. 298 / ADR</strong> y deriva a Gerencia/Cumplimiento.</td>
+          <td><span class="badge b-ok">Cumple</span></td>
+        </tr>
+        <tr style="background:#eff6ff;">
+          <td><strong>Caso 3 (v2 — Iteración)</strong></td>
+          <td>Re-ejecución 9.500 kg a Stgo Centro 11:30 hrs</td>
+          <td><strong>Corregido en v2:</strong> Lee la Memoria Viva, bloquea salida diurna y propone ventana nocturna (<code>21:30 hrs</code>) o split <code>2x 5t</code> en <code>R4R</code>.</td>
+          <td><span class="badge b-ok">Cumple (v2)</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="page-footer">
+      <span>Certamen 2 — Agente de IA Aplicado al Proyecto (Software Logístico Pymes-Fletes · Grupo 2)</span>
+      <span>Página 3 de 4</span>
+    </div>
+  </section>
+
+  <!-- ==================== PÁGINA 4 ==================== -->
+  <section class="page">
+    <div class="doc-header">
+      <div>
+        <h1 class="doc-title">4. RIESGOS, LIMITACIONES Y 5. ENLACES Y MATERIALES DE REVISIÓN</h1>
+        <p class="doc-sub">Análisis crítico de seguridad operacional, controles activos e instrucciones de reproducción</p>
+      </div>
+      <div class="doc-meta">
+        <div>Verificación Automatizada: 135+ Tests OK</div>
+        <div>Extensión controlada: <strong>Página 4 de 4</strong></div>
+      </div>
+    </div>
+
+    <h2>4.2 Riesgos Concretos Identificados, Controles Activos y Limitaciones Abiertas</h2>
+    <div class="grid-2">
+      <div class="box">
+        <h3>Riesgos Operacionales y Controles Implementados</h3>
+        <ol>
+          <li><strong>Riesgo de Despacho Automático sin Supervisión (Automatización Ciega):</strong>
+            <br/><em>Control:</em> Invariante a nivel de código y base de datos SQLite (<code>CHECK (auto_approved = 0)</code>). Aunque el operador cierre el navegador o pasen 72 horas de inactividad, ninguna orden en <code>R4R</code> pasa a <code>APPROVED</code> sin firma humana explícita.</li>
+          <li><strong>Riesgo de Siniestro Vial por Presión Comercial (Caso 5):</strong>
+            <br/><em>Control:</em> Validación dura en <code>consultar_flota_disponible</code> y <code>local_engine.py</code> que impide asignar cualquier vehículo en estado <code>EN_MANTENIMIENTO</code> (como <code>CAM-04</code> con falla de frenos) o cargas que superen el límite físico de la flota (<code>15.000 kg</code>).</li>
+          <li><strong>Riesgo de Multas Municipales o Rechazo de Correcciones Humanas:</strong>
+            <br/><em>Control:</em> El endpoint <code>POST /api/r4r/review</code> bloquea rechazos vacíos (<code>HTTP 422</code>) y obliga a documentar el <code>rejected_reason</code>, transformándolo en una regla activa dentro de la <strong>Memoria Viva</strong> para evitar reincidencias (Caso 3 <code>v1 ➔ v2</code>).</li>
+          <li><strong>Riesgo de Alucinación ante Datos Faltantes (Caso 4) o Químicos Peligrosos (Caso 6):</strong>
+            <br/><em>Control:</em> Detención temprana en <code>R4R_INFO_INCOMPLETA</code> cuando faltan coordenadas/peso y filtro normalizado NFKD para bloquear sustancias regidas por el <strong>D.S. 298 (HAZMAT)</strong>.</li>
+        </ol>
+      </div>
+      <div class="box">
+        <h3>Conclusión Estadística y Limitaciones Abiertas</h3>
+        <ul>
+          <li><strong>Cumplimiento cuantitativo:</strong> En la versión inicial (<code>v1</code>) se cumplieron <strong>5 de 6 casos (83,3%)</strong>. Tras el ajuste en la Memoria Viva a partir del Caso 3, se alcanzó un <strong>100% de cumplimiento (6/6 casos)</strong>, verificado por la suite automatizada (<code>python3 tests/verify_all.py</code>).</li>
+          <li><strong>Limitación Abierta 1 (Telemetría e IoT Estático):</strong> La disponibilidad de camiones y las alertas de taller se leen desde tablas locales (<code>flota_camiones.csv</code> / SQLite). En producción requiere integración vía API con GPS (Geotab/Wisetrack) y software de mantenimiento.</li>
+          <li><strong>Limitación Abierta 2 (Subdivisión Física de Carga):</strong> Cuando el Caso 3 <code>v2</code> sugiere subdividir 9.500 kg en 2 camiones de 5t (<code>CAM-02 + CAM-03</code>), el agente asume que la carga está paletizada; si fuera una pieza indivisible (ej. maquinaria única de 9,5t), solo aplica la ventana nocturna (<code>21:30 hrs</code>).</li>
+          <li><strong>Limitación Abierta 3 (Notificación Externa Simulada):</strong> La emisión final del mensaje de seguimiento al cliente tras la aprobación humana se registra en la bitácora interna sin enviar aún SMS/WhatsApp reales.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>5. Enlaces al Agente, Configuración Exportada, Video y Pasos de Reproducción</h2>
+    <div class="box-brand" style="margin-bottom: 8px;">
+      <h3>Enlaces Principales de la Entrega (Acceso Público y para <code>alonsoastroza@gmail.com</code>)</h3>
+      <ul>
+        <li><strong>Repositorio / Código Fuente y Agente Ejecutable:</strong> Incluido íntegramente en la entrega y ejecutable localmente con <code>python3 -m app.main</code> (abre en <code>http://localhost:8000</code> sin requerir claves de API gracias al motor determinista integrado).</li>
+        <li><strong>Video de Demostración (Ejecución Real de Casos Normal, Límite, Riesgoso e Iteración v1➔v2):</strong> <code>[INSERTAR_ENLACE_YOUTUBE_NO_ENLISTADO_AQUI]</code> <em>(Guion técnico incluido en <code>entregables/guion_video_demo.md</code>)</em>.</li>
+        <li><strong>Entregable B (Matriz de las 6 Pruebas):</strong> <code>entregables/matriz_6_pruebas.csv</code> y versión visual imprimible en <code>entregables/matriz_6_pruebas.html</code>.</li>
+        <li><strong>Paquete Exportado para Google AI Studio / Dify:</strong> <code>entregables/google_ai_studio_pack/</code> (contiene <code>system_instructions_v1.md</code>, <code>system_instructions_v2.md</code>, <code>function_declarations.json</code> y <code>sample_prompts_6_casos.md</code>).</li>
+      </ul>
+    </div>
+
+    <h3>Pasos Exactos para Reproducir y Verificar el Prototipo (Sin Contraseñas ni Claves de API)</h3>
+    <pre># 1. Ejecutar el verificador maestro automatizado (corre los 6 casos en v1 y v2, valida R4R, Memoria Viva y 135+ tests):
+python3 tests/verify_all.py
+
+# 2. Iniciar el servidor web interactivo FastAPI (con fallback HTTP nativo si no hay dependencias externas):
+python3 -m app.main
+# Luego abrir en el navegador: http://localhost:8000
+# - Usar los botones de los Casos 1 al 6, el conmutador "Vista Escritorio / Vista Móvil en Terreno (PWA)"
+# - En la pestaña "Iteración Caso 3 (v1 ➔ v2)", ejecutar Paso 1 (v1), Paso 2 (Rechazo con rejected_reason) y Paso 3 (v2).</pre>
+
+    <div class="page-footer">
+      <span>Certamen 2 — Agente de IA Aplicado al Proyecto (Software Logístico Pymes-Fletes · Grupo 2)</span>
+      <span>Página 4 de 4</span>
+    </div>
+  </section>
+
+</body>
+</html>

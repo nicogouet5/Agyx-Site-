@@ -1,0 +1,8 @@
+id_camion,patente,modelo,tipo_vehiculo,capacidad_max_kg,volumen_max_m3,estado_operativo,mantenimiento_bloqueo,mantenimiento_detalle,ubicacion_base,proxima_disponibilidad,costo_base_clp,costo_km_clp
+CAM-01,HY-3120,Hyundai HD78 3.5t,TRES_CUARTOS,3500,16.0,DISPONIBLE,false,Operativo al 100%,Base Quilicura,INMEDIATA,45000,850
+CAM-02,MB-5012,Mercedes-Benz Atego 1016 5t,MEDIANO_5T,5000,24.0,DISPONIBLE,false,Mantención al día,Base Quilicura,INMEDIATA,65000,1200
+CAM-03,MB-5013,Mercedes-Benz Atego 1016 5t,MEDIANO_5T,5000,24.0,DISPONIBLE,false,Mantención al día,Base Quilicura,INMEDIATA,65000,1200
+CAM-04,VW-8044,Volkswagen Delivery 8.160 8t,MEDIANO_8T,8000,35.0,EN_MANTENIMIENTO,true,Falla crítica de frenos de aire (disco y compresor),Taller Renca,BLOQUEADO,90000,1500
+CAM-05,VO-1205,Volvo VM 270 12t,PESADO_12T,12000,48.0,DISPONIBLE,false,Operativo para ruta carretera,Base Quilicura,INMEDIATA,120000,2100
+CAM-06,SC-1206,Scania P310 12t,PESADO_12T,12000,50.0,EN_RUTA,false,Ruta Santiago-Valparaíso ETA 19:30,En Ruta 68,2026-10-21T08:00:00,120000,2100
+CAM-07,SC-1507,Scania R450 15t,TRACTO_15T,15000,65.0,EN_RUTA,false,Ruta Santiago-Concepción ETA 22:30,Ruta 5 Sur,2026-10-21T08:00:00,160000,2800

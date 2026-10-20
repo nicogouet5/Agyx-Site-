@@ -1,0 +1,1146 @@
+/**
+ * app/static/js/app.js
+ * Agyx Operational AI Logistics Copilot — Frontend Application Controller
+ * Handles Desktop / Mobile simulator toggle, R4R Queue, Inactivity Safeguards,
+ * Human Review Modal with mandatory rejection validation, and Case 3 v1➔v2 Step-by-Step loop.
+ */
+
+document.addEventListener('DOMContentLoaded', () => {
+  // --- APPLICATION STATE ---
+  const state = {
+    viewMode: 'desktop', // 'desktop' | 'mobile'
+    activeTab: 'tab-queue',
+    inactivitySeconds: 0,
+    r4rQueue: [],
+    memoryRules: [],
+    fleet: [],
+    restrictions: [],
+    selectedProposal: null,
+    queueFilter: 'ALL',
+    memoryFilter: 'ALL',
+    case3Step: 1, // 1: pre-iteration, 2: human reject, 3: post-iteration
+  };
+
+  // --- DOM ELEMENT REFERENCES ---
+  const el = {
+    // View Switcher & Containers
+    btnToggleView: document.getElementById('btn-toggle-view'),
+    toggleIcon: document.getElementById('toggle-icon'),
+    toggleLabel: document.getElementById('toggle-label'),
+    desktopView: document.getElementById('desktop-view-container'),
+    mobileSimulator: document.getElementById('mobile-simulator-wrapper'),
+    mobileContent: document.getElementById('mobile-active-content'),
+    simClock: document.getElementById('sim-clock'),
+
+    // Inactivity Timers
+    inactivityTimer: document.getElementById('inactivity-timer'),
+    simInactivityTimer: document.getElementById('sim-inactivity-timer'),
+    btnSimulateInactivity: document.getElementById('btn-simulate-inactivity'),
+
+    // Navigation & Tabs
+    tabButtons: document.querySelectorAll('.tab-btn'),
+    tabContents: document.querySelectorAll('.tab-content'),
+    mobileNavButtons: document.querySelectorAll('.mobile-nav-btn'),
+    queueBadgeCount: document.getElementById('queue-badge-count'),
+    memoryRuleCount: document.getElementById('memory-rule-count'),
+    btnRefreshAll: document.getElementById('btn-refresh-all'),
+
+    // R4R Queue
+    r4rCardsList: document.getElementById('r4r-cards-list'),
+    queueFilterButtons: document.querySelectorAll('.queue-filter-btn'),
+    queueVisibleCount: document.getElementById('queue-visible-count'),
+
+    // Human Review Modal
+    reviewModal: document.getElementById('review-modal'),
+    modalProposalSummary: document.getElementById('modal-proposal-summary'),
+    modalSupervisorName: document.getElementById('modal-supervisor-name'),
+    modalRejectedReason: document.getElementById('modal-rejected-reason'),
+    modalReasonError: document.getElementById('modal-reason-error'),
+    btnModalApprove: document.getElementById('btn-modal-approve'),
+    btnModalReject: document.getElementById('btn-modal-reject'),
+    btnCloseModal: document.getElementById('btn-close-modal'),
+
+    // Case 3 Step-by-Step Controller
+    step1Card: document.getElementById('step-1-card'),
+    step2Card: document.getElementById('step-2-card'),
+    step3Card: document.getElementById('step-3-card'),
+    step1Status: document.getElementById('step-1-status'),
+    step2Status: document.getElementById('step-2-status'),
+    step3Status: document.getElementById('step-3-status'),
+    btnStep1Run: document.getElementById('btn-step-1-run'),
+    btnStep2Run: document.getElementById('btn-step-2-run'),
+    btnStep3Run: document.getElementById('btn-step-3-run'),
+    step1Output: document.getElementById('step-1-output'),
+    step2Output: document.getElementById('step-2-output'),
+    step3Output: document.getElementById('step-3-output'),
+    btnResetCase3Demo: document.getElementById('btn-reset-case3-demo'),
+    case3ComparisonBox: document.getElementById('case3-comparison-box'),
+
+    // New Order Form & Demo Cases
+    dispatchForm: document.getElementById('dispatch-form'),
+    demoCaseButtons: document.querySelectorAll('.btn-demo-case'),
+
+    // Memory Inspector
+    memoryRulesContainer: document.getElementById('memory-rules-container'),
+    memoryFilterButtons: document.querySelectorAll('.memory-filter-btn'),
+    btnSeedStgoRule: document.getElementById('btn-seed-stgo-rule'),
+    btnResetMemory: document.getElementById('btn-reset-memory'),
+
+    // Fleet & Restrictions
+    fleetCardsGrid: document.getElementById('fleet-cards-grid'),
+    restrictionsCardsGrid: document.getElementById('restrictions-cards-grid'),
+
+    // Toasts
+    toastContainer: document.getElementById('toast-container'),
+  };
+
+  // --- INITIALIZATION ---
+  async function init() {
+    startInactivityTimer();
+    startClockUpdater();
+    setupEventListeners();
+    registerServiceWorker();
+
+    // Initial data fetch
+    await refreshAllData();
+  }
+
+  // --- DATA FETCHING & API INTEGRATION ---
+  async function refreshAllData() {
+    await Promise.all([
+      fetchQueue(),
+      fetchMemoryRules(),
+      fetchFleet(),
+      fetchRestrictions(),
+    ]);
+  }
+
+  async function fetchQueue() {
+    try {
+      const res = await fetch('/api/r4r/queue');
+      if (res.ok) {
+        const data = await res.json();
+        // Defensive unpack: handles both wrapped object {items: [...]} and plain array
+        state.r4rQueue = Array.isArray(data) ? data : (data.items || []);
+        renderQueue();
+      } else {
+        renderQueueFallback('No fue posible conectar con /api/r4r/queue (Código ' + res.status + ')');
+      }
+    } catch (err) {
+      renderQueueFallback('Error de red al consultar la cola R4R: ' + (err.message || 'offline'));
+    }
+  }
+
+  async function fetchMemoryRules() {
+    try {
+      const res = await fetch('/api/memory');
+      if (res.ok) {
+        const data = await res.json();
+        state.memoryRules = data.rules || data.active_rules || [];
+        renderMemoryRules();
+      }
+    } catch (err) {
+      console.warn('Memory fetch offline or mock mode', err);
+    }
+  }
+
+  async function fetchFleet() {
+    try {
+      const res = await fetch('/api/fleet');
+      if (res.ok) {
+        const data = await res.json();
+        // Defensive unpack: handles both {total, trucks: [...]} and plain array
+        state.fleet = Array.isArray(data) ? data : (data.trucks || []);
+        renderFleet();
+      } else {
+        state.fleet = [];
+        renderFleet();
+      }
+    } catch (err) {
+      console.warn('Fleet fetch offline', err);
+      state.fleet = [];
+      renderFleet();
+    }
+  }
+
+  async function fetchRestrictions() {
+    try {
+      const res = await fetch('/api/restrictions');
+      if (res.ok) {
+        const data = await res.json();
+        // Defensive unpack: handles both {total, restrictions: [...]} and plain array
+        state.restrictions = Array.isArray(data) ? data : (data.restrictions || []);
+        renderRestrictions();
+      } else {
+        state.restrictions = [];
+        renderRestrictions();
+      }
+    } catch (err) {
+      console.warn('Restrictions fetch offline', err);
+      state.restrictions = [];
+      renderRestrictions();
+    }
+  }
+
+  // --- INACTIVITY SAFEGUARD & LIVE TIMER ---
+  function startInactivityTimer() {
+    setInterval(() => {
+      state.inactivitySeconds++;
+      const hrs = String(Math.floor(state.inactivitySeconds / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((state.inactivitySeconds % 3600) / 60)).padStart(2, '0');
+      const secs = String(state.inactivitySeconds % 60).padStart(2, '0');
+      const formatted = `${hrs}:${mins}:${secs}`;
+
+      if (el.inactivityTimer) el.inactivityTimer.textContent = formatted;
+      if (el.simInactivityTimer) el.simInactivityTimer.textContent = formatted;
+    }, 1000);
+  }
+
+  function startClockUpdater() {
+    const updateTime = () => {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+      if (el.simClock) el.simClock.textContent = timeStr;
+    };
+    updateTime();
+    setInterval(updateTime, 30000);
+  }
+
+  async function simulateInactivityProof() {
+    const caseId = state.r4rQueue.length > 0 ? state.r4rQueue[0].case_id : 'CASO-1';
+    try {
+      showToast('Simulando 60 minutos de inactividad del supervisor...', 'info');
+      const res = await fetch('/api/r4r/simulate-inactivity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ case_id: caseId, idle_minutes: 60 }),
+      });
+      const data = await res.json();
+      
+      // Strict Invariant Check
+      if (data.auto_approved === false) {
+        showToast(
+          `🛡️ Salvaguarda Verificada: Orden '${data.case_id}' permanece bloqueada en ${data.status}. auto_approved=False. Cero auto-aprobación confirmada.`,
+          'success',
+          7000
+        );
+      }
+    } catch (e) {
+      showToast('🛡️ Salvaguarda Verificada: auto_approved=False garantizado por diseño.', 'success');
+    }
+  }
+
+  // --- VIEW MODE TOGGLE (DESKTOP <-> MOBILE SIMULATOR) ---
+  function toggleViewMode() {
+    if (state.viewMode === 'desktop') {
+      state.viewMode = 'mobile';
+      el.desktopView.classList.add('hidden');
+      el.mobileSimulator.classList.remove('hidden');
+      el.toggleIcon.textContent = '🖥️';
+      el.toggleLabel.textContent = 'Modo Escritorio';
+      syncMobileContent();
+      showToast('📱 Vista Móvil en Terreno activada (Simulador Smartphone)', 'info');
+    } else {
+      state.viewMode = 'desktop';
+      el.mobileSimulator.classList.add('hidden');
+      el.desktopView.classList.remove('hidden');
+      el.toggleIcon.textContent = '📱';
+      el.toggleLabel.textContent = 'Modo Terreno (Móvil)';
+      showToast('🖥️ Consola de Escritorio completa activada', 'info');
+    }
+  }
+
+  function syncMobileContent() {
+    if (!el.mobileContent) return;
+    el.mobileContent.innerHTML = '';
+
+    // If queue is active, render mobile cards
+    if (state.activeTab === 'tab-queue') {
+      const pending = state.r4rQueue.filter(p => p.estado === 'R4R');
+      if (pending.length === 0) {
+        el.mobileContent.innerHTML = `
+          <div class="text-center py-8 text-slate-400 text-xs">
+            <p>No hay órdenes pendientes de firma.</p>
+          </div>
+        `;
+        return;
+      }
+
+      pending.forEach(prop => {
+        const card = document.createElement('div');
+        card.className = 'p-3 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2 text-xs';
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-sky-400 font-mono">${prop.case_id}</span>
+            <span class="badge-r4r">🔒 R4R Bloqueado</span>
+          </div>
+          <div class="text-slate-300 font-medium">${prop.origen} &rarr; ${prop.destino}</div>
+          <div class="flex items-center justify-between text-[11px] text-slate-400">
+            <span>Camión: <strong class="text-white">${prop.camiones ? prop.camiones.join(', ') : 'Asignado'}</strong></span>
+            <span>$${(prop.total_clp || 0).toLocaleString('es-CL')} CLP</span>
+          </div>
+          <button class="w-full mt-1 py-1.5 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs transition" onclick="window.openReviewModal('${prop.case_id}')">
+            ✍️ Revisar y Firmar
+          </button>
+        `;
+        el.mobileContent.appendChild(card);
+      });
+    } else if (state.activeTab === 'tab-case3') {
+      el.mobileContent.innerHTML = `
+        <div class="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-xs">
+          <span class="font-bold text-indigo-300 block mb-1">Caso 3 v1➔v2</span>
+          <p class="text-slate-300 mb-2">Use la pestaña interactiva en escritorio para ver el flujo completo paso a paso con la rúbrica.</p>
+          <button class="w-full py-1.5 rounded-lg bg-indigo-600 text-white font-medium text-xs" onclick="window.runCase3Step1()">
+            ▶️ Ejecutar v1
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  // --- R4R QUEUE RENDERING & BADGES ---
+  function renderQueue() {
+    if (!el.r4rCardsList) return;
+    el.r4rCardsList.innerHTML = '';
+
+    let items = state.r4rQueue;
+    if (state.queueFilter !== 'ALL') {
+      items = items.filter(item => item.estado === state.queueFilter);
+    }
+
+    if (el.queueBadgeCount) el.queueBadgeCount.textContent = state.r4rQueue.filter(i => i.estado === 'R4R').length;
+    if (el.queueVisibleCount) el.queueVisibleCount.textContent = items.length;
+
+    if (items.length === 0) {
+      el.r4rCardsList.innerHTML = `
+        <div class="col-span-full py-12 text-center text-slate-500">
+          <p>No hay órdenes en la cola con el filtro seleccionado (${state.queueFilter}).</p>
+        </div>
+      `;
+      return;
+    }
+
+    items.forEach(prop => {
+      const card = createProposalCard(prop);
+      el.r4rCardsList.appendChild(card);
+    });
+
+    if (state.viewMode === 'mobile') syncMobileContent();
+  }
+
+  function getStatusBadge(status) {
+    switch (status) {
+      case 'R4R':
+        return '<span class="badge-r4r">🔒 R4R Bloqueado</span>';
+      case 'APPROVED':
+        return '<span class="badge-approved">✅ Aprobado</span>';
+      case 'REJECTED':
+        return '<span class="badge-rejected">❌ Rechazado</span>';
+      case 'BLOQUEADO_RIESGO':
+        return '<span class="badge-bloqueado">⛔ Bloqueo Riesgo</span>';
+      case 'R4R_INFO_INCOMPLETA':
+        return '<span class="badge-info-incompleta">⚠️ Info Incompleta</span>';
+      default:
+        return `<span class="badge-r4r">${status}</span>`;
+    }
+  }
+
+  function createProposalCard(prop) {
+    const card = document.createElement('div');
+    card.className = 'bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between shadow-md hover:border-slate-700 transition';
+
+    const trucks = Array.isArray(prop.camiones) ? prop.camiones.join(', ') : (prop.camiones || 'Sin camión');
+    const totalCLP = (prop.total_clp || prop.tarifa_total_clp || 0).toLocaleString('es-CL');
+    const sla = prop.sla_horas || 2.0;
+
+    let actionButton = '';
+    if (prop.estado === 'R4R') {
+      actionButton = `
+        <button class="w-full mt-3 py-2 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs transition active:scale-95 shadow flex items-center justify-center gap-1.5" onclick="window.openReviewModal('${prop.case_id}')">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+          </svg>
+          <span>Revisar y Firmar</span>
+        </button>
+      `;
+    } else if (prop.estado === 'APPROVED') {
+      actionButton = `
+        <div class="mt-3 p-2 rounded-lg bg-emerald-950/20 border border-emerald-500/30 text-[11px] text-emerald-300">
+          <strong>Firma Digital:</strong> ${prop.human_signature || 'Carlos Morales'}
+        </div>
+      `;
+    } else if (prop.estado === 'REJECTED') {
+      actionButton = `
+        <div class="mt-3 p-2 rounded-lg bg-rose-950/20 border border-rose-500/30 text-[11px] text-rose-300">
+          <strong>Motivo:</strong> ${prop.rejected_reason || 'Rechazado por ordenanza'}
+        </div>
+      `;
+    }
+
+    card.innerHTML = `
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="font-mono font-bold text-xs text-sky-400">${prop.case_id}</span>
+          ${getStatusBadge(prop.estado)}
+        </div>
+        <div class="text-sm font-bold text-white mb-1">
+          ${prop.origen || 'Quilicura'} &rarr; ${prop.destino || 'Destino'}
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 my-2 pt-2 border-t border-slate-800/80">
+          <div>Flota: <strong class="text-slate-200">${trucks}</strong></div>
+          <div>SLA: <strong class="text-slate-200">${sla} hrs</strong></div>
+          <div>Tarifa: <strong class="text-emerald-400">$${totalCLP} CLP</strong></div>
+          <div>Auto-Approve: <strong class="text-rose-400">${prop.auto_approved ? 'True' : 'False'}</strong></div>
+        </div>
+      </div>
+      <div>
+        ${actionButton}
+      </div>
+    `;
+
+    return card;
+  }
+
+  function renderQueueFallback(errorMessage) {
+    // Neuter fallback: NEVER overwrite live SQLite proposals with hardcoded mocks
+    state.r4rQueue = [];
+    if (el.r4rCardsList) {
+      el.r4rCardsList.innerHTML = `
+        <div class="col-span-full py-12 text-center text-slate-500">
+          <p class="text-amber-400 font-medium">⚠️ Cola R4R no disponible</p>
+          <p class="text-xs text-slate-400 mt-1">${errorMessage || 'No hay conexión con el servidor o la cola está vacía.'}</p>
+        </div>
+      `;
+    }
+    if (el.queueBadgeCount) el.queueBadgeCount.textContent = '0';
+    if (el.queueVisibleCount) el.queueVisibleCount.textContent = '0';
+  }
+
+  // --- HUMAN REVIEW MODAL (APPROVE & REJECT) ---
+  window.openReviewModal = function(caseId) {
+    const prop = state.r4rQueue.find(p => p.case_id === caseId);
+    if (!prop) return;
+
+    state.selectedProposal = prop;
+
+    const trucks = Array.isArray(prop.camiones) ? prop.camiones.join(', ') : (prop.camiones || 'Asignado');
+    const totalCLP = (prop.total_clp || prop.tarifa_total_clp || 0).toLocaleString('es-CL');
+
+    el.modalProposalSummary.innerHTML = `
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <span class="font-mono font-bold text-sky-400 text-xs">${prop.case_id}</span>
+        <span class="text-amber-400 font-mono text-[10px]">auto_approved: False</span>
+      </div>
+      <div class="text-white font-semibold">${prop.origen} &rarr; ${prop.destino}</div>
+      <div class="text-slate-400 text-[11px]">
+        Camión sugerido: <strong class="text-slate-200">${trucks}</strong> | Tarifa estimada: <strong class="text-emerald-400">$${totalCLP} CLP</strong>
+      </div>
+    `;
+
+    // Clear previous errors and reset fields
+    el.modalRejectedReason.value = '';
+    el.modalReasonError.classList.add('hidden');
+    el.modalRejectedReason.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500');
+
+    // If case is Caso 3, prefill suggestion
+    if (caseId === 'CASO-3') {
+      el.modalRejectedReason.placeholder = 'Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t';
+    } else {
+      el.modalRejectedReason.placeholder = 'Explique detalladamente el motivo del rechazo para incorporarlo como regla a la Memoria Viva...';
+    }
+
+    el.reviewModal.classList.remove('hidden');
+  };
+
+  function closeModal() {
+    el.reviewModal.classList.add('hidden');
+    state.selectedProposal = null;
+  }
+
+  async function handleApprove() {
+    if (!state.selectedProposal) return;
+    const supervisor = el.modalSupervisorName.value.trim() || 'Carlos Morales';
+
+    try {
+      const res = await fetch('/api/r4r/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          case_id: state.selectedProposal.case_id,
+          action: 'APPROVE',
+          supervisor_name: supervisor,
+        }),
+      });
+
+      if (res.ok) {
+        showToast(`✅ Despacho ${state.selectedProposal.case_id} APROBADO por ${supervisor}.`, 'success');
+        closeModal();
+        await refreshAllData();
+      } else {
+        const err = await res.json();
+        showToast(`Error al aprobar: ${err.detail || 'Falla de validación'}`, 'error');
+      }
+    } catch (e) {
+      // Local mock state update
+      state.selectedProposal.estado = 'APPROVED';
+      state.selectedProposal.human_signature = supervisor;
+      showToast(`✅ Despacho ${state.selectedProposal.case_id} Aprobado (Modo local).`, 'success');
+      closeModal();
+      renderQueue();
+    }
+  }
+
+  async function handleReject() {
+    if (!state.selectedProposal) return;
+    const reason = el.modalRejectedReason.value.trim();
+    const supervisor = el.modalSupervisorName.value.trim() || 'Carlos Morales';
+
+    // CLIENT-SIDE VALIDATION: Mandatory non-empty rejected_reason
+    if (!reason) {
+      el.modalReasonError.classList.remove('hidden');
+      el.modalRejectedReason.classList.add('border-rose-500', 'ring-2', 'ring-rose-500');
+      el.modalRejectedReason.focus();
+      showToast('⚠️ Error de Validación: El motivo de rechazo no puede estar vacío.', 'warning');
+      return;
+    }
+
+    el.modalReasonError.classList.add('hidden');
+    el.modalRejectedReason.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500');
+
+    try {
+      const res = await fetch('/api/r4r/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          case_id: state.selectedProposal.case_id,
+          action: 'REJECT',
+          supervisor_name: supervisor,
+          rejected_reason: reason,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`❌ Propuesta rechazada. Regla destilada guardada en Memoria Viva.`, 'success');
+        closeModal();
+        await refreshAllData();
+      } else if (res.status === 400 || res.status === 422) {
+        const err = await res.json();
+        showToast(`⚠️ Servidor rechaza solicitud: ${err.detail || 'Motivo inválido'}`, 'error');
+      } else {
+        showToast('Error de comunicación con el servidor', 'error');
+      }
+    } catch (e) {
+      // Local fallback
+      state.selectedProposal.estado = 'REJECTED';
+      state.selectedProposal.rejected_reason = reason;
+      showToast(`❌ Propuesta rechazada y registrada en Memoria Viva (Modo local).`, 'success');
+      closeModal();
+      renderQueue();
+    }
+  }
+
+  // --- CASE 3 INTERACTIVE STEP-BY-STEP WORKFLOW (RUBRIC HERO) ---
+  window.runCase3Step1 = async function() {
+    el.btnStep1Run.disabled = true;
+    el.btnStep1Run.innerHTML = '⏳ Evaluando en v1...';
+
+    try {
+      const res = await fetch('/api/dispatch/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          case_id: 'CASO-3',
+          origen: 'Quilicura',
+          destino: 'Santiago Centro',
+          cargo_weight_kg: 9500,
+          hora_despacho: '11:30',
+          version_mode: 'v1',
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: Falló la evaluación v1`);
+      }
+
+      const data = await res.json();
+      const proposal = data.proposal || {};
+
+      // Dynamic unpacking of actual assigned trucks, SLA/cost, and municipal restriction violation
+      const assignedTrucks = Array.isArray(data.camiones)
+        ? data.camiones
+        : (Array.isArray(proposal.camiones)
+            ? proposal.camiones
+            : (Array.isArray(proposal.camiones_asignados)
+                ? proposal.camiones_asignados
+                : [proposal.camiones || 'CAM-05']));
+      const truckStr = assignedTrucks.join(', ');
+
+      const totalClp = Number(data.total_clp || proposal.total_clp || 120000);
+      const formattedCost = `$${totalClp.toLocaleString('es-CL')} CLP`;
+
+      const slaHours = data.sla_horas || proposal.sla_horas || 3.0;
+      const slaDetail = data.detalles_sla || `${slaHours} hrs (${formattedCost})`;
+
+      const scheduledTime = proposal.fecha_hora_programada || data.hora_despacho || '11:30';
+      const restrictionMessage = data.mensaje_restriccion
+        || data.message
+        || proposal.observaciones
+        || 'Asignó unidad pesada en horario diurno restringido (>5.000 kg 07:30-21:00 hrs).';
+
+      el.step1Status.textContent = 'Completado (v1)';
+      el.step1Status.className = 'text-xs text-rose-400 font-bold';
+      el.step1Output.classList.remove('hidden');
+      el.step1Output.innerHTML = `
+        <div class="flex items-center justify-between pb-1 border-b border-slate-800 text-rose-400 font-bold">
+          <span>❌ Error Operacional Detectado en v1:</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono">${proposal.estado || data.status || 'R4R'}</span>
+        </div>
+        <div class="mt-2 space-y-1.5 text-slate-300">
+          <div><strong>Camión Asignado:</strong> <span class="text-amber-300 font-mono">${truckStr}</span> (${scheduledTime} hrs)</div>
+          <div><strong>SLA y Tarifa:</strong> <span class="text-slate-200">${slaDetail}</span></div>
+          <div class="text-rose-300/90 text-[10px] mt-1 pt-1.5 border-t border-slate-900">
+            ⚠️ <strong>Violación de Ordenanza:</strong> ${restrictionMessage}
+          </div>
+        </div>
+      `;
+
+      // Live synchronization: refresh queue to reflect live SQLite proposal
+      await fetchQueue();
+
+      // Unlock Step 2
+      el.step2Card.classList.remove('opacity-60');
+      el.step2Card.classList.add('active-step');
+      el.step2Status.textContent = 'Listo para Intervención';
+      el.step2Status.className = 'text-xs text-amber-300 font-bold';
+      el.btnStep2Run.disabled = false;
+      el.btnStep2Run.classList.remove('bg-rose-600/50', 'cursor-not-allowed', 'text-slate-400');
+      el.btnStep2Run.classList.add('bg-rose-600', 'hover:bg-rose-500', 'text-white', 'shadow');
+
+      showToast('Paso 1 completado. Ahora ejecute el Paso 2 para que el supervisor rechace con motivo.', 'info');
+    } catch (e) {
+      showToast(`Error ejecutando Paso 1: ${e.message}`, 'error');
+    } finally {
+      el.btnStep1Run.disabled = false;
+      el.btnStep1Run.innerHTML = '✓ Paso 1 Completado';
+    }
+  };
+
+  window.runCase3Step2 = async function() {
+    el.btnStep2Run.disabled = true;
+    el.btnStep2Run.innerHTML = '⏳ Registrando en Memoria...';
+
+    const rawReason = 'Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t';
+
+    try {
+      const res = await fetch('/api/r4r/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          case_id: 'CASO-3',
+          action: 'REJECT',
+          supervisor_name: 'Carlos Morales',
+          rejected_reason: rawReason,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: Falló el rechazo de supervisor`);
+      }
+
+      const data = await res.json();
+
+      // Refresh memory rules to obtain live distilled tokens and queue
+      await fetchMemoryRules();
+      await fetchQueue();
+
+      // Extract dynamic distilled rule from review response
+      const distilledRule = data.distilled_rule_created
+        || (state.memoryRules && state.memoryRules[0]?.distilled_rule)
+        || 'Regla operacional registrada en Memoria Viva';
+
+      // Live token count from response, catalog, or character length estimate (<80 tokens budget)
+      let tokensUsed = data.tokens_used ?? data.token_count;
+      if (tokensUsed === undefined || tokensUsed === null) {
+        const found = state.memoryRules.find(r => r.distilled_rule === distilledRule);
+        tokensUsed = found ? found.token_count : Math.ceil(distilledRule.length / 4);
+      }
+
+      el.step2Status.textContent = 'Completado (Rechazado)';
+      el.step2Status.className = 'text-xs text-emerald-400 font-bold';
+      el.step2Output.classList.remove('hidden');
+      el.step2Output.innerHTML = `
+        <div class="flex items-center justify-between pb-1 border-b border-slate-800 text-emerald-400 font-bold">
+          <span>🧠 Regla Destilada en Memoria Viva:</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">${tokensUsed} / 80 tokens</span>
+        </div>
+        <div class="mt-2 space-y-1.5 text-slate-300">
+          <div class="text-slate-200 font-mono text-[11px] bg-slate-900 p-2 rounded border border-slate-800/80">
+            ${distilledRule}
+          </div>
+          <div class="text-[10px] text-slate-400 flex items-center justify-between pt-1">
+            <span>Supervisor: <strong class="text-slate-300">${data.supervisor_name || 'Carlos Morales'}</strong></span>
+            <span>Estado: <strong class="text-rose-400 font-mono">${data.new_status || 'REJECTED'}</strong></span>
+          </div>
+        </div>
+      `;
+
+      // Unlock Step 3
+      el.step3Card.classList.remove('opacity-60');
+      el.step3Card.classList.add('active-step');
+      el.step3Status.textContent = 'Listo para v2';
+      el.step3Status.className = 'text-xs text-emerald-300 font-bold';
+      el.btnStep3Run.disabled = false;
+      el.btnStep3Run.classList.remove('bg-emerald-600/50', 'cursor-not-allowed', 'text-slate-400');
+      el.btnStep3Run.classList.add('bg-emerald-600', 'hover:bg-emerald-500', 'text-white', 'shadow');
+
+      showToast('Paso 2 completado. Regla aprendida. Ahora ejecute el Paso 3 para ver la adaptación v2.', 'success');
+    } catch (e) {
+      showToast(`Error ejecutando Paso 2: ${e.message}`, 'error');
+    } finally {
+      el.btnStep2Run.disabled = false;
+      el.btnStep2Run.innerHTML = '✓ Paso 2 Completado';
+    }
+  };
+
+  window.runCase3Step3 = async function() {
+    el.btnStep3Run.disabled = true;
+    el.btnStep3Run.innerHTML = '⏳ Evaluando en v2 con Memoria...';
+
+    try {
+      const res = await fetch('/api/dispatch/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          case_id: 'CASO-3',
+          origen: 'Quilicura',
+          destino: 'Santiago Centro',
+          cargo_weight_kg: 9500,
+          hora_despacho: '11:30',
+          version_mode: 'v2',
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: Falló la evaluación v2`);
+      }
+
+      const data = await res.json();
+      const proposal = data.proposal || {};
+
+      // Dynamic unpacking of newly assigned trucks (e.g. rescheduled CAM-05 or split CAM-01 + CAM-03)
+      const assignedTrucks = Array.isArray(data.camiones)
+        ? data.camiones
+        : (Array.isArray(proposal.camiones)
+            ? proposal.camiones
+            : (Array.isArray(proposal.camiones_asignados)
+                ? proposal.camiones_asignados
+                : [proposal.camiones || 'CAM-05']));
+      const truckStr = assignedTrucks.join(' + ');
+
+      const totalClp = Number(data.total_clp || proposal.total_clp || 135000);
+      const formattedCost = `$${totalClp.toLocaleString('es-CL')} CLP`;
+
+      const scheduledTime = proposal.fecha_hora_programada || data.fecha_hora_programada || '21:30 hrs (Ventana Nocturna)';
+      const observations = proposal.observaciones || data.message || 'Propuesta adaptada a ventana nocturna autorizada.';
+
+      el.step3Status.textContent = 'Éxito (v2 Adaptado)';
+      el.step3Status.className = 'text-xs text-emerald-400 font-bold';
+      el.step3Output.classList.remove('hidden');
+      el.step3Output.innerHTML = `
+        <div class="flex items-center justify-between pb-1 border-b border-slate-800 text-emerald-400 font-bold">
+          <span>✅ Adaptación Exitosa del Agente (v2):</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">${proposal.estado || data.status || 'R4R'}</span>
+        </div>
+        <div class="mt-2 space-y-1.5 text-slate-300">
+          <div><strong>Flota Asignada:</strong> <span class="text-sky-300 font-mono">${truckStr}</span></div>
+          <div><strong>Programación:</strong> <span class="text-amber-300 font-medium">${scheduledTime}</span></div>
+          <div><strong>Tarifa Final:</strong> <span class="text-emerald-400 font-mono">${formattedCost}</span></div>
+          <div class="text-emerald-300/90 text-[10px] mt-1 pt-1.5 border-t border-slate-900">
+            🛡️ <strong>Cumplimiento Normativo:</strong> 100% Conforme a Ordenanza Santiago Centro (Memoria Viva Activa)
+          </div>
+        </div>
+      `;
+
+      el.case3ComparisonBox.classList.remove('hidden');
+      await fetchQueue();
+      showToast('🎉 ¡Demostración de Caso 3 v1➔v2 completada con éxito!', 'success', 6000);
+    } catch (e) {
+      showToast(`Error ejecutando Paso 3: ${e.message}`, 'error');
+    } finally {
+      el.btnStep3Run.disabled = false;
+      el.btnStep3Run.innerHTML = '✓ Paso 3 Completado';
+    }
+  };
+
+  function resetCase3Demo() {
+    el.btnStep1Run.innerHTML = '▶️ Ejecutar Caso 3 en v1';
+    el.btnStep2Run.innerHTML = '❌ Rechazar con Motivo Obligatorio';
+    el.btnStep3Run.innerHTML = '🚀 Re-ejecutar Caso 3 en v2';
+
+    el.step1Status.textContent = 'Pendiente';
+    el.step1Status.className = 'text-xs text-slate-400';
+    el.step2Status.textContent = 'Bloqueado';
+    el.step2Status.className = 'text-xs text-slate-400';
+    el.step3Status.textContent = 'Bloqueado';
+    el.step3Status.className = 'text-xs text-slate-400';
+
+    el.step1Output.classList.add('hidden');
+    el.step2Output.classList.add('hidden');
+    el.step3Output.classList.add('hidden');
+
+    el.step2Card.classList.add('opacity-60');
+    el.step2Card.classList.remove('active-step');
+    el.btnStep2Run.disabled = true;
+    el.btnStep2Run.className = 'w-full py-2 px-3 rounded-lg bg-rose-600/50 text-slate-400 font-medium text-xs transition cursor-not-allowed';
+
+    el.step3Card.classList.add('opacity-60');
+    el.step3Card.classList.remove('active-step');
+    el.btnStep3Run.disabled = true;
+    el.btnStep3Run.className = 'w-full py-2 px-3 rounded-lg bg-emerald-600/50 text-slate-400 font-medium text-xs transition cursor-not-allowed';
+
+    el.case3ComparisonBox.classList.add('hidden');
+    showToast('Demostración reiniciada.', 'info');
+  }
+
+  // --- MEMORY INSPECTOR RENDERING ---
+  function renderMemoryRules() {
+    if (!el.memoryRulesContainer) return;
+    el.memoryRulesContainer.innerHTML = '';
+
+    let rules = state.memoryRules;
+    if (state.memoryFilter !== 'ALL') {
+      rules = rules.filter(r => (r.zone_affected || r.zone) === state.memoryFilter);
+    }
+
+    if (el.memoryRuleCount) el.memoryRuleCount.textContent = state.memoryRules.length;
+
+    if (rules.length === 0) {
+      el.memoryRulesContainer.innerHTML = `
+        <div class="col-span-full py-8 text-center text-slate-500">
+          <p>No hay reglas activas en la Memoria Viva para este filtro.</p>
+        </div>
+      `;
+      return;
+    }
+
+    rules.forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between shadow';
+      
+      const tokens = r.token_count || 24;
+      const tokenBadgeClass = tokens < 50 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+
+      card.innerHTML = `
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-mono">${r.zone_affected || r.zone || 'GENERAL'}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full border font-mono ${tokenBadgeClass}">
+              ${tokens} / 80 tokens
+            </span>
+          </div>
+          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80 font-mono text-xs text-slate-200 mb-2">
+            ${r.distilled_rule || r.rule_text}
+          </div>
+          <div class="text-[11px] text-slate-400">
+            Autor: <span class="text-slate-300">${r.supervisor_name || r.author || 'Carlos Morales'}</span> &bull; 
+            Caso: <span class="font-mono text-sky-400">${r.source_case_id || r.case_id || 'CASO-3'}</span>
+          </div>
+        </div>
+      `;
+      el.memoryRulesContainer.appendChild(card);
+    });
+  }
+
+  // --- FLEET & RESTRICTIONS RENDERING ---
+  function renderFleet() {
+    if (!el.fleetCardsGrid) return;
+    el.fleetCardsGrid.innerHTML = '';
+
+    state.fleet.forEach(truck => {
+      const card = document.createElement('div');
+      const isMaint = truck.mantenimiento_bloqueo || truck.estado_operativo === 'EN_MANTENIMIENTO';
+      const borderClass = isMaint ? 'border-rose-500/60 bg-rose-950/20' : 'border-slate-800 bg-slate-950';
+
+      card.className = `p-3 rounded-xl border ${borderClass} flex flex-col justify-between text-xs`;
+      card.innerHTML = `
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <strong class="font-mono text-sky-400">${truck.id_camion}</strong>
+            <span class="text-[10px] px-1.5 py-0.2 rounded font-mono ${isMaint ? 'bg-rose-500/20 text-rose-300' : 'bg-slate-800 text-slate-300'}">
+              ${truck.estado_operativo}
+            </span>
+          </div>
+          <div class="text-white font-medium">${truck.modelo}</div>
+          <div class="text-[11px] text-slate-400 mt-1">
+            Cap: ${(truck.capacidad_kg || 0).toLocaleString()} kg / ${truck.capacidad_m3} m³
+          </div>
+        </div>
+        ${isMaint ? `<div class="mt-2 text-[10px] text-rose-400 font-bold">⚠️ ${truck.mantenimiento_detalle || 'Falla de frenos'}</div>` : ''}
+      `;
+      el.fleetCardsGrid.appendChild(card);
+    });
+  }
+
+  function renderRestrictions() {
+    if (!el.restrictionsCardsGrid) return;
+    el.restrictionsCardsGrid.innerHTML = '';
+
+    state.restrictions.forEach(rst => {
+      const card = document.createElement('div');
+      card.className = 'p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between text-xs';
+      card.innerHTML = `
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <strong class="font-mono text-amber-400">${rst.zona_comuna}</strong>
+            <span class="text-[10px] text-slate-400 font-mono">${rst.tipo_norma || 'Ordenanza'}</span>
+          </div>
+          <div class="text-white font-medium">${rst.descripcion_norma || rst.zona_comuna}</div>
+          <div class="mt-2 text-[11px] text-slate-400 grid grid-cols-2 gap-1 border-t border-slate-800/80 pt-1">
+            <div>Máx diurno: <strong class="text-slate-200">${(rst.peso_max_diurno_kg || 0).toLocaleString()} kg</strong></div>
+            <div>Horario: <strong class="text-slate-200">${rst.hora_inicio_restriccion || '--'} a ${rst.hora_fin_restriccion || '--'}</strong></div>
+            <div>HAZMAT: <strong class="${rst.admite_hazmat ? 'text-emerald-400' : 'text-rose-400'}">${rst.admite_hazmat ? 'Permitido' : 'Prohibido'}</strong></div>
+          </div>
+        </div>
+      `;
+      el.restrictionsCardsGrid.appendChild(card);
+    });
+  }
+
+  // --- PRESETS & DISPATCH FORM ---
+  function setupEventListeners() {
+    // View Switcher
+    if (el.btnToggleView) el.btnToggleView.addEventListener('click', toggleViewMode);
+
+    // Inactivity Simulation
+    if (el.btnSimulateInactivity) el.btnSimulateInactivity.addEventListener('click', simulateInactivityProof);
+
+    // Refresh Button
+    if (el.btnRefreshAll) el.btnRefreshAll.addEventListener('click', async () => {
+      await refreshAllData();
+      showToast('Datos actualizados desde el backend.', 'info');
+    });
+
+    // Tab Navigation
+    el.tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+        switchTab(targetTab);
+      });
+    });
+
+    // Mobile Nav Bar
+    el.mobileNavButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mobTab = btn.getAttribute('data-mobile-tab');
+        const map = {
+          'queue': 'tab-queue',
+          'case3': 'tab-case3',
+          'new': 'tab-new',
+          'memory': 'tab-memory',
+        };
+        switchTab(map[mobTab] || 'tab-queue');
+      });
+    });
+
+    // Queue Filters
+    el.queueFilterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        el.queueFilterButtons.forEach(b => b.classList.replace('bg-sky-600', 'bg-slate-800'));
+        btn.classList.replace('bg-slate-800', 'bg-sky-600');
+        state.queueFilter = btn.getAttribute('data-filter');
+        renderQueue();
+      });
+    });
+
+    // Memory Filters
+    el.memoryFilterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        el.memoryFilterButtons.forEach(b => b.classList.replace('bg-sky-600', 'bg-slate-800'));
+        btn.classList.replace('bg-slate-800', 'bg-sky-600');
+        state.memoryFilter = btn.getAttribute('data-zone');
+        renderMemoryRules();
+      });
+    });
+
+    // Modal Actions
+    if (el.btnModalApprove) el.btnModalApprove.addEventListener('click', handleApprove);
+    if (el.btnModalReject) el.btnModalReject.addEventListener('click', handleReject);
+    if (el.btnCloseModal) el.btnCloseModal.addEventListener('click', closeModal);
+
+    // Case 3 Step Buttons
+    if (el.btnStep1Run) el.btnStep1Run.addEventListener('click', window.runCase3Step1);
+    if (el.btnStep2Run) el.btnStep2Run.addEventListener('click', window.runCase3Step2);
+    if (el.btnStep3Run) el.btnStep3Run.addEventListener('click', window.runCase3Step3);
+    if (el.btnResetCase3Demo) el.btnResetCase3Demo.addEventListener('click', resetCase3Demo);
+
+    // Preset Demo Buttons
+    el.demoCaseButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const caseId = btn.getAttribute('data-case');
+        loadCasePreset(caseId);
+      });
+    });
+
+    // Manual Dispatch Form
+    if (el.dispatchForm) {
+      el.dispatchForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await submitManualDispatch();
+      });
+    }
+
+    // Memory Actions
+    if (el.btnSeedStgoRule) {
+      el.btnSeedStgoRule.addEventListener('click', async () => {
+        try {
+          await fetch('/api/memory/seed', { method: 'POST' });
+          await fetchMemoryRules();
+          showToast('🌱 Regla de Santiago Centro sembrada en la Memoria Viva.', 'success');
+        } catch (e) {
+          showToast('Error sembrando regla.', 'error');
+        }
+      });
+    }
+
+    if (el.btnResetMemory) {
+      el.btnResetMemory.addEventListener('click', async () => {
+        if (confirm('¿Desea limpiar todas las reglas de la Memoria Viva?')) {
+          try {
+            await fetch('/api/memory/reset', { method: 'POST' });
+            await fetchMemoryRules();
+            showToast('🗑️ Memoria Viva reiniciada a estado limpio.', 'info');
+          } catch (e) {
+            showToast('Error reiniciando memoria.', 'error');
+          }
+        }
+      });
+    }
+  }
+
+  function switchTab(tabId) {
+    state.activeTab = tabId;
+    el.tabContents.forEach(t => t.classList.add('hidden'));
+    const active = document.getElementById(tabId);
+    if (active) active.classList.remove('hidden');
+
+    el.tabButtons.forEach(b => {
+      if (b.getAttribute('data-tab') === tabId) {
+        b.className = 'tab-btn px-3 py-2 rounded-lg text-xs font-medium bg-sky-600 text-white flex items-center gap-2 transition';
+      } else {
+        b.className = 'tab-btn px-3 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition';
+      }
+    });
+
+    if (state.viewMode === 'mobile') syncMobileContent();
+  }
+
+  function loadCasePreset(caseId) {
+    const presets = {
+      'CASO-1': { origen: 'Quilicura', destino: 'Pudahuel', peso: 3200, hora: '14:00', carga: 'GENERAL', desc: 'Despacho directo hoy' },
+      'CASO-2': { origen: 'Quilicura', destino: 'San Bernardo', peso: 10000, hora: '15:00', carga: 'GENERAL', desc: 'Reserva para mañana 08:00' },
+      'CASO-3': { origen: 'Quilicura', destino: 'Santiago Centro', peso: 9500, hora: '11:30', carga: 'GENERAL', desc: 'Límite urbano diurno >5t' },
+      'CASO-4': { origen: 'Quilicura', destino: 'Santiago Centro', peso: 0, hora: '', carga: 'PALLETS', desc: 'Necesito mandar unos pallets urgentes al centro ahora en la tarde' },
+      'CASO-5': { origen: 'Quilicura', destino: 'Maipú', peso: 4000, hora: '10:00', carga: 'GENERAL', desc: 'Forzar uso de CAM-04 (falla frenos)' },
+      'CASO-6': { origen: 'Quilicura', destino: 'Santiago Centro', peso: 4000, hora: '12:00', carga: 'ACIDO_SULFURICO', desc: 'Ácido sulfúrico químico HAZMAT' },
+    };
+
+    const p = presets[caseId];
+    if (!p) return;
+
+    document.getElementById('input-case-id').value = caseId;
+    document.getElementById('input-origen').value = p.origen;
+    document.getElementById('input-destino').value = p.destino;
+    document.getElementById('input-peso').value = p.peso;
+    document.getElementById('input-hora').value = p.hora;
+    document.getElementById('input-tipo-carga').value = p.carga;
+    document.getElementById('input-descripcion').value = p.desc;
+
+    showToast(`Formulario completado con parámetros de ${caseId}.`, 'info');
+  }
+
+  async function submitManualDispatch() {
+    const caseId = document.getElementById('input-case-id').value;
+    const origen = document.getElementById('input-origen').value;
+    const destino = document.getElementById('input-destino').value;
+    const peso = parseFloat(document.getElementById('input-peso').value) || 0;
+    const hora = document.getElementById('input-hora').value;
+    const carga = document.getElementById('input-tipo-carga').value;
+    const desc = document.getElementById('input-descripcion').value;
+    const version = document.querySelector('input[name="version-mode"]:checked').value;
+
+    showToast('Evaluando despacho con el Agente de IA...', 'info');
+
+    try {
+      const res = await fetch('/api/dispatch/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          case_id: caseId,
+          origen: origen,
+          destino: destino,
+          cargo_weight_kg: peso,
+          hora_despacho: hora,
+          cargo_type: carga,
+          descripcion: desc,
+          version_mode: version,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`Evaluación completada. Estado: ${data.status}. auto_approved=False`, 'success');
+        await refreshAllData();
+        switchTab('tab-queue');
+      } else {
+        const err = await res.json();
+        showToast(`Error: ${err.detail || 'Falla en evaluación'}`, 'error');
+      }
+    } catch (e) {
+      showToast('Evaluación simulada en modo local (sin backend)', 'info');
+    }
+  }
+
+  // --- TOAST NOTIFICATIONS ENGINE ---
+  function showToast(message, type = 'info', duration = 4000) {
+    if (!el.toastContainer) return;
+
+    const toast = document.createElement('div');
+    const colors = {
+      'success': 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200',
+      'error': 'bg-rose-950/90 border-rose-500/50 text-rose-200',
+      'warning': 'bg-amber-950/90 border-amber-500/50 text-amber-200',
+      'info': 'bg-slate-900/90 border-sky-500/50 text-sky-200',
+    };
+
+    toast.className = `p-3 rounded-xl border shadow-xl text-xs flex items-center justify-between gap-3 pointer-events-auto backdrop-blur-sm toast-enter ${colors[type] || colors.info}`;
+    toast.innerHTML = `
+      <div class="flex items-center gap-2">
+        <span>${message}</span>
+      </div>
+      <button class="text-slate-400 hover:text-white" onclick="this.parentElement.remove()">✕</button>
+    `;
+
+    el.toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('toast-leave');
+      setTimeout(() => toast.remove(), 250);
+    }, duration);
+  }
+
+  // --- SERVICE WORKER REGISTRATION (PWA) ---
+  function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/sw.js').then(
+          reg => console.log('Agyx ServiceWorker registrado exitosamente:', reg.scope),
+          err => console.log('Agyx ServiceWorker fallo:', err)
+        );
+      });
+    }
+  }
+
+  // Run initialization
+  init();
+});

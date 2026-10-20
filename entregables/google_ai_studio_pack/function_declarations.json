@@ -1,0 +1,136 @@
+[
+  {
+    "name": "consultar_flota_disponible",
+    "description": "Filtra camiones aptos por peso/volumen en Python (<150 tokens) y reporta bloqueos de mantenimiento o disponibilidad futura para reserva.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "peso_kg": {
+          "type": "number",
+          "description": "Peso bruto de la carga en kilogramos"
+        },
+        "volumen_m3": {
+          "type": "number",
+          "description": "Volumen estimado en metros cúbicos (opcional)"
+        },
+        "fecha_despacho": {
+          "type": "string",
+          "description": "Fecha solicitada (YYYY-MM-DD o 'HOY')"
+        },
+        "hora_despacho": {
+          "type": "string",
+          "description": "Hora solicitada en formato HH:MM"
+        },
+        "truck_id_preferido": {
+          "type": "string",
+          "description": "ID de camión específico si fue solicitado por el operador (ej. 'CAM-04')"
+        }
+      },
+      "required": ["peso_kg"]
+    }
+  },
+  {
+    "name": "verificar_factibilidad_ruta_urbana",
+    "description": "Valida ordenanzas municipales por comuna, ventanas horarias, restricciones de tonelaje urbano, normativa HAZMAT D.S. 298 y reglas activas de Memoria Viva.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "origen": {
+          "type": "string",
+          "description": "Comuna o base de origen"
+        },
+        "destino_comuna": {
+          "type": "string",
+          "description": "Comuna o zona de destino (ej. 'Pudahuel', 'Santiago Centro', 'San Bernardo')"
+        },
+        "peso_kg": {
+          "type": "number",
+          "description": "Peso total en kilogramos"
+        },
+        "hora_solicitada": {
+          "type": "string",
+          "description": "Hora prevista de ingreso/entrega (HH:MM)"
+        },
+        "tipo_carga": {
+          "type": "string",
+          "description": "Tipo de carga ('GENERAL', 'ACIDO_SULFURICO', 'HAZMAT', etc.)"
+        },
+        "living_memory_active": {
+          "type": "boolean",
+          "description": "True en v2 para cruzar reglas aprendidas desde rejected_reason en la Memoria Viva"
+        }
+      },
+      "required": ["origen", "destino_comuna", "peso_kg", "hora_solicitada"]
+    }
+  },
+  {
+    "name": "generar_propuesta_r4r",
+    "description": "Persiste la propuesta oficial estrictamente en estado R4R (Ready for Review) con auto_approved=False para revisión y firma del Coordinador de Tráfico.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "case_id": {
+          "type": "string",
+          "description": "Identificador del caso evaluado (ej. 'CASO-1' a 'CASO-6')"
+        },
+        "camiones_asignados": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Lista de IDs de camiones asignados (vacía si está bloqueado o incompleto)"
+        },
+        "origen": {
+          "type": "string",
+          "description": "Origen del despacho"
+        },
+        "destino": {
+          "type": "string",
+          "description": "Destino del despacho"
+        },
+        "fecha_hora_programada": {
+          "type": "string",
+          "description": "Fecha y ventana horaria programada"
+        },
+        "tarifa_base_clp": {
+          "type": "number",
+          "description": "Tarifa base calculada en CLP"
+        },
+        "recargo_clp": {
+          "type": "number",
+          "description": "Recargo adicional en CLP (ej. recargo nocturno)"
+        },
+        "sla_horas": {
+          "type": "number",
+          "description": "SLA estimado en horas"
+        },
+        "estado_caso": {
+          "type": "string",
+          "description": "Estado de gobernanza ('R4R', 'BLOQUEADO_RIESGO', 'R4R_INFO_INCOMPLETA')"
+        },
+        "observaciones": {
+          "type": "string",
+          "description": "Justificación técnica, alternativa propuesta y reglas de Memoria Viva aplicadas"
+        },
+        "campos_faltantes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Lista de campos obligatorios faltantes cuando el estado es R4R_INFO_INCOMPLETA"
+        }
+      },
+      "required": [
+        "case_id",
+        "camiones_asignados",
+        "origen",
+        "destino",
+        "fecha_hora_programada",
+        "tarifa_base_clp",
+        "sla_horas",
+        "estado_caso",
+        "observaciones"
+      ]
+    }
+  }
+]

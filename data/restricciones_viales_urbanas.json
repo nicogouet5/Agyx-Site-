@@ -1,0 +1,58 @@
+[
+  {
+    "id_restriccion": "RST-STGO-01",
+    "zona_comuna": "SANTIAGO_CENTRO",
+    "comunas_cubiertas": ["Santiago", "Santiago Centro", "Casco Histórico"],
+    "nombre_ordenanza": "Ordenanza Municipal Santiago N° 43 (Tránsito Pesado)",
+    "peso_max_diurno_kg": 5000.0,
+    "hora_inicio_restriccion": "07:30",
+    "hora_fin_restriccion": "21:00",
+    "ventana_permitida_pesados": "21:30-06:30",
+    "admite_hazmat": false,
+    "requiere_escolta_o_permiso": true,
+    "accion_mitigacion_sugerida": "Reprogramar a ventana nocturna (21:30 hrs) o subdividir carga en unidades <=5.000 kg",
+    "base_legal": "D.S. 212 MTT / Ordenanza Municipal Santiago N° 43"
+  },
+  {
+    "id_restriccion": "RST-PROV-02",
+    "zona_comuna": "PROVIDENCIA_LAS_CONDES",
+    "comunas_cubiertas": ["Providencia", "Las Condes", "Vitacura"],
+    "nombre_ordenanza": "Decreto Alcaldicio Ejes Viales Estructurantes Oriente",
+    "peso_max_diurno_kg": 8000.0,
+    "hora_inicio_restriccion": "07:00",
+    "hora_fin_restriccion": "20:00",
+    "ventana_permitida_pesados": "20:30-06:30",
+    "admite_hazmat": false,
+    "requiere_escolta_o_permiso": false,
+    "accion_mitigacion_sugerida": "Despachar fuera de horas punta o emplear camiones medianos <=8.000 kg",
+    "base_legal": "Ordenanzas Conjuntas Providencia-Las Condes"
+  },
+  {
+    "id_restriccion": "RST-PORT-03",
+    "zona_comuna": "CORREDOR_PORTUARIO",
+    "comunas_cubiertas": ["San Antonio", "Valparaíso", "Corredor Logístico Ruta 68 / Ruta 78"],
+    "nombre_ordenanza": "Reglamento Concesión Acceso Terrestre Portuario Silogport",
+    "peso_max_diurno_kg": 25000.0,
+    "hora_inicio_restriccion": "00:00",
+    "hora_fin_restriccion": "23:59",
+    "ventana_permitida_pesados": "24 HORAS CON SLOT AGENDADO",
+    "admite_hazmat": true,
+    "requiere_escolta_o_permiso": true,
+    "accion_mitigacion_sugerida": "Reserva de slot portuario obligatoria (SAG/Aduana) con anticipación mínima de 4 horas",
+    "base_legal": "Normativa EPV / EPSA Silogport VUP"
+  },
+  {
+    "id_restriccion": "RST-HAZM-04",
+    "zona_comuna": "ANILLO_VESPUCIO",
+    "comunas_cubiertas": ["Todas las comunas al interior del Anillo Américo Vespucio"],
+    "nombre_ordenanza": "D.S. 298/1994 MTT — Transporte de Sustancias Peligrosas",
+    "peso_max_diurno_kg": 0.0,
+    "hora_inicio_restriccion": "00:00",
+    "hora_fin_restriccion": "23:59",
+    "ventana_permitida_pesados": "PROHIBIDO SIN RESOLUCIÓN SANITARIA",
+    "admite_hazmat": false,
+    "requiere_escolta_o_permiso": true,
+    "accion_mitigacion_sugerida": "Cargas peligrosas D.S. 298 requieren camión certificado ADR y escolta SEREMI; rechazar y derivar a operador HAZMAT certificado",
+    "base_legal": "Decreto Supremo 298 MTT / Res. Exenta 143 SEREMI Salud RM"
+  }
+]
