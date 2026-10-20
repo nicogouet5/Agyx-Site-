@@ -1,12 +1,4 @@
-# Core Web Framework and ASGI Server
-fastapi>=0.100.0
-uvicorn>=0.22.0
-jinja2>=3.1.0
-pydantic>=2.0.0
-
-# Testing and HTTP Client
-pytest>=7.4.0
-httpx>=0.24.0
-
-# Optional Google AI Gemini SDK (for live API calls when GEMINI_API_KEY is configured)
-google-genai>=0.1.0
+# Lightweight dependencies for FastAPI & Vercel Serverless Runtime
+fastapi>=0.100.0,<1.0.0
+jinja2>=3.1.0,<4.0.0
+pydantic>=2.0.0,<3.0.0
