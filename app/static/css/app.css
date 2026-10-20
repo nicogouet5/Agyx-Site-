@@ -34,6 +34,29 @@ body {
   line-height: 1.5;
 }
 
+/* Dispatch-map: an offline tactical board that mirrors the agent's zone check. */
+.dispatch-map__layout { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 12px; }
+.dispatch-map__board { min-height: 310px; position: relative; overflow: hidden; isolation: isolate; border: 1px solid #1e4a61; border-radius: 14px; background: #071923; }
+.dispatch-map__grid { position: absolute; z-index: 1; inset: 0; opacity: .6; background-image: linear-gradient(#174355 1px, transparent 1px), linear-gradient(90deg, #174355 1px, transparent 1px); background-size: 28px 28px; }
+.dispatch-map__board::before { content: ''; position: absolute; inset: 12% 26% 13% 30%; z-index: 0; border: 1px solid rgba(251, 191, 36, .55); border-radius: 45% 55% 42% 50%; background: rgba(245, 158, 11, .09); box-shadow: 0 0 45px rgba(245, 158, 11, .08) inset; }
+.dispatch-map__district { position: absolute; z-index: 2; color: #7dd3fc; font-size: 10px; letter-spacing: .13em; font-weight: 700; text-align: center; opacity: .9; }
+.dispatch-map__district--north { top: 11%; left: 12%; }
+.dispatch-map__district--center { right: 13%; bottom: 10%; color: #fcd34d; line-height: 1.65; }
+.dispatch-map__road { position: absolute; z-index: 1; height: 14px; border-radius: 999px; background: rgba(100, 194, 222, .16); border-block: 1px solid rgba(125, 211, 252, .22); transform: rotate(-19deg); }
+.dispatch-map__road--one { width: 125%; top: 52%; left: -12%; }
+.dispatch-map__road--two { width: 82%; top: 45%; left: 18%; transform: rotate(55deg); }
+.dispatch-map__route { position: absolute; z-index: 2; width: 59%; height: 42%; top: 27%; left: 17%; border-right: 3px dashed #38bdf8; border-bottom: 3px dashed #38bdf8; border-radius: 0 0 35px 0; transform: skewY(19deg); filter: drop-shadow(0 0 5px rgba(56, 189, 248, .65)); }
+.dispatch-map__route span { position: absolute; right: -8px; bottom: -7px; width: 12px; height: 12px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 0 5px rgba(56,189,248,.2); }
+.dispatch-map__marker { position: absolute; z-index: 3; display: grid; grid-template-columns: 28px auto; column-gap: 6px; align-items: center; color: #e2e8f0; font-size: 9px; letter-spacing: .07em; }
+.dispatch-map__marker span { grid-row: span 2; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: #0c4a6e; border: 1px solid #38bdf8; font-size: 14px; box-shadow: 0 0 18px rgba(56,189,248,.25); }
+.dispatch-map__marker b { font-size: 9px; color: #f8fafc; }.dispatch-map__marker small { color: #94a3b8; letter-spacing: 0; }
+.dispatch-map__marker--origin { left: 12%; top: 32%; }.dispatch-map__marker--destination { right: 13%; bottom: 28%; }.dispatch-map__marker--destination span { background: #78350f; border-color: #fbbf24; color: #fef3c7; }
+.dispatch-map__checkpoint { position: absolute; z-index: 4; top: 43%; right: 31%; display: flex; align-items: center; gap: 5px; color: #fcd34d; font-size: 8px; line-height: 1.25; }.dispatch-map__checkpoint span { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #ef4444; border: 2px solid #fecaca; color: white; font-weight: 900; }.dispatch-map__checkpoint small { font-weight: 700; letter-spacing: .06em; }
+.dispatch-map__legend { position: absolute; z-index: 4; bottom: 10px; left: 12px; color: #94a3b8; font-size: 9px; }.dispatch-map__legend i,.dispatch-map__legend em { display: inline-block; width: 16px; height: 3px; margin: 0 4px 2px 9px; background: #38bdf8; }.dispatch-map__legend em { background: #fbbf24; }
+.dispatch-map__telemetry { padding: 14px; border: 1px solid #334155; border-radius: 14px; background: #07131e; }.dispatch-map__status { display: grid; gap: 3px; padding-bottom: 11px; border-bottom: 1px solid #334155; }.dispatch-map__status span,.dispatch-map__telemetry dt { color: #64748b; font-size: 9px; letter-spacing: .1em; font-weight: 700; }.dispatch-map__status strong { color: #fbbf24; font: 700 12px ui-monospace, SFMono-Regular, Menlo, monospace; }.dispatch-map__telemetry dl { margin: 12px 0; }.dispatch-map__telemetry dl div { display: flex; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid rgba(51,65,85,.6); }.dispatch-map__telemetry dd { margin: 0; color: #e2e8f0; font: 600 10px ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }.dispatch-map__telemetry dd b { color: #34d399; }.dispatch-map__telemetry .dispatch-map__risk { color: #fbbf24; font-size: 8px; }.dispatch-map__mission-note { padding: 9px; border-radius: 8px; background: rgba(14, 116, 144, .14); color: #bae6fd; font-size: 10px; line-height: 1.45; }
+.dispatch-map__live-dot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 4px rgba(52,211,153,.14); }
+@media (max-width: 700px) { .dispatch-map__layout { grid-template-columns: 1fr; }.dispatch-map__board { min-height: 270px; }.dispatch-map__telemetry { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }.dispatch-map__status { grid-column: span 2; }.dispatch-map__telemetry dl { margin: 0; }.dispatch-map__mission-note { font-size: 9px; } }
+
 /* Custom Scrollbar for Phone Simulator */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;

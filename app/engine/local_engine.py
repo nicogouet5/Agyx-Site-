@@ -12,6 +12,7 @@ from app.services.fleet_service import FleetService
 from app.services.restriction_service import RestrictionService
 from app.services.memory_service import MemoryService
 from app.services.r4r_service import R4RService
+from app.services.geo_service import resolve_destination
 
 
 def normalize_text_nfkd(text: Any) -> str:
@@ -193,7 +194,8 @@ class LocalAgentEngine(BaseAgentEngine):
         # 4. CASO 3 CHECK: Urban Restriction & Living Memory
         # -------------------------------------------------------------
         dest_upper = normalize_text_nfkd(destino)
-        is_santiago_centro = any(z in dest_upper for z in ["CENTRO", "SANTIAGO CENTRO", "STGO CENTRO"])
+        mapped_destination = resolve_destination(destino)
+        is_santiago_centro = bool(mapped_destination) or any(z in dest_upper for z in ["CENTRO", "SANTIAGO CENTRO", "STGO CENTRO"])
         active_memory = self.memory_service.get_active_rules("SANTIAGO_CENTRO")
 
         if is_santiago_centro and peso_numerico > 5000.0:
@@ -214,7 +216,7 @@ class LocalAgentEngine(BaseAgentEngine):
                     case_id=case_id,
                     camiones_asignados=["CAM-05"],
                     origen=origen,
-                    destino="Santiago Centro",
+                    destino=destino,
                     fecha_hora_programada=f"{hora} hrs (Ventana Nocturna Confirmada)",
                     tarifa_base_clp=120000.0,
                     recargo_clp=15000.0 if not v1_mode else 0.0,
@@ -232,7 +234,7 @@ class LocalAgentEngine(BaseAgentEngine):
                 }
 
             # Order requested daytime: evaluate v1 vs v2
-            if v1_mode or not active_memory:
+            if (v1_mode or not active_memory) and not mapped_destination:
                 # v1: Naive planning, assigns CAM-05 at daytime 11:30 hrs ignoring municipal ban
                 proposal = self.r4r_service.create_proposal(
                     case_id=case_id,
@@ -256,18 +258,18 @@ class LocalAgentEngine(BaseAgentEngine):
                 }
             else:
                 # v2: Living Memory rule is active and daytime requested! Proposes compliant night window (21:30 hrs)
-                distilled_lesson = active_memory[0]["distilled_rule"]
+                distilled_lesson = active_memory[0]["distilled_rule"] if active_memory else "Referencia Lira 953 ubicada en zona Santiago Centro: revisar restricción diurna para carga >5t."
                 proposal = self.r4r_service.create_proposal(
                     case_id=case_id,
                     camiones_asignados=["CAM-05"],
                     origen=origen,
-                    destino="Santiago Centro",
+                    destino=destino,
                     fecha_hora_programada="21:30 hrs (Ventana Nocturna)",
                     tarifa_base_clp=120000.0,
                     recargo_clp=15000.0,
                     sla_horas=3.0,
                     estado_caso="R4R",
-                    observaciones=f"[v2 Memoria Viva Activa] Restricción detectada: {distilled_lesson}. Propuesta adaptada a ventana nocturna (21:30 hrs) o subdivisión en 2 unidades 5t (CAM-02 + CAM-03).",
+                    observaciones=f"[Mapa operativo / Memoria Viva] Restricción detectada: {distilled_lesson}. Propuesta adaptada a ventana nocturna (21:30 hrs) o subdivisión en 2 unidades 5t (CAM-02 + CAM-03). Requiere validar ruta y permisos con el coordinador.",
                 )
                 return {
                     "case_id": case_id,

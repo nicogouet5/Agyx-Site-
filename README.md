@@ -2,6 +2,8 @@
 
 Prototipo funcional desarrollado para el **Certamen 2** del proyecto semestral integrador **"Software Logístico Pymes-Fletes" (Grupo 2)**.
 
+**Equipo:** Nicolas Inostrosa, Felipe Gatica, Tomas Perez y Daniel Brambilla.
+
 ---
 
 ## 1. Características Principales y Cumplimiento de Rúbrica (100 pts)
@@ -35,6 +37,12 @@ python3 -m app.main
 Luego abrir en el navegador: **`http://localhost:8000`**
 
 *(Opcional: Si tienes `uvicorn` instalado, también puedes correr `uvicorn app.main:app --reload --port 8000`)*.
+
+### Ejemplo de mapa operativo: Lira 953
+
+En la pestaña de casos, pulsa **“Usar Lira 953 como destino”**. El formulario carga una orden de 9.500 kg a las 11:30. Al evaluarla, el agente identifica la referencia como Santiago Centro y deja una propuesta `R4R` para las 21:30, sujeta a revisión del Coordinador. El mapa visual usa un servicio externo y necesita conexión; la asociación local de la dirección y la regla de horario funcionan sin conexión. Esta referencia no reemplaza la verificación de ruta, accesos ni permisos reales.
+
+PDF para revisión: `entregables/ficha_diseno_certamen2.pdf` (4 páginas), `entregables/matriz_6_pruebas.pdf` y `entregables/guia_readme.pdf`. El logo y formato están adaptados del PDF de referencia aportado por el equipo, con paleta turquesa.
 
 ---
 

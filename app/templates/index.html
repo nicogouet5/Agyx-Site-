@@ -397,7 +397,7 @@
               <input type="text" id="input-origen" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" value="Quilicura" required>
             </div>
             <div>
-              <label class="block text-xs text-slate-400 mb-1" for="input-destino">Destino (Comuna)</label>
+              <label class="block text-xs text-slate-400 mb-1" for="input-destino">Destino (comuna o dirección)</label>
               <input type="text" id="input-destino" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" value="Pudahuel" required>
             </div>
             <div>
@@ -438,6 +438,46 @@
             </div>
           </form>
         </div>
+
+        <section class="dispatch-map bg-slate-900 border border-slate-700 rounded-2xl p-4 md:p-5 shadow-lg" aria-labelledby="dispatch-map-title">
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="dispatch-map__live-dot" aria-hidden="true"></span>
+                <p class="text-[10px] uppercase tracking-[0.18em] text-sky-300 font-bold">Dispatch map · simulación operativa</p>
+              </div>
+              <h3 id="dispatch-map-title" class="text-sm font-bold text-white mt-1">Ruta de factibilidad · Lira 953</h3>
+              <p class="text-xs text-slate-400 mt-1">Panel de despacho: origen, corredor de acceso y control de zona urbana.</p>
+            </div>
+            <button type="button" id="btn-map-example" class="px-3 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium shadow-lg shadow-sky-950/50">Cargar misión Lira 953</button>
+          </div>
+
+          <div class="dispatch-map__layout">
+            <div class="dispatch-map__board" role="img" aria-label="Mapa de despacho simulado desde Quilicura hacia Lira 953 en Santiago Centro">
+              <div class="dispatch-map__grid" aria-hidden="true"></div>
+              <div class="dispatch-map__district dispatch-map__district--north">QUILICURA</div>
+              <div class="dispatch-map__district dispatch-map__district--center">ZONA URBANA<br><strong>SANTIAGO CENTRO</strong></div>
+              <div class="dispatch-map__road dispatch-map__road--one" aria-hidden="true"></div>
+              <div class="dispatch-map__road dispatch-map__road--two" aria-hidden="true"></div>
+              <div class="dispatch-map__route" aria-hidden="true"><span></span></div>
+              <div class="dispatch-map__marker dispatch-map__marker--origin"><span>🚚</span><b>ORIGEN</b><small>Quilicura</small></div>
+              <div class="dispatch-map__marker dispatch-map__marker--destination"><span>⌖</span><b>DESTINO</b><small>Lira 953</small></div>
+              <div class="dispatch-map__checkpoint"><span>!</span><small>CONTROL<br>07:30–21:00</small></div>
+              <div class="dispatch-map__legend"><i></i> Corredor sugerido <em></em> Zona con control</div>
+            </div>
+            <aside class="dispatch-map__telemetry" aria-label="Telemetría de misión">
+              <div class="dispatch-map__status"><span>ESTADO DE RUTA</span><strong>REVISIÓN R4R</strong></div>
+              <dl>
+                <div><dt>CARGA</dt><dd>9.500 kg</dd></div>
+                <div><dt>VENTANA</dt><dd>11:30 → <b>21:30</b></dd></div>
+                <div><dt>DESTINO</dt><dd>Lira 953</dd></div>
+                <div><dt>RIESGO</dt><dd class="dispatch-map__risk">RESTRICCIÓN DIURNA</dd></div>
+              </dl>
+              <div class="dispatch-map__mission-note">El agente detecta una carga superior a 5 t en Santiago Centro y propone la ventana nocturna. La aprobación final sigue en manos del coordinador.</div>
+            </aside>
+          </div>
+          <p id="map-result" class="text-xs text-slate-400 mt-3">Misión de referencia lista. Carga Lira 953 para evaluar la propuesta nocturna en R4R.</p>
+        </section>
 
       </section>
 

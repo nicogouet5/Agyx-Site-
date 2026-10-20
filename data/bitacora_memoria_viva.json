@@ -1715,6 +1715,31 @@
       "human_signature": null,
       "review_timestamp": null,
       "rejected_reason": null
+    },
+    {
+      "propuesta_id": "PROP-20261020-TEST-LIRA-953",
+      "case_id": "TEST-LIRA-953",
+      "created_at": "2026-10-20T19:59:26.098477Z",
+      "origen": "Quilicura",
+      "destino": "Lira 953, Santiago",
+      "fecha_hora_programada": "21:30 hrs (Ventana Nocturna)",
+      "camiones": [
+        "CAM-05"
+      ],
+      "tarifa_base_clp": 120000.0,
+      "recargo_clp": 15000.0,
+      "total_clp": 135000.0,
+      "sla_horas": 3.0,
+      "estado": "R4R",
+      "auto_approved": false,
+      "requiere_firma_humana": true,
+      "campos_faltantes": [],
+      "bloqueo_legal": null,
+      "bloqueos_mantenimiento": [],
+      "observaciones": "[Mapa operativo / Memoria Viva] Restricción detectada: [SANTIAGO_CENTRO] >5.000kg prohibido 07:30-21:00. Solución: reprogramar 21:30 hrs o 2x camiones 5t.. Propuesta adaptada a ventana nocturna (21:30 hrs) o subdivisión en 2 unidades 5t (CAM-02 + CAM-03). Requiere validar ruta y permisos con el coordinador.",
+      "human_signature": null,
+      "review_timestamp": null,
+      "rejected_reason": null
     }
   ],
   "propuestas_r4r": [
@@ -3396,6 +3421,31 @@
       "bloqueo_legal": null,
       "bloqueos_mantenimiento": [],
       "observaciones": "Faltan campos obligatorios: peso_kg, direccion_exacta",
+      "human_signature": null,
+      "review_timestamp": null,
+      "rejected_reason": null
+    },
+    {
+      "propuesta_id": "PROP-20261020-TEST-LIRA-953",
+      "case_id": "TEST-LIRA-953",
+      "created_at": "2026-10-20T19:59:26.098477Z",
+      "origen": "Quilicura",
+      "destino": "Lira 953, Santiago",
+      "fecha_hora_programada": "21:30 hrs (Ventana Nocturna)",
+      "camiones": [
+        "CAM-05"
+      ],
+      "tarifa_base_clp": 120000.0,
+      "recargo_clp": 15000.0,
+      "total_clp": 135000.0,
+      "sla_horas": 3.0,
+      "estado": "R4R",
+      "auto_approved": false,
+      "requiere_firma_humana": true,
+      "campos_faltantes": [],
+      "bloqueo_legal": null,
+      "bloqueos_mantenimiento": [],
+      "observaciones": "[Mapa operativo / Memoria Viva] Restricción detectada: [SANTIAGO_CENTRO] >5.000kg prohibido 07:30-21:00. Solución: reprogramar 21:30 hrs o 2x camiones 5t.. Propuesta adaptada a ventana nocturna (21:30 hrs) o subdivisión en 2 unidades 5t (CAM-02 + CAM-03). Requiere validar ruta y permisos con el coordinador.",
       "human_signature": null,
       "review_timestamp": null,
       "rejected_reason": null

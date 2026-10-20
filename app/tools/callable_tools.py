@@ -21,6 +21,7 @@ from app.config import (
     MAX_TOOL_TOKENS,
 )
 from app.tools.token_optimizer import count_tokens, enforce_token_budget, distill_rule
+from app.services.geo_service import resolve_destination
 
 
 # -------------------------------------------------------------------------
@@ -232,7 +233,7 @@ def verificar_factibilidad_ruta_urbana(
         }, max_tokens=MAX_TOOL_TOKENS)
 
     dest_norm = _strip_accents(destino_comuna or "")
-    is_santiago_centro = any(z in dest_norm for z in ["CENTRO", "SANTIAGO CENTRO", "STGO CENTRO"])
+    is_santiago_centro = bool(resolve_destination(destino_comuna)) or any(z in dest_norm for z in ["CENTRO", "SANTIAGO CENTRO", "STGO CENTRO"])
 
     # 2. Non-restricted industrial zones (Caso 1, Caso 2)
     if not is_santiago_centro:
@@ -259,7 +260,7 @@ def verificar_factibilidad_ruta_urbana(
     if is_heavy and is_daytime_ban:
         # In v1 (living_memory_active=False): baseline passes or warns without mitigation solutions,
         # allowing the baseline agent to propose CAM-05 at 11:30 hrs as requested by rubric!
-        if not living_memory_active:
+        if not living_memory_active and not resolve_destination(destino_comuna):
             return enforce_token_budget({
                 "factible": True,
                 "zona": "SANTIAGO_CENTRO",

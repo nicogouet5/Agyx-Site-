@@ -78,6 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // New Order Form & Demo Cases
     dispatchForm: document.getElementById('dispatch-form'),
+    btnMapExample: document.getElementById('btn-map-example'),
+    mapResult: document.getElementById('map-result'),
     demoCaseButtons: document.querySelectorAll('.btn-demo-case'),
 
     // Memory Inspector
@@ -989,6 +991,16 @@ document.addEventListener('DOMContentLoaded', () => {
         await submitManualDispatch();
       });
     }
+    if (el.btnMapExample) {
+      el.btnMapExample.addEventListener('click', () => {
+        document.getElementById('input-case-id').value = 'CASO-LIRA-953';
+        document.getElementById('input-destino').value = 'Lira 953, Santiago';
+        document.getElementById('input-peso').value = '9500';
+        document.getElementById('input-hora').value = '11:30';
+        document.querySelector('input[name="version-mode"][value="v2"]').checked = true;
+        el.mapResult.textContent = 'Ejemplo cargado: 9.500 kg a Lira 953 a las 11:30. Evalúa para ver la propuesta nocturna en R4R.';
+      });
+    }
 
     // Memory Actions
     if (el.btnSeedStgoRule) {
@@ -1089,6 +1101,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (res.ok) {
         const data = await res.json();
+        if (el.mapResult && data.mapa) {
+          el.mapResult.textContent = `${data.mapa.direccion}: zona ${data.mapa.zona}. ${data.message} Validación final de ruta y permisos: coordinador humano.`;
+        }
         showToast(`Evaluación completada. Estado: ${data.status}. auto_approved=False`, 'success');
         await refreshAllData();
         switchTab('tab-queue');

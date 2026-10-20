@@ -1,6 +1,7 @@
 # Ficha de Diseño — Agente de IA "Agyx" (Certamen 2 — Grupo 2)
 
 - **Proyecto Semestral Integrador:** Software Logístico Pymes-Fletes (Grupo 2)
+- **Integrantes:** Nicolas Inostrosa, Felipe Gatica, Tomas Perez y Daniel Brambilla.
 - **Extensión:** Máximo 4 páginas (versión maquetada para exportar a PDF en `entregables/ficha_diseno_certamen2.html`)
 - **Arquitectura:** Python FastAPI + Motor Dual (Determinista 0-Tokens / Google Gemini 2.5 Flash Function Calling) + Interfaz Mobile-First PWA + Gobernanza `R4R` y Memoria Viva (`bitacora_memoria_viva.json` / SQLite)
 
@@ -83,4 +84,4 @@ GOBERNANZA ESTRICTA Y R4R:
 - **Suite de Verificación Automatizada:** Ejecutar `python3 tests/verify_all.py` (verifica los 6 casos, la iteración `v1 ➔ v2`, el bloqueo por inactividad `R4R` y los 135+ tests con `exit code 0`).
 - **Matriz de las 6 Pruebas (Entregable B):** `entregables/matriz_6_pruebas.csv` y `entregables/matriz_6_pruebas.html`.
 - **Configuración para Google AI Studio / Dify:** `entregables/google_ai_studio_pack/`.
-- **Enlace al Video de Demostración:** `[INSERTAR_ENLACE_YOUTUBE_NO_ENLISTADO_AQUI]` (Guion detallado en `entregables/guion_video_demo.md`).
+- **Video de Demostración:** pendiente de grabación y enlace público (guion en `entregables/guion_video_demo.md`).

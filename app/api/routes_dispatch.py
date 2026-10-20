@@ -6,6 +6,7 @@ enforcing the strict R4R state machine invariant: auto_approved == False.
 """
 from typing import Dict, Any, Optional, Tuple
 from app.api.dependencies import ServiceContainer, get_services
+from app.services.geo_service import resolve_destination
 
 try:
     from fastapi import APIRouter, HTTPException, Depends, Request
@@ -56,6 +57,10 @@ def evaluate_dispatch_controller(
     if "proposal" in eval_result and isinstance(eval_result["proposal"], dict):
         eval_result["proposal"]["auto_approved"] = False
         eval_result["proposal"]["requiere_firma_humana"] = True
+
+    location = resolve_destination(order_data.get("destino") or order_data.get("destino_comuna", ""))
+    if location:
+        eval_result["mapa"] = location
 
     return 200, eval_result
 
