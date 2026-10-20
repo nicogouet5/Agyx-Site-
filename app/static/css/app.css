@@ -208,3 +208,5 @@ button:disabled {
   box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
   opacity: 1 !important;
 }
+/* Long user-supplied case IDs and addresses must not widen the mobile page. */
+#r4r-cards-list > div { min-width: 0; overflow-wrap: anywhere; }

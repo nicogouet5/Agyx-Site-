@@ -119,7 +119,7 @@ class TestV1V2IterationLoop(unittest.TestCase):
         2. Supervisor rejects with mandatory reason -> saved to Living Memory.
         3. Evaluate Case 3 in v2 -> night window 21:30 hrs proposed.
         4. Reset memory -> clears active rules.
-        5. Evaluate Case 3 -> reverts to naive v1 baseline.
+        5. Explicit v1 replay remains naive; safe v2 never regresses after memory reset.
         6. Re-reject -> re-activates rule -> v2 compliant proposal.
         """
         order_caso3 = {
@@ -157,8 +157,10 @@ class TestV1V2IterationLoop(unittest.TestCase):
         active_after_reset = self.memory_service.get_active_rules("SANTIAGO_CENTRO")
         self.assertEqual(len(active_after_reset), 0)
 
-        # Step 5: After reset, re-evaluating without active memory falls back to baseline
-        v1_again = self.engine.evaluate_order(order_caso3, v1_mode=False)
+        # Step 5: Only an explicit historical v1 replay is naive after reset.
+        safe_after_reset = self.engine.evaluate_order(order_caso3, v1_mode=False)
+        self.assertIn("21:30", safe_after_reset["proposal"]["fecha_hora_programada"])
+        v1_again = self.engine.evaluate_order(order_caso3, v1_mode=True)
         self.assertEqual(v1_again["proposal"]["camiones"], ["CAM-05"])
         self.assertIn("11:30", v1_again["proposal"]["fecha_hora_programada"])
 

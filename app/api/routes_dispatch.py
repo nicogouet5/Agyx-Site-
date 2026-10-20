@@ -37,7 +37,9 @@ def evaluate_dispatch_controller(
         return 400, {"error": "INVALID_PAYLOAD", "detail": "Payload must be a valid JSON object"}
 
     engine_mode = str(order_data.get("engine_mode", "local")).strip().lower()
-    version_mode = str(order_data.get("version_mode", "v1")).strip().lower()
+    version_mode = str(order_data.get("version_mode", "v2")).strip().lower()
+    if version_mode not in ("v1", "v2"):
+        return 400, {"error": "INVALID_VERSION", "detail": "version_mode debe ser v1 o v2"}
     v1_mode = (version_mode == "v1")
 
     # Select operational agent engine

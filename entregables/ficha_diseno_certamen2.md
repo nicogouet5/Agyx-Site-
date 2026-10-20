@@ -3,7 +3,7 @@
 - **Proyecto Semestral Integrador:** Software Logístico Pymes-Fletes (Grupo 2)
 - **Integrantes:** Nicolas Inostrosa, Felipe Gatica, Tomas Perez y Daniel Brambilla.
 - **Extensión:** Máximo 4 páginas (versión maquetada para exportar a PDF en `entregables/ficha_diseno_certamen2.html`)
-- **Arquitectura:** Python FastAPI + Motor Dual (Determinista 0-Tokens / Google Gemini 2.5 Flash Function Calling) + Interfaz Mobile-First PWA + Gobernanza `R4R` y Memoria Viva (`bitacora_memoria_viva.json` / SQLite)
+- **Arquitectura demostrada:** Python FastAPI + motor determinista local + interfaz móvil PWA + gobernanza `R4R` y Memoria Viva (`bitacora_memoria_viva.json` / SQLite). Gemini es experimental y no ejecuta Function Calling real en esta versión.
 
 ---
 
@@ -33,7 +33,7 @@ Las Pymes de transporte y fletes en Santiago coordinan sus despachos de forma ma
    - Llama a `generar_propuesta_r4r` guardando la propuesta en SQLite (`agyx.db`) con `estado = "R4R"` y `auto_approved = False`.
    - **Garantía de Inactividad:** Ante inactividad humana, la propuesta permanece indefinidamente en `R4R` (protegida por `CHECK (auto_approved = 0)` en base de datos). Jamás se auto-aprueba.
 5. **Paso 4 — Punto Explícito de Revisión Humana y Bucle de Memoria Viva:**
-   - **Si el humano Aprueba (`APPROVE`):** Se registra su firma y timestamp, pasando a `APPROVED`.
+   - **Si el humano Aprueba (`APPROVE`) una propuesta `R4R`:** Se registra el nombre declarado y timestamp, pasando a `APPROVED` sólo dentro del prototipo. No hay autenticación de identidad ni despacho real.
    - **Si el humano Rechaza (`REJECT`):** El backend exige obligatoriamente un `rejected_reason` no vacío (`HTTP 422` si se omite). El motivo del rechazo se guarda y destila en `data/bitacora_memoria_viva.json`, retroalimentando automáticamente al agente en las siguientes ejecuciones.
 
 ---
@@ -74,7 +74,7 @@ GOBERNANZA ESTRICTA Y R4R:
   - **Caso 5 (Riesgoso):** Forzar uso de `CAM-04` con falla de frenos ➔ Bloquea en `BLOQUEADO_RIESGO` y escala a taller (**Cumple**).
   - **Caso 6 (Riesgoso):** Transporte de Ácido Sulfúrico (HAZMAT D.S. 298) ➔ Bloquea en `BLOQUEADO_RIESGO` (**Cumple**).
 - **Mejora Verificada (Caso 3 `v1 ➔ v2`):** El supervisor rechaza la propuesta `v1` del Caso 3 ingresando el `rejected_reason`: *"Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t"*. La Memoria Viva destila la regla (`<80 tokens`) y al re-ejecutar el Caso 3 en **`v2`**, el agente propone ventana nocturna (`21:30 hrs`) o subdivisión en 2 camiones de 5t (**Cumple — 6/6 casos aprobados en `v2`**).
-- **Limitaciones Abiertas:** (1) Datos de GPS y taller provienen de tablas locales y no de sensores IoT en vivo; (2) Notificación final por WhatsApp al cliente tras la firma humana está simulada en la bitácora local.
+- **Limitaciones Abiertas:** (1) Datos de GPS y taller provienen de tablas locales y no de sensores IoT en vivo; (2) Notificación final por WhatsApp está simulada; (3) el nombre de revisión no autentica a la persona; (4) el mapa es ilustrativo, no una ruta calculada; (5) la integración Gemini no ejecuta herramientas.
 
 ---
 

@@ -7,6 +7,7 @@ tabular content and a restrained accent colour (teal instead of magenta).
 from __future__ import annotations
 
 import csv
+import os
 from html import escape
 from pathlib import Path
 
@@ -19,6 +20,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     Flowable,
     HRFlowable,
+    Image,
     KeepTogether,
     PageBreak,
     Paragraph,
@@ -37,8 +39,9 @@ PALE = colors.HexColor("#E8F4F4")
 GRAY = colors.HexColor("#52616A")
 LIGHT = colors.HexColor("#F2F5F6")
 
-pdfmetrics.registerFont(TTFont("DejaVu", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"))
-pdfmetrics.registerFont(TTFont("DejaVu-Bold", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"))
+FONT_DIR = Path(os.environ.get("AGYX_FONT_DIR", "/usr/share/fonts/truetype/dejavu"))
+pdfmetrics.registerFont(TTFont("DejaVu", str(FONT_DIR / "DejaVuSans.ttf")))
+pdfmetrics.registerFont(TTFont("DejaVu-Bold", str(FONT_DIR / "DejaVuSans-Bold.ttf")))
 pdfmetrics.registerFontFamily("DejaVu", normal="DejaVu", bold="DejaVu-Bold")
 
 ST = {
@@ -194,7 +197,7 @@ def ficha():
         section("03 / Qué funciona y qué se simula"),
         band("OPERATIVO", "Motor local determinista, consulta de datos, herramientas Python, API, cola R4R, revisión humana y bitácora de aprendizaje."),
         Spacer(1, 6),
-        band("SIMULADO", "Estado GPS y taller, normativa de ejemplo, tarifas de demostración y notificación externa. El mapa externo necesita conexión; la asociación local de Lira 953 a Santiago Centro funciona sin ella."),
+        band("SIMULADO", "Estado GPS y taller, reglas viales cargadas como datos de demostración, tarifas y notificación externa. El panel cartográfico es ilustrativo; Lira 953 se reconoce mediante un catálogo local, sin cálculo de ruta."),
         Spacer(1, 10),
         p("<b>Equipo:</b> " + TEAM, "muted"),
         PageBreak(),
@@ -207,10 +210,14 @@ def ficha():
         bullet("CAM-04 con falla de frenos: <b>BLOQUEADO_RIESGO</b>; no se asigna vehículo."),
         bullet("Ácido sulfúrico y otras cargas peligrosas: <b>BLOQUEADO_RIESGO</b> y derivación."),
         bullet("Pedido sin peso/dirección/hora suficiente: <b>R4R_INFO_INCOMPLETA</b>."),
-        bullet("La base exige auto_approved = 0; el rechazo exige rejected_reason no vacío."),
+        bullet("La base exige auto_approved = 0; solo R4R permite aprobar o rechazar, y el rechazo exige motivo. El nombre declarado no autentica la identidad del revisor."),
         section("06 / Configuración que puede revisarse"),
         p("Código y datos: <b>app/</b> y <b>data/</b>. Instrucciones reutilizables: <b>entregables/google_ai_studio_pack/</b>. Pruebas: <b>tests/verify_all.py</b>. El motor Gemini figura como opción experimental; esta entrega demuestra el motor local."),
-        p("<b>Capturas reales pendientes:</b> insertar capturas legibles del formulario, respuesta, cola R4R, rechazo y mapa antes del envío final. Los bloques de la ficha HTML original son diagramas explicativos, no capturas de ejecución.", "muted"),
+        p("<b>Capturas de ejecución local:</b> caso normal evaluado en R4R y caso riesgoso detenido. Los datos son de demostración; estas capturas no prueban acceso público ni reemplazan el video.", "muted"),
+        Image(str(ROOT / "evidencia" / "01_caso_normal_r4r.png"), width=400, height=120),
+        p("Caso normal: CAM-02 en espera de revisión humana.", "muted"),
+        Image(str(ROOT / "evidencia" / "02_caso_riesgoso_bloqueado.png"), width=400, height=92),
+        p("Caso riesgoso: CAM-04 bloqueado, sin flota asignada.", "muted"),
         PageBreak(),
         section("07 / Seis casos y mejora"),
         matrix_row("1 · NORMAL", "3.200 kg Quilicura → Pudahuel. CAM-02, $65.000 CLP, R4R. Cumple."),
@@ -220,16 +227,16 @@ def ficha():
         matrix_row("5 · RIESGO", "Forzar CAM-04 con falla crítica de frenos. BLOQUEADO_RIESGO, sin camiones. Cumple."),
         matrix_row("6 · RIESGO", "Ácido sulfúrico no autorizado. BLOQUEADO_RIESGO, sin camiones. Cumple."),
         section("08 / Evidencia y conclusión"),
-        band("RESULTADO", "5/6 casos cumplieron en v1; 6/6 tras la iteración del Caso 3. La suite integrada ejecutó 14 criterios y 135 pruebas automatizadas en el entorno de desarrollo."),
+        band("RESULTADO", "5/6 casos cumplieron en v1; 6/6 tras la iteración del Caso 3. La suite integrada ejecutó 14 criterios y 143 pruebas automatizadas en el entorno de desarrollo."),
         Spacer(1, 8),
         p("El principal fallo fue la asignación diurna de un camión de 12 t hacia Santiago Centro. El rechazo registró la restricción; la repetición v2 propuso una ventana nocturna. La matriz CSV adjunta conserva entrada, resultado esperado, resultado obtenido, cumplimiento, evidencia y ajuste."),
         p("<b>Nueva comprobación cartográfica:</b> al ingresar Lira 953 con 9.500 kg a las 11:30, la API devuelve zona SANTIAGO_CENTRO y propuesta R4R para 21:30. La dirección se trata como referencia de demostración, no como geocodificación verificada."),
         PageBreak(),
         section("09 / Riesgos y límites abiertos"),
         matrix_row("DATOS", "La flota y restricciones son datos de demostración. No hay GPS ni estado de taller en tiempo real."),
-        matrix_row("MAPA", "El visor usa un proveedor externo cuando hay conexión. No calcula rutas, tiempos, accesos ni permisos reales. El Coordinador debe contrastar la ruta antes de aprobar."),
+        matrix_row("MAPA", "El panel es ilustrativo y reconoce una dirección precargada. No calcula rutas, tiempos, accesos ni permisos reales. El Coordinador debe contrastar la ruta antes de aprobar."),
         matrix_row("GEMINI", "Hay declaraciones y un motor opcional, pero el flujo probado es determinista. La integración de Function Calling no es un resultado demostrado en esta entrega."),
-        matrix_row("DESPACHO", "La aprobación humana cambia el estado local; no ejecuta un despacho físico ni manda WhatsApp."),
+        matrix_row("DESPACHO", "La revisión con nombre declarado cambia el estado local, sin autenticar al operador. No ejecuta un despacho físico ni manda WhatsApp; no debe usarse para operaciones reales."),
         section("10 / Acceso y materiales de revisión"),
         bullet("Código ejecutable y datos: repositorio Agyx-Site-. Instalar <b>pip install -r requirements.txt</b>; iniciar <b>python3 -m app.main</b>; abrir localhost:8000 en el equipo que lo ejecuta."),
         bullet("Verificación: <b>python3 tests/verify_all.py</b>. Matriz: <b>matriz_6_pruebas.pdf/csv</b>. Pack de instrucciones: <b>google_ai_studio_pack/</b>."),

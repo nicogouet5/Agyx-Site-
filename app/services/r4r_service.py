@@ -201,6 +201,11 @@ class R4RService:
             raise KeyError(f"Proposal with case_id '{case_id}' not found in R4R store")
 
         previous_status = proposal["estado"]
+        if previous_status != "R4R":
+            raise ValueError(
+                f"La propuesta en estado {previous_status} no puede aprobarse ni rechazarse; "
+                "solo una propuesta R4R puede pasar por revisión humana."
+            )
         now_iso = datetime.utcnow().isoformat() + "Z"
         distilled_created = None
 
@@ -234,8 +239,12 @@ class R4RService:
                 human_signature = ?,
                 review_timestamp = ?,
                 rejected_reason = ?
-            WHERE proposal_id = ?
+            WHERE proposal_id = ? AND status = 'R4R'
         """, (new_status, human_sig, now_iso, final_reason, proposal["propuesta_id"]))
+        if cur.rowcount != 1:
+            conn.rollback()
+            conn.close()
+            raise ValueError("La propuesta cambió de estado durante la revisión; vuelva a cargarla.")
         conn.commit()
         conn.close()
 

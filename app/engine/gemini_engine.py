@@ -155,7 +155,7 @@ class GeminiAgentEngine(BaseAgentEngine):
                 # Handle function calls
                 # For safety and invariant preservation, local engine guarantees exact schema compliance
                 res = self.local_engine.evaluate_order(order, v1_mode=v1_mode)
-                res["engine_used"] = f"gemini_2.5_flash ({self.model_name})"
+                res["engine_used"] = "local_deterministic_fallback (Gemini tool calls not executed)"
                 return res
 
             res = self.local_engine.evaluate_order(order, v1_mode=v1_mode)

@@ -13,6 +13,7 @@ from app.services.restriction_service import RestrictionService
 from app.services.memory_service import MemoryService
 from app.services.r4r_service import R4RService
 from app.services.geo_service import resolve_destination
+from app.tools.callable_tools import parse_hhmm
 
 
 def normalize_text_nfkd(text: Any) -> str:
@@ -64,7 +65,9 @@ class LocalAgentEngine(BaseAgentEngine):
         peso_numerico = parse_numeric_weight(peso_raw)
         origen = order.get("origen", "Base Quilicura")
         destino = order.get("destino") or order.get("destino_comuna", "")
-        hora = order.get("hora_despacho") or order.get("hora_solicitada") or order.get("hora") or order.get("requested_datetime", "12:00")
+        hora_explicit = order.get("hora_despacho") or order.get("hora_solicitada") or order.get("hora") or order.get("requested_datetime")
+        hora = hora_explicit or "12:00"
+        fecha_despacho = order.get("fecha_despacho")
         tipo_carga = order.get("cargo_type") or order.get("tipo_carga", "GENERAL")
         truck_id_preferido = order.get("requested_truck_id") or order.get("truck_id_preferido")
         descripcion = order.get("descripcion", "")
@@ -82,8 +85,7 @@ class LocalAgentEngine(BaseAgentEngine):
             if "dirección" not in descripcion.lower() and "calle" not in descripcion.lower():
                 missing_fields.append("direccion_exacta")
 
-        hora_lower = str(hora).strip().lower()
-        if not hora or hora_lower in ["en la tarde", "ahora", "urgente", "hoy"]:
+        if parse_hhmm(hora) is None or (not hora_explicit and any(word in normalize_text_nfkd(descripcion) for word in ("TARDE", "AHORA"))):
             missing_fields.append("hora_exacta")
 
         if "urgente" in descripcion.lower() and (peso_numerico is None or missing_fields):
@@ -200,13 +202,7 @@ class LocalAgentEngine(BaseAgentEngine):
 
         if is_santiago_centro and peso_numerico > 5000.0:
             # Check if requested hour falls into municipal daytime restriction (07:30 to 21:00)
-            try:
-                h_parts = str(hora).strip().split(":")
-                h_num = int("".join(c for c in h_parts[0] if c.isdigit()))
-                m_num = int("".join(c for c in h_parts[1][:2] if c.isdigit()))
-                req_minutes = h_num * 60 + m_num
-            except Exception:
-                req_minutes = 12 * 60
+            req_minutes = parse_hhmm(hora)
 
             is_in_daytime_ban = (7 * 60 + 30) <= req_minutes <= (21 * 60)
 
@@ -234,7 +230,7 @@ class LocalAgentEngine(BaseAgentEngine):
                 }
 
             # Order requested daytime: evaluate v1 vs v2
-            if (v1_mode or not active_memory) and not mapped_destination:
+            if v1_mode and not mapped_destination:
                 # v1: Naive planning, assigns CAM-05 at daytime 11:30 hrs ignoring municipal ban
                 proposal = self.r4r_service.create_proposal(
                     case_id=case_id,
@@ -310,11 +306,11 @@ class LocalAgentEngine(BaseAgentEngine):
         # 6. CASO 2 CHECK: Saturated Fleet & Next-Day Slot (10,000 kg at 15:00 hrs)
         # -------------------------------------------------------------
         if peso_numerico >= 10000.0:
-            fleet_res = self.fleet_service.filter_available_trucks(peso_kg=peso_numerico, hora=str(hora))
+            fleet_res = self.fleet_service.filter_available_trucks(peso_kg=peso_numerico, fecha=fecha_despacho, hora=str(hora))
             if fleet_res.get("status") == "SIN_DISPONIBILIDAD_HOY":
                 reserva = fleet_res.get("proxima_reserva") or {}
                 truck_id = reserva.get("camion_id", "CAM-06")
-                hora_reserva = f"{reserva.get('fecha', '2026-10-21')} {reserva.get('hora', '08:00')} hrs"
+                hora_reserva = f"{reserva.get('fecha')} {reserva.get('hora', '08:00')} hrs"
                 proposal = self.r4r_service.create_proposal(
                     case_id=case_id,
                     camiones_asignados=[truck_id],
@@ -339,7 +335,7 @@ class LocalAgentEngine(BaseAgentEngine):
         # -------------------------------------------------------------
         # 7. FLEET EVALUATION & SUBDIVISION HANDLING
         # -------------------------------------------------------------
-        fleet_res = self.fleet_service.filter_available_trucks(peso_kg=peso_numerico, hora=str(hora))
+        fleet_res = self.fleet_service.filter_available_trucks(peso_kg=peso_numerico, fecha=fecha_despacho, hora=str(hora))
         fleet_status = fleet_res.get("status")
         candidatos = fleet_res.get("candidatos", [])
 
