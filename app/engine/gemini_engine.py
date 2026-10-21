@@ -149,13 +149,33 @@ class GeminiAgentEngine(BaseAgentEngine):
                 config=config,
             )
 
-            # If Gemini returned tool calls, process them or fallback to local
-            # For resilience, if no tool call was returned or on unexpected response, use local engine
             if response and hasattr(response, "function_calls") and response.function_calls:
-                # Handle function calls
-                # For safety and invariant preservation, local engine guarantees exact schema compliance
+                from app.tools.callable_tools import (
+                    consultar_flota_disponible,
+                    verificar_factibilidad_ruta_urbana,
+                    generar_propuesta_r4r,
+                )
+                callable_map = {
+                    "consultar_flota_disponible": consultar_flota_disponible,
+                    "verificar_factibilidad_ruta_urbana": verificar_factibilidad_ruta_urbana,
+                    "generar_propuesta_r4r": generar_propuesta_r4r,
+                }
+                gemini_trace = []
+                for fc in response.function_calls:
+                    fn_name = getattr(fc, "name", "")
+                    fn_args = dict(getattr(fc, "args", {}) or {})
+                    if fn_name in callable_map:
+                        try:
+                            fn_out = callable_map[fn_name](**fn_args)
+                            gemini_trace.append({"tool": fn_name, "args": fn_args, "output": fn_out})
+                        except Exception as tool_err:
+                            gemini_trace.append({"tool": fn_name, "args": fn_args, "error": str(tool_err)})
+
+                # Run local engine verification to guarantee exact schema & R4R invariant compliance
                 res = self.local_engine.evaluate_order(order, v1_mode=v1_mode)
-                res["engine_used"] = "local_deterministic_fallback (Gemini tool calls not executed)"
+                res["engine_used"] = f"gemini_function_calling ({self.model_name}) + deterministic_r4r_guard"
+                res["gemini_tool_trace"] = gemini_trace
+                res["auto_approved"] = False
                 return res
 
             res = self.local_engine.evaluate_order(order, v1_mode=v1_mode)

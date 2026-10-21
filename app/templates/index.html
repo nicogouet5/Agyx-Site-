@@ -83,8 +83,15 @@
         </div>
       </div>
 
-      <!-- Interactive View Toggle: Desktop vs Mobile Field Simulator -->
-      <div class="flex items-center gap-2">
+      <!-- Interactive View Toggle & Deliverables Quick Links -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="hidden xl:flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-lg px-2 py-1 text-[11px]">
+          <span class="text-slate-400 font-semibold mr-1">📄 Entregables:</span>
+          <a href="/entregables/ficha_diseno_certamen2.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded bg-teal-500/15 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 font-mono transition" title="Ficha de Diseño Certamen 2 (PDF <= 4 págs)">Ficha PDF</a>
+          <a href="/entregables/matriz_6_pruebas.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded bg-sky-500/15 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 font-mono transition" title="Matriz de 6 Casos de Prueba (PDF)">Matriz PDF</a>
+          <a href="/entregables/guia_readme.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 font-mono transition" title="Guía Operativa & README (PDF)">Guía PDF</a>
+          <a href="/entregables/matriz_6_pruebas.html" target="_blank" rel="noopener" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-mono transition" title="Matriz Interactiva HTML">Matriz Web</a>
+        </div>
         <button id="btn-toggle-view" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs shadow-sm transition active:scale-95" title="Alternar entre consola de escritorio y vista smartphone para video demo">
           <span id="toggle-icon">📱</span>
           <span id="toggle-label">Modo Terreno (Móvil)</span>
@@ -98,7 +105,7 @@
   <main id="app-viewport-wrapper" class="flex-1 flex justify-center py-4 px-2 md:px-4">
     
     <!-- DESKTOP MODE CONTAINER (Default wide layout) -->
-    <div id="desktop-view-container" class="w-full max-w-7xl mx-auto flex flex-col gap-6">
+    <div id="desktop-view-container" class="w-full max-w-7xl mx-auto flex flex-col gap-5">
 
       <!-- Inactivity Safeguard Banner & Proof of Zero Auto-Approval -->
       <section id="inactivity-safeguard-panel" class="bg-gradient-to-r from-slate-900 via-amber-950/20 to-slate-900 border border-amber-500/30 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
@@ -130,6 +137,296 @@
             </svg>
             <span>Simular Inactividad (60 min)</span>
           </button>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           DISPATCH TACTICAL COMMAND RADAR (INSPIRED BY "DISPATCH" GAME UI)
+           Interactive Vector Map of Santiago Metropolitan Network + Live Telemetry
+           ====================================================================== -->
+      <section id="tactical-command-radar" class="tactical-radar-shell rounded-2xl p-4 md:p-5 flex flex-col gap-3.5" aria-label="Centro de Comando y Radar Táctico Dispatch">
+        <!-- Top Tactical Header & Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/90 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping"></span>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono uppercase tracking-[0.2em] text-sky-400 font-bold">DISPATCH TACTICAL RADAR · RED VIAL RM</span>
+                <span id="radar-congestion-pill" class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">Tráfico: MEDIA (1.25x)</span>
+              </div>
+              <h2 id="radar-mission-headline" class="text-sm md:text-base font-bold text-white">Centro de Comando Operativo — Simulación de Rutas, Congestión y Flota</h2>
+            </div>
+          </div>
+
+          <!-- Time / Congestion Controls & Collapse Toggle -->
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <label for="radar-time-select" class="text-[11px] text-slate-400 font-mono">⏱️ Hora / Tráfico:</label>
+            <select id="radar-time-select" class="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-sky-300 font-mono text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none">
+              <option value="08:00">08:00 — Punta Mañana (1.55x)</option>
+              <option value="11:30" selected>11:30 — Restricción Diurna Centro (1.25x)</option>
+              <option value="14:00">14:00 — Flujo Operativo Tarde (1.15x)</option>
+              <option value="15:00">15:00 — Saturación Flota 12t (1.25x)</option>
+              <option value="21:30">21:30 — Ventana Nocturna Libre (0.90x)</option>
+            </select>
+            <button id="btn-toggle-radar-panel" type="button" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-mono transition">
+              Minimizar Radar
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Scenario / Rubric Cases Selector Bar -->
+        <div id="radar-body-container" class="flex flex-col gap-3.5">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-[11px] text-slate-400 font-mono mr-1">Misiones Certamen 2:</span>
+            <button type="button" data-radar-case="CASO-1" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-mono transition">
+              🟢 Caso 1: Pudahuel 3.2t
+            </button>
+            <button type="button" data-radar-case="CASO-2" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-mono transition">
+              🟡 Caso 2: San Bernardo 10t (Acto 4)
+            </button>
+            <button type="button" data-radar-case="CASO-3-V1" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-rose-300 text-[11px] font-mono transition">
+              🔴 Caso 3 (v1): Centro 11:30 Infracción
+            </button>
+            <button type="button" data-radar-case="CASO-3-V2" class="radar-case-btn active-radar-case px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-emerald-300 text-[11px] font-mono transition">
+              🛡️ Caso 3 (v2): Nocturno 21:30
+            </button>
+            <button type="button" data-radar-case="CASO-3-SPLIT" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-sky-300 text-[11px] font-mono transition">
+              🚚🚚 Caso 3 (v2): Split 2x 5t
+            </button>
+            <button type="button" data-radar-case="CASO-4" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-amber-300 text-[11px] font-mono transition">
+              ⚠️ Caso 4: Info Incompleta
+            </button>
+            <button type="button" data-radar-case="CASO-5" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-rose-400 text-[11px] font-mono transition">
+              ⛔ Caso 5: CAM-04 Falla Frenos
+            </button>
+            <button type="button" data-radar-case="CASO-6" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-purple-300 text-[11px] font-mono transition">
+              ☣️ Caso 6: Ácido D.S. 298
+            </button>
+            <button type="button" data-radar-case="LIRA-953" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-teal-500/40 text-teal-300 text-[11px] font-mono transition">
+              📍 Lira 953 Centro
+            </button>
+          </div>
+
+          <!-- Split View: Left Interactive Vector Map (8 cols) | Right Telemetry & Governance HUD (4 cols) -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+            
+            <!-- Left: Interactive SVG Tactical Map -->
+            <div class="lg:col-span-8 tactical-canvas-wrap flex flex-col justify-between min-h-[340px]">
+              <div class="tactical-scanline" aria-hidden="true"></div>
+
+              <!-- Top Map Overlay Bar -->
+              <div class="relative z-10 flex flex-wrap items-center justify-between gap-2 px-3.5 pt-2.5 text-[10px] font-mono text-slate-400">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-slate-900/90 border border-slate-700 text-sky-300">GRID: 33°26'S 70°39'W</span>
+                  <span id="radar-zone-banner" class="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300">
+                    ZONA EXCLUSIÓN SANTIAGO CENTRO: &gt;5.000 kg (07:30–21:00)
+                  </span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="flex items-center gap-1"><i class="w-2.5 h-1 bg-emerald-400 inline-block rounded"></i> Fluido</span>
+                  <span class="flex items-center gap-1"><i class="w-2.5 h-1 bg-amber-400 inline-block rounded"></i> Congestión Media</span>
+                  <span class="flex items-center gap-1"><i class="w-2.5 h-1 bg-rose-500 inline-block rounded"></i> Alta / Restricción</span>
+                </div>
+              </div>
+
+              <!-- Interactive SVG Canvas -->
+              <svg id="dispatch-tactical-svg" viewBox="0 0 820 430" class="w-full h-auto select-none relative z-10" role="img" aria-label="Mapa Táctico Interactivo de Despacho en Santiago de Chile">
+                <defs>
+                  <filter id="radar-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                  <pattern id="hazard-stripes" width="12" height="12" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                    <line x1="0" y1="0" x2="0" y2="12" stroke="rgba(245, 158, 11, 0.16)" stroke-width="6" />
+                  </pattern>
+                </defs>
+
+                <!-- Background Topographic Rings -->
+                <circle cx="455" cy="240" r="175" fill="none" stroke="rgba(56, 189, 248, 0.06)" stroke-width="1" stroke-dasharray="4 6" />
+                <circle cx="455" cy="240" r="115" fill="none" stroke="rgba(56, 189, 248, 0.08)" stroke-width="1" />
+
+                <!-- SANTIAGO CENTRO MUNICIPAL RESTRICTION POLYGON (>5.000 kg 07:30-21:00) -->
+                <g id="svg-restricted-zone">
+                  <polygon id="svg-centro-polygon" points="390,175 535,175 555,295 375,295" fill="url(#hazard-stripes)" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="6 4" rx="12" />
+                  <rect x="392" y="154" width="150" height="18" rx="4" fill="#091524" stroke="#f59e0b" stroke-width="1" />
+                  <text id="svg-centro-badge-text" x="467" y="166" text-anchor="middle" fill="#fcd34d" font-size="9" font-family="monospace" font-weight="bold">
+                    ORDENANZA &gt;5t (07:30–21:00)
+                  </text>
+                </g>
+
+                <!-- SANTIAGO HIGHWAY CORRIDORS LAYER (Populated/Updated by JS) -->
+                <g id="svg-corridors-layer">
+                  <!-- C-NORTE-PONIENTE: Quilicura (350,82) -> Pudahuel (155,215) -->
+                  <path id="corridor-C-NORTE-PONIENTE" d="M 350 82 Q 230 120 155 215" fill="none" stroke="#334155" stroke-width="6" stroke-linecap="round" />
+                  <!-- C-PONIENTE-SUR: Pudahuel (155,215) -> Maipu (205,340) -->
+                  <path id="corridor-C-PONIENTE-SUR" d="M 155 215 Q 165 280 205 340" fill="none" stroke="#334155" stroke-width="6" stroke-linecap="round" />
+                  <!-- C-NORTE-TALLER: Quilicura (350,82) -> Renca (295,165) -->
+                  <path id="corridor-C-NORTE-TALLER" d="M 350 82 L 295 165" fill="none" stroke="#334155" stroke-width="5" stroke-linecap="round" />
+                  <!-- C-CENTRAL-NORTE: Quilicura (350,82) -> Santiago Centro (455,240) -->
+                  <path id="corridor-C-CENTRAL-NORTE" d="M 350 82 Q 415 155 455 240" fill="none" stroke="#334155" stroke-width="7" stroke-linecap="round" />
+                  <!-- C-CENTRAL-SUR: Santiago Centro (455,240) -> San Bernardo (445,380) -->
+                  <path id="corridor-C-CENTRAL-SUR" d="M 455 240 L 445 380" fill="none" stroke="#334155" stroke-width="7" stroke-linecap="round" />
+                  <!-- C-SUR-PONIENTE: Maipu (205,340) -> San Bernardo (445,380) -->
+                  <path id="corridor-C-SUR-PONIENTE" d="M 205 340 Q 320 375 445 380" fill="none" stroke="#334155" stroke-width="5" stroke-linecap="round" />
+                  <!-- C-ORIENTE: Quilicura (350,82) -> Providencia (615,205) -> Santiago Centro (455,240) -->
+                  <path id="corridor-C-ORIENTE" d="M 350 82 Q 510 115 615 205 L 455 240" fill="none" stroke="#334155" stroke-width="5" stroke-linecap="round" />
+                </g>
+
+                <!-- ACTIVE ANIMATED ROUTES LAYER -->
+                <g id="svg-active-routes-layer">
+                  <!-- Secondary Split Route (Used when 2x 5t split is active) -->
+                  <path id="svg-route-secondary" d="" fill="none" stroke="#38bdf8" stroke-width="3.5" class="radar-route-split-anim hidden" filter="url(#radar-glow)" />
+                  <!-- Primary Tactical Route -->
+                  <path id="svg-route-primary" d="M 350 82 Q 415 155 455 240" fill="none" stroke="#10b981" stroke-width="4.5" class="radar-route-anim" filter="url(#radar-glow)" />
+                </g>
+
+                <!--highway labels -->
+                <g font-family="monospace" font-size="8.5" fill="#64748b">
+                  <text x="215" y="132" transform="rotate(-28 215,132)">Vespucio Norte</text>
+                  <text x="415" y="142" transform="rotate(52 415,142)">Ruta 5 Norte</text>
+                  <text x="515" y="132" transform="rotate(22 515,132)">Costanera Norte</text>
+                  <text x="462" y="325">Ruta 5 Sur</text>
+                  <text x="142" y="285" transform="rotate(75 142,285)">Vespucio Sur</text>
+                </g>
+
+                <!-- COMUNA NODES LAYER (Clickable) -->
+                <g id="svg-nodes-layer">
+                  <!-- QUILICURA (HUB) -->
+                  <g class="radar-node-group" data-node-id="QUILICURA" transform="translate(350, 82)">
+                    <circle r="16" fill="rgba(14, 165, 233, 0.18)" stroke="#38bdf8" stroke-width="1.5" />
+                    <circle r="6" fill="#38bdf8" />
+                    <text y="-22" text-anchor="middle" fill="#f8fafc" font-size="10" font-weight="bold" font-family="monospace">HUB QUILICURA</text>
+                    <text y="28" text-anchor="middle" fill="#7dd3fc" font-size="8.5" font-family="monospace">Base Operativa</text>
+                  </g>
+
+                  <!-- RENCA (TALLER / CAM-04 LOCK) -->
+                  <g class="radar-node-group" data-node-id="RENCA" transform="translate(295, 165)">
+                    <circle r="13" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" stroke-width="1.5" />
+                    <circle r="5" fill="#ef4444" />
+                    <text x="-18" y="4" text-anchor="end" fill="#fca5a5" font-size="9.5" font-weight="bold" font-family="monospace">TALLER RENCA</text>
+                    <text x="-18" y="15" text-anchor="end" fill="#f87171" font-size="8" font-family="monospace">⛔ CAM-04 Frenos</text>
+                  </g>
+
+                  <!-- PUDAHUEL -->
+                  <g class="radar-node-group" data-node-id="PUDAHUEL" transform="translate(155, 215)">
+                    <circle r="14" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="1.5" />
+                    <circle r="5.5" fill="#10b981" />
+                    <text x="-18" y="0" text-anchor="end" fill="#f8fafc" font-size="10" font-weight="bold" font-family="monospace">PUDAHUEL</text>
+                    <text x="-18" y="12" text-anchor="end" fill="#94a3b8" font-size="8" font-family="monospace">CD Logístico (Caso 1)</text>
+                  </g>
+
+                  <!-- MAIPU -->
+                  <g class="radar-node-group" data-node-id="MAIPU" transform="translate(205, 340)">
+                    <circle r="13" fill="rgba(56, 189, 248, 0.15)" stroke="#38bdf8" stroke-width="1.5" />
+                    <circle r="5" fill="#38bdf8" />
+                    <text y="26" text-anchor="middle" fill="#f8fafc" font-size="10" font-weight="bold" font-family="monospace">MAIPÚ</text>
+                    <text y="37" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="monospace">Polígono Industrial</text>
+                  </g>
+
+                  <!-- SANTIAGO CENTRO / LIRA 953 -->
+                  <g class="radar-node-group" data-node-id="SANTIAGO_CENTRO" transform="translate(455, 240)">
+                    <circle r="17" fill="rgba(245, 158, 11, 0.22)" stroke="#fbbf24" stroke-width="2" />
+                    <circle r="6.5" fill="#fbbf24" />
+                    <text y="-22" text-anchor="middle" fill="#fef3c7" font-size="10.5" font-weight="bold" font-family="monospace">SANTIAGO CENTRO</text>
+                    <text y="29" text-anchor="middle" fill="#fcd34d" font-size="8.5" font-family="monospace">📍 Lira 953 · Control &gt;5t</text>
+                  </g>
+
+                  <!-- PROVIDENCIA -->
+                  <g class="radar-node-group" data-node-id="PROVIDENCIA" transform="translate(615, 205)">
+                    <circle r="13" fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" stroke-width="1.5" />
+                    <circle r="5" fill="#f59e0b" />
+                    <text x="18" y="2" text-anchor="start" fill="#f8fafc" font-size="10" font-weight="bold" font-family="monospace">PROVIDENCIA</text>
+                    <text x="18" y="13" text-anchor="start" fill="#94a3b8" font-size="8" font-family="monospace">Eje Oriente (&le;3.5t)</text>
+                  </g>
+
+                  <!-- SAN BERNARDO -->
+                  <g class="radar-node-group" data-node-id="SAN_BERNARDO" transform="translate(445, 380)">
+                    <circle r="14" fill="rgba(56, 189, 248, 0.18)" stroke="#38bdf8" stroke-width="1.5" />
+                    <circle r="5.5" fill="#38bdf8" />
+                    <text x="20" y="3" text-anchor="start" fill="#f8fafc" font-size="10" font-weight="bold" font-family="monospace">SAN BERNARDO</text>
+                    <text x="20" y="14" text-anchor="start" fill="#7dd3fc" font-size="8" font-family="monospace">Planta Sur 10t (Caso 2)</text>
+                  </g>
+                </g>
+
+                <!-- LIVE FLEET UNITS OVERLAY (CAM-01 to CAM-07) -->
+                <g id="svg-fleet-markers-layer">
+                  <!-- Dynamically updated via JS -->
+                </g>
+              </svg>
+
+              <!-- Bottom Interactive Node / Truck Inspector Bar -->
+              <div id="radar-inspector-bar" class="relative z-10 px-3.5 py-2 bg-slate-950/90 border-t border-slate-800/90 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="text-sky-400 font-mono font-bold">🛰️ TELEMETRÍA:</span>
+                  <span id="radar-inspector-text" class="text-slate-300">Haga clic en cualquier comuna, corredor o camión (<code class="text-sky-300">CAM-01..07</code>) en el mapa para inspeccionar estado.</span>
+                </div>
+                <span id="radar-memory-indicator" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                  Memoria Viva: Activa (&lt;80 tok)
+                </span>
+              </div>
+            </div>
+
+            <!-- Right: Mission Telemetry & R4R Decision HUD -->
+            <aside id="radar-telemetry-panel" class="lg:col-span-4 bg-slate-950/90 border border-slate-800 rounded-xl p-4 flex flex-col justify-between gap-3">
+              <div>
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                  <div>
+                    <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Misión Activa en Radar</span>
+                    <strong id="hud-case-id" class="text-sm font-mono text-sky-400">CASO-3 (v2 Nocturno)</strong>
+                  </div>
+                  <span id="hud-status-badge" class="badge-r4r">🔒 R4R Bloqueado</span>
+                </div>
+
+                <!-- Key Telemetry Metrics Grid -->
+                <div class="grid grid-cols-2 gap-2 my-3">
+                  <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/90">
+                    <span class="text-[10px] font-mono text-slate-400 block">RUTA / DISTANCIA</span>
+                    <strong id="hud-route-distance" class="text-xs font-mono text-white">Quilicura ➔ Centro (14.2 km)</strong>
+                  </div>
+                  <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/90">
+                    <span class="text-[10px] font-mono text-slate-400 block">ETA &amp; CONGESTIÓN</span>
+                    <strong id="hud-eta" class="text-xs font-mono text-emerald-400">21 min (0.90x Fluido)</strong>
+                  </div>
+                  <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/90">
+                    <span class="text-[10px] font-mono text-slate-400 block">FLOTA ASIGNADA</span>
+                    <strong id="hud-trucks" class="text-xs font-mono text-sky-300">CAM-05 (Volvo 12t)</strong>
+                  </div>
+                  <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/90">
+                    <span class="text-[10px] font-mono text-slate-400 block">VENTANA / SLA</span>
+                    <strong id="hud-schedule" class="text-xs font-mono text-amber-300">Hoy 21:30 hrs (SLA 2.5h)</strong>
+                  </div>
+                </div>
+
+                <!-- Checkpoint / Legal / Safety Alert Box -->
+                <div id="hud-alert-box" class="p-3 rounded-xl bg-emerald-950/25 border border-emerald-500/40 text-xs flex flex-col gap-1">
+                  <div class="flex items-center justify-between">
+                    <span id="hud-alert-title" class="font-bold text-emerald-300 font-mono text-[11px]">🛡️ REGLA MEMORIA VIVA APLICADA</span>
+                    <span class="text-[10px] font-mono text-slate-400">auto_approved: False</span>
+                  </div>
+                  <p id="hud-alert-desc" class="text-[11px] text-slate-300 leading-relaxed">
+                    Carga de 9.500 kg supera límite diurno (&gt;5t) en Santiago Centro. Agente reprograma salida a ventana nocturna (21:30 hrs) o permite split 2x 5t.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Action Buttons inside HUD -->
+              <div class="flex flex-col gap-2 pt-2 border-t border-slate-800/80">
+                <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <span>Tarifa Estimada: <strong id="hud-tariff" class="text-emerald-400">$135.000 CLP</strong></span>
+                  <span>Firma Humana: <strong class="text-amber-300">REQUERIDA</strong></span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <button type="button" id="btn-hud-evaluate" class="py-2 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs shadow transition active:scale-95">
+                    🤖 Evaluar en Cola R4R
+                  </button>
+                  <button type="button" id="btn-hud-open-modal" class="py-2 px-3 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 font-semibold text-xs transition active:scale-95">
+                    ✍️ Firmar / Rechazar
+                  </button>
+                </div>
+              </div>
+            </aside>
+
+          </div>
         </div>
       </section>
 
@@ -603,6 +900,21 @@
               <span id="sim-inactivity-timer" class="text-xs font-mono font-bold text-white">00:00:00</span>
             </div>
             <span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono">Cero Auto-Aprobación</span>
+          </div>
+
+          <!-- Compact Mobile Tactical Radar Widget (Synced with Dispatch Radar) -->
+          <div id="mobile-tactical-mini-radar" class="p-2.5 rounded-xl bg-slate-900/95 border border-sky-500/30 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold text-sky-400">🛰️ RADAR TÁCTICO RM</span>
+              <span id="mob-radar-case" class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300">CASO-3 (v2)</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-200">
+              <span id="mob-radar-route">Quilicura ➔ Centro (14.2 km)</span>
+              <span id="mob-radar-eta" class="text-emerald-400">21 min</span>
+            </div>
+            <div id="mob-radar-note" class="text-[10px] text-slate-400 truncate">
+              Flota: CAM-05 · Ventana Nocturna 21:30 hrs (Ordenanza &gt;5t)
+            </div>
           </div>
 
           <!-- Dynamic container for mobile tab content -->

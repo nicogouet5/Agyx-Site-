@@ -210,3 +210,96 @@ button:disabled {
 }
 /* Long user-supplied case IDs and addresses must not widen the mobile page. */
 #r4r-cards-list > div { min-width: 0; overflow-wrap: anywhere; }
+
+/* ==========================================================================
+   DISPATCH TACTICAL COMMAND CENTER & VECTOR RADAR ENGINE (v2.0)
+   ========================================================================== */
+.tactical-radar-shell {
+  background: radial-gradient(circle at 20% 20%, rgba(14, 116, 144, 0.14), rgba(2, 6, 23, 0.96) 70%);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.85), inset 0 0 40px rgba(14, 165, 233, 0.06);
+}
+
+.tactical-canvas-wrap {
+  position: relative;
+  background-color: #040d17;
+  background-image:
+    linear-gradient(rgba(14, 165, 233, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.07) 1px, transparent 1px),
+    radial-gradient(circle at 50% 48%, rgba(56, 189, 248, 0.09) 0%, transparent 68%);
+  background-size: 28px 28px, 28px 28px, 100% 100%;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.tactical-scanline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(56, 189, 248, 0.04) 48%,
+    rgba(56, 189, 248, 0.14) 50%,
+    transparent 52%,
+    transparent 100%
+  );
+  background-size: 100% 100%;
+  animation: tacticalSweep 7s linear infinite;
+}
+
+@keyframes tacticalSweep {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes dashFlowPrimary {
+  to { stroke-dashoffset: -48; }
+}
+
+@keyframes dashFlowSplit {
+  to { stroke-dashoffset: -36; }
+}
+
+@keyframes pulseRing {
+  0% { transform: scale(0.92); opacity: 0.9; }
+  50% { transform: scale(1.18); opacity: 0.35; }
+  100% { transform: scale(0.92); opacity: 0.9; }
+}
+
+.radar-route-anim {
+  stroke-dasharray: 12 8;
+  animation: dashFlowPrimary 1.15s linear infinite;
+}
+
+.radar-route-split-anim {
+  stroke-dasharray: 8 7;
+  animation: dashFlowSplit 1.35s linear infinite;
+}
+
+.radar-node-group {
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.radar-node-group:hover {
+  opacity: 0.95;
+}
+
+.radar-truck-pill {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.radar-truck-pill:hover {
+  filter: brightness(1.18);
+}
+
+.radar-case-btn.active-radar-case {
+  background-color: rgba(14, 165, 233, 0.22) !important;
+  border-color: #38bdf8 !important;
+  color: #f8fafc !important;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.28);
+}
+

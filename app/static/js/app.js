@@ -603,7 +603,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
-      // Live synchronization: refresh queue to reflect live SQLite proposal
+      // Live synchronization: refresh queue and update Tactical Radar to v1
+      setRadarScenario('CASO-3-V1');
       await fetchQueue();
 
       // Unlock Step 2
@@ -761,6 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       el.case3ComparisonBox.classList.remove('hidden');
+      setRadarScenario('CASO-3-V2');
       await fetchQueue();
       showToast('🎉 ¡Demostración de Caso 3 v1➔v2 completada con éxito!', 'success', 6000);
     } catch (e) {
@@ -995,6 +997,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('input-hora').value = '11:30';
         document.querySelector('input[name="version-mode"][value="v2"]').checked = true;
         el.mapResult.textContent = 'Ejemplo cargado: 9.500 kg a Lira 953 a las 11:30. Evalúa para ver la propuesta nocturna en R4R.';
+        setRadarScenario('LIRA-953');
       });
     }
 
@@ -1064,7 +1067,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('input-tipo-carga').value = p.carga;
     document.getElementById('input-descripcion').value = p.desc;
 
-    showToast(`Formulario completado con parámetros de ${caseId}.`, 'info');
+    const radarMap = {
+      'CASO-1': 'CASO-1',
+      'CASO-2': 'CASO-2',
+      'CASO-3': 'CASO-3-V2',
+      'CASO-4': 'CASO-4',
+      'CASO-5': 'CASO-5',
+      'CASO-6': 'CASO-6',
+    };
+    if (radarMap[caseId]) setRadarScenario(radarMap[caseId]);
+
+    showToast(`Formulario y Radar Táctico sincronizados con ${caseId}.`, 'info');
   }
 
   async function submitManualDispatch() {
@@ -1100,6 +1113,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el.mapResult && data.mapa) {
           el.mapResult.textContent = `${data.mapa.direccion}: zona ${data.mapa.zona}. ${data.message} Validación final de ruta y permisos: coordinador humano.`;
         }
+        if (data.tactical_map) {
+          applyBackendTacticalMap(caseId, data);
+        }
         showToast(`Evaluación completada. Estado: ${data.status}. auto_approved=False`, 'success');
         await refreshAllData();
         switchTab('tab-queue');
@@ -1109,6 +1125,458 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (e) {
       showToast('Evaluación simulada en modo local (sin backend)', 'info');
+    }
+  }
+
+  // --- DISPATCH TACTICAL RADAR ENGINE (INSPIRED BY "DISPATCH" GAME UI) ---
+  const RADAR_SCENARIOS = {
+    'CASO-1': {
+      caseId: 'CASO-1',
+      label: 'CASO-1 (Normal Hoy)',
+      routeLabel: 'Quilicura ➔ Pudahuel (16.4 km)',
+      eta: '23 min',
+      hora: '14:00',
+      congestionLabel: 'MEDIA (1.15x)',
+      trucks: 'CAM-02 (Atego 5t)',
+      schedule: 'Hoy 14:00 hrs (SLA 2.0h)',
+      tariff: '$65.000 CLP',
+      status: 'R4R',
+      primaryPath: 'M 350 82 Q 230 120 155 215',
+      primaryColor: '#10b981',
+      secondaryPath: '',
+      alertClass: 'bg-emerald-950/25 border-emerald-500/40',
+      alertTitle: '🟢 CORREDOR INDUSTRIAL EXPEDITO',
+      alertTitleColor: 'text-emerald-300',
+      alertDesc: 'Vespucio Norte sin restricción municipal para 3.200 kg. Unidad CAM-02 asignada en estado R4R esperando firma del supervisor.',
+      payload: { case_id: 'CASO-1', origen: 'Quilicura', destino: 'Pudahuel', cargo_weight_kg: 3200, hora_despacho: '14:00', version_mode: 'v2' },
+    },
+    'CASO-2': {
+      caseId: 'CASO-2',
+      label: 'CASO-2 (Reserva Acto 4)',
+      routeLabel: 'Quilicura ➔ San Bernardo (28.5 km)',
+      eta: '48 min',
+      hora: '15:00',
+      congestionLabel: 'MEDIA-ALTA (1.25x)',
+      trucks: 'CAM-06 (Scania 12t)',
+      schedule: 'Mañana 08:00 hrs (SLA 24h)',
+      tariff: '$145.000 CLP',
+      status: 'R4R',
+      primaryPath: 'M 350 82 Q 415 155 455 240 L 445 380',
+      primaryColor: '#f59e0b',
+      secondaryPath: '',
+      alertClass: 'bg-amber-950/30 border-amber-500/40',
+      alertTitle: '🟡 FLOTA 12t EN RUTA — RESERVA MAÑANA 08:00',
+      alertTitleColor: 'text-amber-300',
+      alertDesc: 'Carga pesada de 10.000 kg a las 15:00 hrs con unidades 12t ocupadas en ruta. Agyx activa reserva de slot prioritario para mañana 08:00 hrs en R4R.',
+      payload: { case_id: 'CASO-2', origen: 'Quilicura', destino: 'San Bernardo', cargo_weight_kg: 10000, hora_despacho: '15:00', version_mode: 'v2' },
+    },
+    'CASO-3-V1': {
+      caseId: 'CASO-3',
+      label: 'CASO-3 (v1 Pre-Memoria ❌)',
+      routeLabel: 'Quilicura ➔ Stgo Centro (14.2 km)',
+      eta: '36 min (Infracción)',
+      hora: '11:30',
+      congestionLabel: 'ALTA DIURNA (1.35x)',
+      trucks: 'CAM-05 (Volvo 12t ❌)',
+      schedule: 'Hoy 11:30 hrs (PROHIBIDO)',
+      tariff: '$120.000 CLP',
+      status: 'R4R',
+      primaryPath: 'M 350 82 Q 415 155 455 240',
+      primaryColor: '#ef4444',
+      secondaryPath: '',
+      alertClass: 'bg-rose-950/35 border-rose-500/50',
+      alertTitle: '❌ VIOLACIÓN ORDENANZA MUNICIPAL (v1)',
+      alertTitleColor: 'text-rose-300',
+      alertDesc: 'En v1 (sin Memoria Viva), el agente asigna CAM-05 (12t) a las 11:30 hrs hacia Santiago Centro, infringiendo la prohibición diurna >5.000 kg (07:30–21:00). El supervisor debe rechazar en R4R.',
+      payload: { case_id: 'CASO-3', origen: 'Quilicura', destino: 'Santiago Centro', cargo_weight_kg: 9500, hora_despacho: '11:30', version_mode: 'v1' },
+    },
+    'CASO-3-V2': {
+      caseId: 'CASO-3',
+      label: 'CASO-3 (v2 Nocturno 21:30)',
+      routeLabel: 'Quilicura ➔ Stgo Centro (14.2 km)',
+      eta: '21 min (Fluido)',
+      hora: '21:30',
+      congestionLabel: 'BAJA NOCTURNA (0.90x)',
+      trucks: 'CAM-05 (Volvo 12t)',
+      schedule: 'Hoy 21:30 hrs (SLA 2.5h)',
+      tariff: '$135.000 CLP',
+      status: 'R4R',
+      primaryPath: 'M 350 82 Q 415 155 455 240',
+      primaryColor: '#10b981',
+      secondaryPath: '',
+      alertClass: 'bg-emerald-950/25 border-emerald-500/40',
+      alertTitle: '🛡️ REGLA MEMORIA VIVA APLICADA (v2)',
+      alertTitleColor: 'text-emerald-300',
+      alertDesc: 'Carga de 9.500 kg supera límite diurno (>5t) en Santiago Centro. Agente inyecta regla destilada (<80 tokens) y reprograma salida a ventana nocturna (21:30 hrs).',
+      payload: { case_id: 'CASO-3', origen: 'Quilicura', destino: 'Santiago Centro', cargo_weight_kg: 9500, hora_despacho: '11:30', version_mode: 'v2' },
+    },
+    'CASO-3-SPLIT': {
+      caseId: 'CASO-3',
+      label: 'CASO-3 (v2 Split 2x 5t)',
+      routeLabel: 'Quilicura ➔ Centro Dual (14.8 km)',
+      eta: '26 min (2 Corredores)',
+      hora: '11:30',
+      congestionLabel: 'MEDIA DIURNA (1.25x)',
+      trucks: 'CAM-02 (5t) + CAM-03 (5t)',
+      schedule: 'Hoy 11:30 hrs (Subdividido)',
+      tariff: '$140.000 CLP',
+      status: 'R4R',
+      primaryPath: 'M 350 82 Q 415 155 455 240',
+      primaryColor: '#10b981',
+      secondaryPath: 'M 350 82 Q 510 115 615 205 L 455 240',
+      alertClass: 'bg-sky-950/30 border-sky-500/40',
+      alertTitle: '🚚🚚 SUBDIVISIÓN TÁCTICA 2x CAMIONES 5t',
+      alertTitleColor: 'text-sky-300',
+      alertDesc: 'Alternativa de Memoria Viva para despacho diurno inmediato: divide 9.500 kg en 2 camiones de 4.750 kg (CAM-02 + CAM-03), cumpliendo el tope municipal <= 5.000 kg.',
+      payload: { case_id: 'CASO-3', origen: 'Quilicura', destino: 'Santiago Centro', cargo_weight_kg: 9500, hora_despacho: '11:30', version_mode: 'v2' },
+    },
+    'CASO-4': {
+      caseId: 'CASO-4',
+      label: 'CASO-4 (Info Incompleta)',
+      routeLabel: 'Quilicura ➔ Centro Indefinido',
+      eta: 'RETENIDO EN BASE',
+      hora: '14:00',
+      congestionLabel: 'EN ESPERA DE DATOS',
+      trucks: 'Sin Asignar (0 unidades)',
+      schedule: 'Detenido en R4R',
+      tariff: '$0 CLP',
+      status: 'R4R_INFO_INCOMPLETA',
+      primaryPath: 'M 350 82 L 350 82',
+      primaryColor: '#eab308',
+      secondaryPath: '',
+      alertClass: 'bg-amber-950/35 border-amber-500/50',
+      alertTitle: '⚠️ DETENIDO: INFORMACIÓN AMBIGUA / INCOMPLETA',
+      alertTitleColor: 'text-amber-300',
+      alertDesc: 'Solicitud "mandar unos pallets urgentes al centro ahora en la tarde" carece de peso_kg, direccion_exacta y hora_exacta. El agente jamás adivina datos críticos.',
+      payload: { case_id: 'CASO-4', descripcion: 'Necesito mandar unos pallets urgentes al centro ahora en la tarde.', version_mode: 'v1' },
+    },
+    'CASO-5': {
+      caseId: 'CASO-5',
+      label: 'CASO-5 (Falla Frenos CAM-04)',
+      routeLabel: 'Taller Renca ⛔ Maipú (Bloqueado)',
+      eta: 'SALIDA PROHIBIDA',
+      hora: '10:00',
+      congestionLabel: 'BLOQUEO SEGURIDAD VIAL',
+      trucks: '⛔ CAM-04 (BLOQUEADO)',
+      schedule: 'Escalamiento Operaciones',
+      tariff: '$0 CLP (Riesgo)',
+      status: 'BLOQUEADO_RIESGO',
+      primaryPath: 'M 350 82 L 295 165',
+      primaryColor: '#ef4444',
+      secondaryPath: '',
+      alertClass: 'bg-rose-950/40 border-rose-500/60',
+      alertTitle: '⛔ BLOQUEO DURO: FALLA CRÍTICA DE FRENOS (CAM-04)',
+      alertTitleColor: 'text-rose-400',
+      alertDesc: 'Solicitud expresa de forzar salida de CAM-04 rechazada automáticamente. Telemetría reporta falla crítica de frenos de aire (disco y compresor) en Taller Renca.',
+      payload: { case_id: 'CASO-5', origen: 'Quilicura', destino: 'Maipú', cargo_weight_kg: 4000, truck_id_preferido: 'CAM-04', hora_despacho: '10:00', version_mode: 'v1' },
+    },
+    'CASO-6': {
+      caseId: 'CASO-6',
+      label: 'CASO-6 (HAZMAT D.S. 298)',
+      routeLabel: 'Quilicura ⛔ Stgo Centro (HAZMAT)',
+      eta: 'BLOQUEO LEGAL D.S. 298',
+      hora: '14:00',
+      congestionLabel: 'EXCLUSIÓN QUÍMICA ADR',
+      trucks: '⛔ Flota No Certificada ADR',
+      schedule: 'Rechazo Normativo',
+      tariff: '$0 CLP (Fuera de Alcance)',
+      status: 'BLOQUEADO_RIESGO',
+      primaryPath: 'M 350 82 L 385 135',
+      primaryColor: '#a855f7',
+      secondaryPath: '',
+      alertClass: 'bg-purple-950/40 border-purple-500/50',
+      alertTitle: '☣️ BLOQUEO LEGAL D.S. 298 — ÁCIDO SULFÚRICO',
+      alertTitleColor: 'text-purple-300',
+      alertDesc: 'Transporte de cargas peligrosas Clase 8 (Ácido Sulfúrico) requiere resolución sanitaria SEREMI y camión certificado ADR. Orden bloqueada y escalada a Gerencia.',
+      payload: { case_id: 'CASO-6', origen: 'Quilicura', destino: 'Santiago Centro', cargo_weight_kg: 4000, tipo_carga: 'ACIDO_SULFURICO', hora_despacho: '14:00', version_mode: 'v1' },
+    },
+    'LIRA-953': {
+      caseId: 'CASO-LIRA-953',
+      label: 'Misión Lira 953 (Geo-Check)',
+      routeLabel: 'Quilicura ➔ Lira 953, Centro (14.2 km)',
+      eta: '21 min (Ventana 21:30)',
+      hora: '11:30',
+      congestionLabel: 'CONTROL URBANO ACTIVO',
+      trucks: 'CAM-05 (Nocturno) / Revisión R4R',
+      schedule: '11:30 ➔ 21:30 hrs',
+      tariff: '$135.000 CLP',
+      status: 'R4R',
+      primaryPath: 'M 350 82 Q 415 155 455 240',
+      primaryColor: '#38bdf8',
+      secondaryPath: '',
+      alertClass: 'bg-sky-950/30 border-sky-500/40',
+      alertTitle: '📍 GEORREFERENCIACIÓN LIRA 953 (-33.4542, -70.6386)',
+      alertTitleColor: 'text-sky-300',
+      alertDesc: 'El motor geoespacial resuelve Lira 953 dentro del polígono SANTIAGO_CENTRO. Detecta 9.500 kg en horario diurno (11:30) y exige validación de regla u horario nocturno 21:30.',
+      payload: { case_id: 'CASO-LIRA-953', origen: 'Quilicura', destino: 'Lira 953, Santiago', cargo_weight_kg: 9500, hora_despacho: '11:30', version_mode: 'v2' },
+    },
+  };
+
+  let currentRadarKey = 'CASO-3-V2';
+
+  async function fetchTacticalNetwork(hora = '11:30') {
+    try {
+      const res = await fetch(`/api/tactical-network?hora=${encodeURIComponent(hora)}`);
+      if (res.ok) {
+        const net = await res.json();
+        renderTacticalNetworkOverlay(net);
+      }
+    } catch (err) {
+      console.warn('Tactical network offline fallback active', err);
+    }
+  }
+
+  function renderTacticalNetworkOverlay(net) {
+    if (!net) return;
+    const pill = document.getElementById('radar-congestion-pill');
+    if (pill) {
+      pill.textContent = `Tráfico ${net.hora || '11:30'}: ${net.congestion_label || 'MEDIA'} (${net.congestion_multiplier || 1.25}x)`;
+    }
+
+    // Update Santiago Centro exclusion polygon according to daytime ban active status
+    const poly = document.getElementById('svg-centro-polygon');
+    const badgeText = document.getElementById('svg-centro-badge-text');
+    const zoneBanner = document.getElementById('radar-zone-banner');
+    if (poly && badgeText) {
+      if (net.santiago_centro_daytime_ban_active === false) {
+        poly.setAttribute('stroke', '#10b981');
+        badgeText.setAttribute('fill', '#34d399');
+        badgeText.textContent = 'VENTANA NOCTURNA LIBRE (21:30–06:30)';
+        if (zoneBanner) {
+          zoneBanner.className = 'px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300';
+          zoneBanner.textContent = 'ZONA SANTIAGO CENTRO: VENTANA NOCTURNA HABILITADA (>5t OK)';
+        }
+      } else {
+        poly.setAttribute('stroke', '#f59e0b');
+        badgeText.setAttribute('fill', '#fcd34d');
+        badgeText.textContent = 'ORDENANZA >5t (07:30–21:00)';
+        if (zoneBanner) {
+          zoneBanner.className = 'px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300';
+          zoneBanner.textContent = 'ZONA EXCLUSIÓN SANTIAGO CENTRO: >5.000 kg (07:30–21:00)';
+        }
+      }
+    }
+
+    // Colorize corridors by live congestion
+    if (Array.isArray(net.corridors)) {
+      net.corridors.forEach(c => {
+        const pathEl = document.getElementById(`corridor-${c.id}`);
+        if (!pathEl) return;
+        const colorMap = {
+          'BAJA': '#1e3a5f',
+          'MEDIA': '#334155',
+          'ALTA': '#78350f',
+          'CRITICA': '#7f1d1d',
+        };
+        pathEl.setAttribute('stroke', colorMap[c.congestion_level] || '#334155');
+      });
+    }
+
+    // Render live fleet markers (CAM-01..CAM-07)
+    const fleetLayer = document.getElementById('svg-fleet-markers-layer');
+    if (fleetLayer && Array.isArray(net.fleet_markers)) {
+      fleetLayer.innerHTML = '';
+      net.fleet_markers.forEach((m, idx) => {
+        const offsetX = ((idx % 3) - 1) * 26;
+        const offsetY = (idx < 3 ? -32 : 34);
+        const gx = (m.x || 350) + offsetX;
+        const gy = (m.y || 82) + offsetY;
+        const isLocked = m.blocked || m.status === 'EN_MANTENIMIENTO';
+        const isEnRuta = m.status === 'EN_RUTA';
+        const strokeColor = isLocked ? '#ef4444' : (isEnRuta ? '#f59e0b' : '#38bdf8');
+        const bgFill = isLocked ? '#450a0a' : (isEnRuta ? '#451a03' : '#082f49');
+
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'radar-truck-pill');
+        g.setAttribute('transform', `translate(${gx}, ${gy})`);
+        g.innerHTML = `
+          <rect x="-24" y="-9" width="48" height="18" rx="5" fill="${bgFill}" stroke="${strokeColor}" stroke-width="1.2" />
+          <text x="0" y="3" text-anchor="middle" fill="#f8fafc" font-size="8.5" font-family="monospace" font-weight="bold">${escapeHtml(m.id)}</text>
+        `;
+        g.addEventListener('click', () => {
+          const insp = document.getElementById('radar-inspector-text');
+          if (insp) {
+            insp.innerHTML = `🚛 <strong>${escapeHtml(m.id)}</strong> (${escapeHtml(m.modelo)}, máx ${(m.capacidad_kg || 0).toLocaleString('es-CL')} kg) — Estado: <strong class="${isLocked ? 'text-rose-400' : 'text-sky-300'}">${escapeHtml(m.status)}</strong> · ${escapeHtml(m.detail)}`;
+          }
+        });
+        fleetLayer.appendChild(g);
+      });
+    }
+  }
+
+  function setRadarScenario(scenarioKey) {
+    const sc = RADAR_SCENARIOS[scenarioKey];
+    if (!sc) return;
+    currentRadarKey = scenarioKey;
+
+    document.querySelectorAll('.radar-case-btn').forEach(btn => {
+      if (btn.getAttribute('data-radar-case') === scenarioKey) {
+        btn.classList.add('active-radar-case');
+      } else {
+        btn.classList.remove('active-radar-case');
+      }
+    });
+
+    const primaryEl = document.getElementById('svg-route-primary');
+    const secondaryEl = document.getElementById('svg-route-secondary');
+    if (primaryEl) {
+      primaryEl.setAttribute('d', sc.primaryPath);
+      primaryEl.setAttribute('stroke', sc.primaryColor);
+    }
+    if (secondaryEl) {
+      if (sc.secondaryPath) {
+        secondaryEl.setAttribute('d', sc.secondaryPath);
+        secondaryEl.classList.remove('hidden');
+      } else {
+        secondaryEl.classList.add('hidden');
+      }
+    }
+
+    const setText = (id, val) => {
+      const node = document.getElementById(id);
+      if (node) node.textContent = val;
+    };
+
+    setText('hud-case-id', sc.label);
+    setText('hud-route-distance', sc.routeLabel);
+    setText('hud-eta', sc.eta);
+    setText('hud-trucks', sc.trucks);
+    setText('hud-schedule', sc.schedule);
+    setText('hud-tariff', sc.tariff);
+    setText('hud-alert-title', sc.alertTitle);
+    setText('hud-alert-desc', sc.alertDesc);
+
+    const statusBadge = document.getElementById('hud-status-badge');
+    if (statusBadge) statusBadge.outerHTML = `<span id="hud-status-badge">${getStatusBadge(sc.status)}</span>`;
+
+    const alertBox = document.getElementById('hud-alert-box');
+    if (alertBox) alertBox.className = `p-3 rounded-xl border text-xs flex flex-col gap-1 ${sc.alertClass}`;
+    const alertTitle = document.getElementById('hud-alert-title');
+    if (alertTitle) alertTitle.className = `font-bold font-mono text-[11px] ${sc.alertTitleColor}`;
+
+    // Sync Mobile Mini Radar
+    setText('mob-radar-case', sc.label);
+    setText('mob-radar-route', sc.routeLabel);
+    setText('mob-radar-eta', sc.eta);
+    setText('mob-radar-note', `Flota: ${sc.trucks} · ${sc.schedule}`);
+
+    // Sync time selector & fetch network telemetry for that hour
+    const timeSelect = document.getElementById('radar-time-select');
+    if (timeSelect && sc.hora) {
+      timeSelect.value = sc.hora;
+    }
+    fetchTacticalNetwork(sc.hora || '11:30');
+  }
+
+  function applyBackendTacticalMap(caseId, evalData) {
+    const tmap = evalData.tactical_map;
+    if (!tmap) return;
+    const prop = evalData.proposal || {};
+    const trucks = Array.isArray(prop.camiones) && prop.camiones.length ? prop.camiones.join(' + ') : 'Sin Asignar';
+    const totalClp = Number(prop.total_clp || evalData.total_clp || 0);
+
+    const setText = (id, val) => {
+      const node = document.getElementById(id);
+      if (node) node.textContent = val;
+    };
+
+    setText('hud-case-id', `${caseId} (${tmap.version_mode || 'v2'})`);
+    setText('hud-route-distance', `${tmap.origin_node?.nombre || 'Origen'} ➔ ${tmap.destination_node?.nombre || 'Destino'} (${tmap.distance_km} km)`);
+    setText('hud-eta', `${tmap.eta_minutes} min (${tmap.congestion_multiplier}x ${tmap.congestion_label})`);
+    setText('hud-trucks', trucks);
+    setText('hud-schedule', `${prop.fecha_hora_programada || tmap.hora_evaluada} (SLA ${prop.sla_horas || 2}h)`);
+    setText('hud-tariff', `$${totalClp.toLocaleString('es-CL')} CLP`);
+    setText('hud-alert-desc', prop.observaciones || evalData.message || '');
+
+    setText('mob-radar-case', caseId);
+    setText('mob-radar-route', `${tmap.origin_node?.nombre || 'Origen'} ➔ ${tmap.destination_node?.nombre || 'Destino'} (${tmap.distance_km} km)`);
+    setText('mob-radar-eta', `${tmap.eta_minutes} min`);
+    setText('mob-radar-note', `Flota: ${trucks} · Estado: ${evalData.status}`);
+  }
+
+  function setupTacticalRadarListeners() {
+    document.querySelectorAll('.radar-case-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-radar-case');
+        setRadarScenario(key);
+      });
+    });
+
+    const timeSelect = document.getElementById('radar-time-select');
+    if (timeSelect) {
+      timeSelect.addEventListener('change', (e) => {
+        fetchTacticalNetwork(e.target.value);
+      });
+    }
+
+    const toggleRadarBtn = document.getElementById('btn-toggle-radar-panel');
+    const radarBody = document.getElementById('radar-body-container');
+    if (toggleRadarBtn && radarBody) {
+      toggleRadarBtn.addEventListener('click', () => {
+        const isHidden = radarBody.classList.toggle('hidden');
+        toggleRadarBtn.textContent = isHidden ? 'Expandir Radar' : 'Minimizar Radar';
+      });
+    }
+
+    const NODE_DESCRIPTIONS = {
+      'QUILICURA': '🏢 HUB QUILICURA: Base Operativa Central. Unidades disponibles en patio: CAM-01 (3.5t), CAM-02 (5t), CAM-03 (5t), CAM-05 (12t).',
+      'RENCA': '🔧 TALLER RENCA: Bloqueo físico y electrónico activo sobre CAM-04 (VW 8t) por falla crítica de frenos de aire (Caso 5).',
+      'PUDAHUEL': '📦 CD PUDAHUEL: Zona industrial libre de restricción diurna. Destino del Caso 1 (3.200 kg en CAM-02).',
+      'MAIPU': '🏭 POLÍGONO MAIPÚ: Destino industrial poniente. En Caso 5 se bloquea intento de forzar salida con CAM-04.',
+      'SANTIAGO_CENTRO': '🏛️ SANTIAGO CENTRO (Lira 953): Ordenanza Municipal prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs (Caso 3 v1➔v2).',
+      'PROVIDENCIA': '🏙️ EJE PROVIDENCIA: Corredor comercial con restricción de tonelaje >3.500 kg en horas punta.',
+      'SAN_BERNARDO': '🏗️ PLANTA SAN BERNARDO: Zona industrial sur. Destino del Caso 2 (10.000 kg reserva mañana 08:00 hrs en CAM-06).',
+    };
+
+    document.querySelectorAll('.radar-node-group').forEach(nodeEl => {
+      nodeEl.addEventListener('click', () => {
+        const nid = nodeEl.getAttribute('data-node-id');
+        const insp = document.getElementById('radar-inspector-text');
+        if (insp && NODE_DESCRIPTIONS[nid]) {
+          insp.innerHTML = NODE_DESCRIPTIONS[nid];
+        }
+      });
+    });
+
+    const btnHudEval = document.getElementById('btn-hud-evaluate');
+    if (btnHudEval) {
+      btnHudEval.addEventListener('click', async () => {
+        const sc = RADAR_SCENARIOS[currentRadarKey];
+        if (!sc || !sc.payload) return;
+        showToast(`Evaluando misión ${sc.caseId} en motor de despacho...`, 'info');
+        try {
+          const res = await fetch('/api/dispatch/evaluate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sc.payload),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            await refreshAllData();
+            showToast(`✅ Misión ${sc.caseId} registrada en Cola R4R (${data.status}). auto_approved=False`, 'success');
+          }
+        } catch (err) {
+          showToast('Error al evaluar misión en radar.', 'error');
+        }
+      });
+    }
+
+    const btnHudModal = document.getElementById('btn-hud-open-modal');
+    if (btnHudModal) {
+      btnHudModal.addEventListener('click', async () => {
+        const sc = RADAR_SCENARIOS[currentRadarKey];
+        if (!sc) return;
+        let exists = state.r4rQueue.find(p => p.case_id === sc.caseId);
+        if (!exists && sc.payload) {
+          await fetch('/api/dispatch/evaluate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sc.payload),
+          });
+          await fetchQueue();
+        }
+        window.openReviewModal(sc.caseId);
+      });
     }
   }
 
@@ -1153,5 +1621,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Run initialization
+  setupTacticalRadarListeners();
+  setRadarScenario('CASO-3-V2');
   init();
 });

@@ -37,6 +37,7 @@ from app.api.routes_fleet import (
     get_truck_controller,
     get_restrictions_controller,
     get_zone_restriction_controller,
+    get_tactical_network_controller,
 )
 from app.api.routes_demo import (
     get_demo_cases_controller,
@@ -292,7 +293,12 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
             self._send_json(code, res)
             return
 
-        # API Routes: Fleet & Restrictions
+        # API Routes: Fleet, Tactical Network & Restrictions
+        if path in ("/api/tactical-network", "/api/tactical-network/"):
+            hora = query.get("hora", ["14:00"])[0]
+            code, res = get_tactical_network_controller(hora=hora)
+            self._send_json(code, res)
+            return
         if path == "/api/fleet":
             code, res = get_fleet_controller()
             self._send_json(code, res)

@@ -6,7 +6,7 @@ enforcing the strict R4R state machine invariant: auto_approved == False.
 """
 from typing import Dict, Any, Optional, Tuple
 from app.api.dependencies import ServiceContainer, get_services
-from app.services.geo_service import resolve_destination
+from app.services.geo_service import resolve_destination, calculate_tactical_route
 
 try:
     from fastapi import APIRouter, HTTPException, Depends, Request
@@ -60,9 +60,34 @@ def evaluate_dispatch_controller(
         eval_result["proposal"]["auto_approved"] = False
         eval_result["proposal"]["requiere_firma_humana"] = True
 
-    location = resolve_destination(order_data.get("destino") or order_data.get("destino_comuna", ""))
+    destino_raw = order_data.get("destino") or order_data.get("destino_comuna", "")
+    location = resolve_destination(destino_raw)
     if location:
         eval_result["mapa"] = location
+
+    prop_dict = eval_result.get("proposal") if isinstance(eval_result.get("proposal"), dict) else {}
+    assigned_trucks = prop_dict.get("camiones") or prop_dict.get("camiones_asignados") or []
+    peso_raw = order_data.get("cargo_weight_kg") if order_data.get("cargo_weight_kg") is not None else order_data.get("peso_kg")
+    try:
+        peso_val = float(peso_raw) if peso_raw is not None else 0.0
+    except (ValueError, TypeError):
+        peso_val = 0.0
+    hora_val = str(
+        order_data.get("hora_despacho")
+        or order_data.get("hora_solicitada")
+        or order_data.get("hora")
+        or order_data.get("requested_datetime")
+        or "14:00"
+    )
+    eval_result["tactical_map"] = calculate_tactical_route(
+        origen=str(order_data.get("origen", "Quilicura")),
+        destino=str(destino_raw or "Santiago Centro"),
+        hora=hora_val,
+        peso_kg=peso_val,
+        version_mode=version_mode,
+        status=str(eval_result.get("status", "R4R")),
+        assigned_trucks=assigned_trucks,
+    )
 
     return 200, eval_result
 

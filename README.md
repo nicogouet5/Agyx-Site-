@@ -16,16 +16,20 @@ Prototipo funcional desarrollado para el **Certamen 2** del proyecto semestral i
 3. **Rechazo con `rejected_reason` Obligatorio y Bitácora / Memoria Viva (`<80 tokens`):**
    - Si el Coordinador de Tráfico rechaza una propuesta en `R4R`, el sistema exige un `rejected_reason` no vacío (`HTTP 400/422` si se omite o contiene solo espacios).
    - El motivo del rechazo se destila automáticamente en una regla compacta (`<80 tokens`) dentro de `data/bitacora_memoria_viva.json` y retroalimenta al agente en futuras ejecuciones (demostrado en vivo en la iteración del **Caso 3: `v1 ➔ v2`**).
-4. **Arquitectura Python + FastAPI + Optimización de Tokens + Adaptación Móvil (PWA):**
-   - Herramientas verificables (`consultar_flota_disponible`, `verificar_factibilidad_ruta_urbana`, `generar_propuesta_r4r`) con pre-filtrado determinista en Python (`<150 tokens` por llamada).
-   - Motor evaluado: **determinista local** (funciona sin conexión ni claves). La integración opcional de Gemini es experimental: hoy no ejecuta sus llamadas a herramientas y recae en el motor local; no forma parte de la demostración evaluada.
-   - Interfaz Web **Mobile-First / PWA** con conmutador en pantalla **"Vista Escritorio / Vista Móvil en Terreno"**.
+4. **Arquitectura Python + FastAPI + Radar Táctico *"Dispatch"* + Optimización de Tokens + PWA:**
+   - Herramientas verificables (`consultar_flota_disponible`, `verificar_factibilidad_ruta_urbana`, `generar_propuesta_r4r`) con pre-filtrado determinista en Python (`<150 tokens` por llamada: `69`, `86` y `88` tokens medidos).
+   - **Motor Dual Resiliente:** Por defecto utiliza el **Motor Determinista Local (0 tokens)** que garantiza reproducibilidad 100% offline en corrección automatizada, e incorpora soporte para **Google Gemini 2.5 Flash con Function Calling real** sobre las herramientas Python cuando se configura `GEMINI_API_KEY`.
+   - **Centro de Comando & Radar Táctico estilo *"Dispatch"*:** Mapa vectorial interactivo de la red vial metropolitana (`Quilicura`, `Pudahuel`, `Maipú`, `Taller Renca`, `Santiago Centro / Lira 953`, `Providencia`, `San Bernardo`) con simulación de congestión por franja horaria (`08:00`, `11:30`, `14:00`, `15:00`, `21:30`), visualización de alternativas (`v1` vs `v2 21:30` vs `Split 2x 5t`), marcadores de flota en vivo (`CAM-01`..`CAM-07`) y versión compacta sincronizada en el **Simulador Móvil en Terreno (`#mobile-simulator-frame`)**.
 
 ---
 
-## 2. Ejecución Rápida (Sin Contraseñas ni Claves de API)
+## 2. Accesos Públicos y Ejecución Rápida (Sin Contraseñas ni Claves de API)
 
-### A. Ejecutar la Verificación Automatizada Completa (6 Casos + Iteración `v1 ➔ v2` + 143 Tests)
+- 🌐 **Deploy Público en Producción (Vercel):** [**`https://agyx-fletes.vercel.app`**](https://agyx-fletes.vercel.app)
+- 💻 **Repositorio GitHub:** [**`https://github.com/nicogouet5/Agyx-Site-`**](https://github.com/nicogouet5/Agyx-Site-)
+- 📄 **Acceso directo a los PDFs desde la aplicación web:** Barra superior con enlaces 1-clic a `Ficha PDF` (`<= 4` páginas), `Matriz PDF` y `Guía PDF`.
+
+### A. Ejecutar la Verificación Automatizada Completa (14 Criterios + 6 Casos + Iteración `v1 ➔ v2` + 145 Tests)
 ```bash
 python3 tests/verify_all.py
 ```
@@ -38,11 +42,11 @@ Luego abrir en el navegador: **`http://localhost:8000`**
 
 *(Opcional: Si tienes `uvicorn` instalado, también puedes correr `uvicorn app.main:app --reload --port 8000`)*.
 
-### Ejemplo de mapa operativo: Lira 953
+### C. Centro de Comando Táctico *"Dispatch"* y Ejemplo Lira 953
 
-En la pestaña de casos, pulsa **“Usar Lira 953 como destino”**. El formulario carga una orden de 9.500 kg a las 11:30. El agente identifica esa referencia precargada como Santiago Centro. Con memoria limpia retiene el caso en `R4R_INFO_INCOMPLETA`, sin asignar camión; después de registrar el rechazo humano del Caso 3 y su regla operativa, `v2` propone las 21:30 en `R4R`, sujeto a revisión del Coordinador. El panel de mapa es ilustrativo: no consulta rutas, tráfico ni permisos en vivo; la referencia se resuelve con un catálogo local de una sola dirección.
-
-PDF para revisión: `entregables/ficha_diseno_certamen2.pdf` (4 páginas), `entregables/matriz_6_pruebas.pdf` y `entregables/guia_readme.pdf`. El logo y formato están adaptados del PDF de referencia aportado por el equipo, con paleta turquesa.
+En el panel superior **Dispatch Tactical Radar** (o pulsando **“Cargar misión Lira 953”** en la pestaña de nueva orden):
+- Puedes alternar en un clic entre los **Casos 1 al 6**, la comparación **`Caso 3 (v1) ➔ Caso 3 (v2 Nocturno 21:30) ➔ Split 2x 5t`** y la misión georreferenciada **`Lira 953, Santiago Centro`**.
+- Al cambiar el selector **Hora / Tráfico** (`08:00`, `11:30`, `14:00`, `15:00`, `21:30`), el endpoint `/api/tactical-network` recalcula el multiplicador de congestión vial y activa o libera visualmente el polígono de restricción municipal de Santiago Centro (`>5.000 kg` prohibido `07:30–21:00`).
 
 ---
 
@@ -50,7 +54,9 @@ PDF para revisión: `entregables/ficha_diseno_certamen2.pdf` (4 páginas), `entr
 
 | Entregable | Archivo en el Repositorio | Descripción |
 |---|---|---|
-| **A. Ficha de Diseño (<= 4 páginas PDF)** | `entregables/ficha_diseno_certamen2.html` y `entregables/ficha_diseno_certamen2.md` | Documento de 4 páginas A4 listo para `Imprimir -> Guardar como PDF` desde cualquier navegador. |
-| **B. Matriz de las 6 Pruebas + Iteración** | `entregables/matriz_6_pruebas.csv` y `entregables/matriz_6_pruebas.html` | Matriz con las 7 columnas oficiales de la pauta, los 6 casos distintos (`v1`), la repetición verificada del Caso 3 (`v2`) y las conclusiones. |
-| **C. Guion para el Video de Ejecución Real** | `entregables/guion_video_demo.md` | Guion cronometrado (3 min 30 seg) indicando qué clic hacer y qué explicar en cada sección. |
-| **D. Pack para Google AI Studio / Dify** | `entregables/google_ai_studio_pack/` | Instrucciones del sistema (`v1` y `v2`), declaraciones OpenAPI de herramientas (`function_declarations.json`) y prompts de los 6 casos. |
+| **A. Ficha de Diseño (<= 4 páginas PDF)** | `entregables/ficha_diseno_certamen2.pdf` (`.html` / `.md`) | Documento oficial de **exactamente 4 páginas A4** con identidad visual SimpleTech, diagrama de flujo comparativo, arquitectura, capturas y límites abiertos. |
+| **B. Matriz de las 6 Pruebas + Iteración** | `entregables/matriz_6_pruebas.pdf` (`.csv` / `.html`) | Matriz completa con las 7 columnas oficiales de la rúbrica, los 6 casos distintos (`v1`), la repetición verificada del Caso 3 (`v2`) y la conclusión general. |
+| **C. Guía de Uso / Resumen README** | `entregables/guia_readme.pdf` | Guía rápida en PDF de 1 página con instrucciones de instalación, ejecución, Radar Táctico y validación. |
+| **D. Guion para el Video de Ejecución Real** | `entregables/guion_video_demo.md` | Guion cronometrado (3 min 30 seg) indicando qué clic hacer y qué explicar en cada sección de la rúbrica. |
+| **E. Pack para Google AI Studio / Dify** | `entregables/google_ai_studio_pack/` | Instrucciones del sistema (`v1` y `v2`), declaraciones OpenAPI de herramientas (`function_declarations.json`) y prompts de los 6 casos. |
+

@@ -563,7 +563,7 @@ GOBERNANZA ESTRICTA Y R4R:
         <p class="doc-sub">Análisis crítico de seguridad operacional, controles activos e instrucciones de reproducción</p>
       </div>
       <div class="doc-meta">
-        <div>Verificación Automatizada: 143 Tests OK</div>
+        <div>Verificación Automatizada: 14/14 Criterios · 145 Tests OK</div>
         <div>Extensión controlada: <strong>Página 4 de 4</strong></div>
       </div>
     </div>
@@ -576,7 +576,7 @@ GOBERNANZA ESTRICTA Y R4R:
           <li><strong>Riesgo de Despacho Automático sin Supervisión (Automatización Ciega):</strong>
             <br/><em>Control:</em> Invariante a nivel de código y base de datos SQLite (<code>CHECK (auto_approved = 0)</code>). Aunque el operador cierre el navegador o pasen 72 horas de inactividad, ninguna orden en <code>R4R</code> pasa a <code>APPROVED</code> sin firma humana explícita.</li>
           <li><strong>Riesgo de Siniestro Vial por Presión Comercial (Caso 5):</strong>
-            <br/><em>Control:</em> Validación dura en <code>consultar_flota_disponible</code> y <code>local_engine.py</code> que impide asignar cualquier vehículo en estado <code>EN_MANTENIMIENTO</code> (como <code>CAM-04</code> con falla de frenos) o cargas que superen el límite físico de la flota (<code>15.000 kg</code>).</li>
+            <br/><em>Control:</em> Validación dura en <code>consultar_flota_disponible</code> y <code>local_engine.py</code> que impide asignar cualquier vehículo en estado <code>EN_MANTENIMIENTO</code> (como <code>CAM-04</code> con falla de frenos en Taller Renca) o cargas que superen el límite físico de la flota (<code>15.000 kg</code>).</li>
           <li><strong>Riesgo de Multas Municipales o Rechazo de Correcciones Humanas:</strong>
             <br/><em>Control:</em> El endpoint <code>POST /api/r4r/review</code> bloquea rechazos vacíos (<code>HTTP 422</code>) y obliga a documentar el <code>rejected_reason</code>, transformándolo en una regla activa dentro de la <strong>Memoria Viva</strong> para evitar reincidencias (Caso 3 <code>v1 ➔ v2</code>).</li>
           <li><strong>Riesgo de Alucinación ante Datos Faltantes (Caso 4) o Químicos Peligrosos (Caso 6):</strong>
@@ -587,7 +587,7 @@ GOBERNANZA ESTRICTA Y R4R:
         <h3>Conclusión Estadística y Limitaciones Abiertas</h3>
         <ul>
           <li><strong>Cumplimiento cuantitativo:</strong> En la versión inicial (<code>v1</code>) se cumplieron <strong>5 de 6 casos (83,3%)</strong>. Tras el ajuste en la Memoria Viva a partir del Caso 3, se alcanzó un <strong>100% de cumplimiento (6/6 casos)</strong>, verificado por la suite automatizada (<code>python3 tests/verify_all.py</code>).</li>
-          <li><strong>Limitación Abierta 1 (Telemetría e IoT Estático):</strong> La disponibilidad de camiones y las alertas de taller se leen desde tablas locales (<code>flota_camiones.csv</code> / SQLite). En producción requiere integración vía API con GPS (Geotab/Wisetrack) y software de mantenimiento.</li>
+          <li><strong>Limitación Abierta 1 (Telemetría e IoT Estático):</strong> La disponibilidad de camiones, el tráfico horario del Radar Táctico y las alertas de taller se calculan sobre catálogo y perfiles locales (<code>flota_camiones.csv</code> / SQLite). En producción requiere integración vía API con GPS satelital y software de mantenimiento.</li>
           <li><strong>Limitación Abierta 2 (Subdivisión Física de Carga):</strong> Cuando el Caso 3 <code>v2</code> sugiere subdividir 9.500 kg en 2 camiones de 5t (<code>CAM-02 + CAM-03</code>), el agente asume que la carga está paletizada; si fuera una pieza indivisible (ej. maquinaria única de 9,5t), solo aplica la ventana nocturna (<code>21:30 hrs</code>).</li>
           <li><strong>Limitación Abierta 3 (Notificación Externa Simulada):</strong> La emisión final del mensaje de seguimiento al cliente tras la aprobación humana se registra en la bitácora interna sin enviar aún SMS/WhatsApp reales.</li>
         </ul>
@@ -598,22 +598,22 @@ GOBERNANZA ESTRICTA Y R4R:
     <div class="box-brand" style="margin-bottom: 8px;">
       <h3>Enlaces Principales de la Entrega (Acceso Público y para <code>alonsoastroza@gmail.com</code>)</h3>
       <ul>
-        <li><strong>Prototipo web de revisión:</strong> <code>https://agyx-fletes-git-work-beneficios-alumno-udd.vercel.app/</code>. El enlace temporal completo, probado sin iniciar sesión y válido hasta el 19/11/2026, debe adjuntarse por separado en Canvas; no se publica su token en GitHub. El almacenamiento de Vercel es efímero; para reproducir la iteración con memoria persistente, ejecutar localmente <code>python3 -m app.main</code> y abrir <code>http://localhost:8000</code>.</li>
-        <li><strong>Video de Demostración (Ejecución Real de Casos Normal, Límite, Riesgoso e Iteración v1➔v2):</strong> pendiente de grabación y enlace público. <em>(Guion técnico incluido en <code>entregables/guion_video_demo.md</code>)</em>.</li>
-        <li><strong>Entregable B (Matriz de las 6 Pruebas):</strong> <code>entregables/matriz_6_pruebas.csv</code> y versión visual imprimible en <code>entregables/matriz_6_pruebas.html</code>.</li>
+        <li><strong>Prototipo web público desplegado (Vercel):</strong> <a href="https://agyx-fletes.vercel.app" target="_blank" rel="noopener"><code>https://agyx-fletes.vercel.app</code></a> (incluye el <strong>Centro de Comando &amp; Radar Táctico estilo <em>"Dispatch"</em></strong>, simulador móvil en terreno y barra superior con acceso directo a los 3 PDFs).</li>
+        <li><strong>Repositorio GitHub:</strong> <a href="https://github.com/nicogouet5/Agyx-Site-" target="_blank" rel="noopener"><code>https://github.com/nicogouet5/Agyx-Site-</code></a></li>
+        <li><strong>Entregables Oficiales en PDF:</strong> <code>entregables/ficha_diseno_certamen2.pdf</code> (4 páginas), <code>entregables/matriz_6_pruebas.pdf</code> y <code>entregables/guia_readme.pdf</code>.</li>
         <li><strong>Paquete Exportado para Google AI Studio / Dify:</strong> <code>entregables/google_ai_studio_pack/</code> (contiene <code>system_instructions_v1.md</code>, <code>system_instructions_v2.md</code>, <code>function_declarations.json</code> y <code>sample_prompts_6_casos.md</code>).</li>
       </ul>
     </div>
 
     <h3>Pasos Exactos para Reproducir y Verificar el Prototipo (Sin Contraseñas ni Claves de API)</h3>
-    <pre># 1. Ejecutar el verificador maestro automatizado (corre los 6 casos en v1 y v2, valida R4R, Memoria Viva y 143 tests):
+    <pre># 1. Ejecutar el verificador maestro automatizado (corre los 6 casos en v1 y v2, valida R4R, Memoria Viva y 145 tests):
 python3 tests/verify_all.py
 
 # 2. Iniciar el servidor web interactivo FastAPI (con fallback HTTP nativo si no hay dependencias externas):
 python3 -m app.main
-# Luego abrir en el navegador: http://localhost:8000
-# - Usar los botones de los Casos 1 al 6, el conmutador "Vista Escritorio / Vista Móvil en Terreno (PWA)"
-# - En la pestaña "Iteración Caso 3 (v1 ➔ v2)", ejecutar Paso 1 (v1), Paso 2 (Rechazo con rejected_reason) y Paso 3 (v2).</pre>
+# Luego abrir en el navegador: http://localhost:8000 (o visitar https://agyx-fletes.vercel.app)
+# - Explorar el Radar Táctico "Dispatch" superior (Casos 1 al 6, Lira 953, selector de congestión horaria y clic en nodos/flota)
+# - En la pestaña "Caso 3: v1➔v2 Memoria", ejecutar Paso 1 (v1), Paso 2 (Rechazo con rejected_reason) y Paso 3 (v2).</pre>
 
     <div class="page-footer">
       <span>Certamen 2 — Agente de IA Aplicado al Proyecto (Software Logístico Pymes-Fletes · Grupo 2)</span>

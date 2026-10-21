@@ -70,7 +70,28 @@ def get_zone_restriction_controller(
     return 200, rst.to_dict()
 
 
+from app.services.geo_service import get_network_telemetry
+
+
+def get_tactical_network_controller(
+    hora: str = "14:00",
+    services: Optional[ServiceContainer] = None,
+) -> Tuple[int, Dict[str, Any]]:
+    """Retrieves full Santiago tactical network telemetry, corridors, and live fleet markers."""
+    container = services or ServiceContainer.get_instance()
+    trucks = [t.to_dict() for t in container.fleet_service.get_all_trucks()]
+    return 200, get_network_telemetry(hora=hora, trucks=trucks)
+
+
 if HAS_FASTAPI:
+    @router.get("/tactical-network")
+    async def get_tactical_network_endpoint(
+        hora: str = "14:00",
+        services: ServiceContainer = Depends(get_services),
+    ):
+        status_code, data = get_tactical_network_controller(hora=hora, services=services)
+        return JSONResponse(status_code=status_code, content=data)
+
     @router.get("/fleet")
     async def get_fleet_endpoint(services: ServiceContainer = Depends(get_services)):
         status_code, data = get_fleet_controller(services=services)
