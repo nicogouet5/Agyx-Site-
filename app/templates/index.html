@@ -50,7 +50,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
   <!-- Comprehensive Local CSS Fallback (active if CDN is unavailable or offline) -->
-  <link rel="stylesheet" href="/static/css/app.css?v=6">
+  <link rel="stylesheet" href="/static/css/app.css?v=7">
   <script>
     // Purge legacy Cache-First Service Worker cache ('agyx-v1-cache') so the Dispatch Map is always visible
     if ('caches' in window) {
@@ -238,14 +238,17 @@
           <div id="realmap-controls-bar" class="flex flex-wrap items-center justify-between gap-2 bg-slate-900/80 border border-slate-800/90 rounded-xl px-3 py-1.5 text-xs font-mono">
             <div class="flex flex-wrap items-center gap-1.5">
               <span class="text-slate-400 text-[11px]">Capa:</span>
-              <button type="button" data-map-layer="carto-dark" class="map-layer-btn active-layer px-2.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 text-[11px] transition">
-                🌑 Carto Dark (Dispatch)
+              <button type="button" data-map-layer="google-dark" class="map-layer-btn active-layer px-2.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 text-[11px] transition">
+                🌑 Google Táctico (Dispatch)
               </button>
-              <button type="button" data-map-layer="osm-streets" class="map-layer-btn px-2.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] transition">
-                🗺️ Google / OSM Calles
+              <button type="button" data-map-layer="google-streets" class="map-layer-btn px-2.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] transition">
+                🗺️ Google Calles
               </button>
-              <button type="button" data-map-layer="esri-satellite" class="map-layer-btn px-2.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] transition">
-                🛰️ Satélite
+              <button type="button" data-map-layer="google-hybrid" class="map-layer-btn px-2.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] transition">
+                🛰️ Google Satélite
+              </button>
+              <button type="button" data-map-layer="osm-dark" class="map-layer-btn px-2.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] transition">
+                🌐 OSM Dark
               </button>
             </div>
 
@@ -1111,6 +1114,6 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-2"></div>
 
   <!-- App Main JavaScript Controller -->
-  <script src="/static/js/app.js?v=6"></script>
+  <script src="/static/js/app.js?v=7"></script>
 </body>
 </html>

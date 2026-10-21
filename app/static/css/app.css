@@ -316,6 +316,13 @@ button:disabled {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
 }
 
+/* Tactical Dark Tile Filter (Transforms Google Maps / OSM tiles into dark Dispatch Radar without watermarks or API keys) */
+.tactical-dark-tile,
+.tactical-dark-tile img.leaflet-tile,
+.tactical-dark-tile .leaflet-tile {
+  filter: brightness(0.62) invert(1) contrast(2.7) hue-rotate(200deg) saturate(0.28) !important;
+}
+
 /* Dark mode styling for Leaflet controls */
 .leaflet-control-zoom a {
   background-color: #0f172a !important;

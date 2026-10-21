@@ -1409,28 +1409,38 @@ document.addEventListener('DOMContentLoaded', () => {
         attributionControl: true,
       });
 
-      // CartoDB Dark Matter (Tactical Dispatch Default)
-      tileLayers['carto-dark'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19
+      // Google Maps Táctico Oscuro (Default Dispatch Theme - Sin marca de agua ni API key)
+      tileLayers['google-dark'] = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        subdomains: ['0', '1', '2', '3'],
+        className: 'tactical-dark-tile',
+        attribution: '&copy; Google Maps &mdash; Agyx Tactical Dispatch',
+        maxZoom: 20
       });
 
-      // OpenStreetMap / Google standard streets
-      tileLayers['osm-streets'] = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      // Google Maps Calles Reales (Full Color Streets)
+      tileLayers['google-streets'] = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        subdomains: ['0', '1', '2', '3'],
+        attribution: '&copy; Google Maps &mdash; Calles Santiago',
+        maxZoom: 20
+      });
+
+      // Google Maps Satélite Híbrido (Satellite + Streets)
+      tileLayers['google-hybrid'] = L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        subdomains: ['0', '1', '2', '3'],
+        attribution: '&copy; Google Maps &mdash; Satélite Híbrido RM',
+        maxZoom: 20
+      });
+
+      // OpenStreetMap Táctico (Zero-key fallback)
+      tileLayers['osm-dark'] = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         subdomains: 'abc',
+        className: 'tactical-dark-tile',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19
-      });
-
-      // Esri Satellite
-      tileLayers['esri-satellite'] = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; DigitalGlobe, GeoEye, Earthstar Geographics',
-        maxZoom: 18
       });
 
       // Add default dark layer
-      tileLayers['carto-dark'].addTo(leafletMap);
+      tileLayers['google-dark'].addTo(leafletMap);
 
       // Santiago Centro Exclusion Geofence Polygon (>5.000 kg 07:30–21:00)
       const geofenceCoords = [

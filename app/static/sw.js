@@ -3,11 +3,11 @@
  * Agyx PWA Service Worker — Network-First with Offline Fallback
  */
 
-const CACHE_NAME = 'agyx-v6-dispatch-realmap';
+const CACHE_NAME = 'agyx-v7-google-realmap';
 const STATIC_ASSETS = [
   '/',
-  '/static/css/app.css?v=6',
-  '/static/js/app.js?v=6',
+  '/static/css/app.css?v=7',
+  '/static/js/app.js?v=7',
   '/static/manifest.json',
   '/static/icons/icon-192.svg',
   '/static/icons/icon-512.svg',
