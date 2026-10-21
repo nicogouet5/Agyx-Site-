@@ -214,11 +214,60 @@ def main() -> int:
     if not result.wasSuccessful():
         return 1
 
+    # Clean up test pollution from data/agyx.db and data/bitacora_memoria_viva.json
+    # Leave only 4 clean demo proposals so the R4R queue is never overloaded
+    seed_clean_demo_state()
+
     print("\n" + "=" * 78)
     print(f"ALL ACCEPTANCE CRITERIA (14/14) AND AUTOMATED TESTS ({result.testsRun}/{result.testsRun}) PASSED!")
     print("=" * 78)
     return 0
 
 
+def seed_clean_demo_state() -> None:
+    """Purges test/adversarial rows from SQLite and JSON, leaving 4 clean representative proposals."""
+    import sqlite3
+    from app.config import SQLITE_DB_PATH, MEMORY_JSON_PATH
+
+    ServiceContainer.reset()
+    services = ServiceContainer.get_instance()
+    services.memory_service.reset_memory()
+
+    conn = sqlite3.connect(SQLITE_DB_PATH)
+    cur = conn.cursor()
+    cur.execute("DELETE FROM r4r_proposals")
+    cur.execute("DELETE FROM living_memory_rules")
+    cur.execute("DELETE FROM feedback_history")
+    cur.execute("DELETE FROM audit_log")
+    conn.commit()
+    conn.close()
+
+    with open(MEMORY_JSON_PATH, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "metadata": {
+                    "system": "Agyx Operational AI Agent",
+                    "version": "1.0.0",
+                },
+                "active_rules": [],
+                "feedback_history": [],
+                "proposals_log": [],
+                "propuestas_r4r": [],
+                "bitacora_feedback": [],
+                "living_memory_rules": [],
+            },
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
+
+    client = InProcessApiClient(services=services)
+    # Seed only 3 clean representative cases so the UI queue starts clean and uncluttered
+    client.post("/api/demo/run-case/CASO-1", json_data={"version_mode": "v1"})
+    client.post("/api/demo/run-case/CASO-2", json_data={"version_mode": "v1"})
+    client.post("/api/demo/run-case/CASO-5", json_data={"version_mode": "v1"})
+
+
 if __name__ == "__main__":
     sys.exit(main())
+

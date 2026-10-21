@@ -46,7 +46,31 @@
   </script>
 
   <!-- Comprehensive Local CSS Fallback (active if CDN is unavailable or offline) -->
-  <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/app.css?v=5">
+  <script>
+    // Purge legacy Cache-First Service Worker cache ('agyx-v1-cache') so the Dispatch Map is always visible
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        var purged = false;
+        names.forEach(function(name) {
+          if (name === 'agyx-v1-cache') {
+            caches.delete(name);
+            purged = true;
+          }
+        });
+        if (purged && !sessionStorage.getItem('agyx_sw_purged')) {
+          sessionStorage.setItem('agyx_sw_purged', '1');
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              Promise.all(regs.map(function(r) { return r.unregister(); })).then(function() {
+                window.location.reload();
+              });
+            });
+          }
+        }
+      });
+    }
+  </script>
 </head>
 <body class="min-h-full flex flex-col bg-slate-950 font-sans antialiased text-slate-100 selection:bg-sky-500 selection:text-white">
 
@@ -177,33 +201,21 @@
         <!-- Quick Scenario / Rubric Cases Selector Bar -->
         <div id="radar-body-container" class="flex flex-col gap-3.5">
           <div class="flex flex-wrap items-center gap-1.5">
-            <span class="text-[11px] text-slate-400 font-mono mr-1">Misiones Certamen 2:</span>
+            <span class="text-[11px] text-slate-400 font-mono mr-1">Rutas Rápidas:</span>
             <button type="button" data-radar-case="CASO-1" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-mono transition">
               🟢 Caso 1: Pudahuel 3.2t
             </button>
             <button type="button" data-radar-case="CASO-2" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-mono transition">
-              🟡 Caso 2: San Bernardo 10t (Acto 4)
+              🟡 Caso 2: San Bernardo 10t
             </button>
             <button type="button" data-radar-case="CASO-3-V1" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-rose-300 text-[11px] font-mono transition">
-              🔴 Caso 3 (v1): Centro 11:30 Infracción
+              🔴 Caso 3 (v1): Infracción 11:30
             </button>
             <button type="button" data-radar-case="CASO-3-V2" class="radar-case-btn active-radar-case px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-emerald-300 text-[11px] font-mono transition">
               🛡️ Caso 3 (v2): Nocturno 21:30
             </button>
             <button type="button" data-radar-case="CASO-3-SPLIT" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-sky-300 text-[11px] font-mono transition">
               🚚🚚 Caso 3 (v2): Split 2x 5t
-            </button>
-            <button type="button" data-radar-case="CASO-4" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-amber-300 text-[11px] font-mono transition">
-              ⚠️ Caso 4: Info Incompleta
-            </button>
-            <button type="button" data-radar-case="CASO-5" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-rose-400 text-[11px] font-mono transition">
-              ⛔ Caso 5: CAM-04 Falla Frenos
-            </button>
-            <button type="button" data-radar-case="CASO-6" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-purple-300 text-[11px] font-mono transition">
-              ☣️ Caso 6: Ácido D.S. 298
-            </button>
-            <button type="button" data-radar-case="LIRA-953" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-teal-500/40 text-teal-300 text-[11px] font-mono transition">
-              📍 Lira 953 Centro
             </button>
           </div>
 
@@ -1043,6 +1055,6 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-2"></div>
 
   <!-- App Main JavaScript Controller -->
-  <script src="/static/js/app.js"></script>
+  <script src="/static/js/app.js?v=5"></script>
 </body>
 </html>

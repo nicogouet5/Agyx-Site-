@@ -400,10 +400,24 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
       <div>
+        <button type="button" class="w-full mt-2 py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sky-300 font-mono text-[11px] transition flex items-center justify-center gap-1.5" data-radar-focus>
+          <span>🗺️ Ver Ruta en Radar Dispatch</span>
+        </button>
         ${actionButton}
       </div>
     `;
 
+    card.querySelector('[data-radar-focus]')?.addEventListener('click', () => {
+      const cid = String(prop.case_id || '').toUpperCase();
+      if (cid.includes('CASO-1')) setRadarScenario('CASO-1');
+      else if (cid.includes('CASO-2')) setRadarScenario('CASO-2');
+      else if (cid.includes('CASO-4')) setRadarScenario('CASO-4');
+      else if (cid.includes('CASO-5')) setRadarScenario('CASO-5');
+      else if (cid.includes('CASO-6')) setRadarScenario('CASO-6');
+      else if (cid.includes('LIRA')) setRadarScenario('LIRA-953');
+      else setRadarScenario('CASO-3-V2');
+      document.getElementById('tactical-command-radar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
     card.querySelector('[data-review-action]')?.addEventListener('click', () => window.openReviewModal(prop.case_id));
 
     return card;

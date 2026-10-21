@@ -1,101 +1,87 @@
 /**
  * app/static/sw.js
- * Agyx PWA Service Worker — Offline Shell and Static Asset Caching
+ * Agyx PWA Service Worker — Network-First with Offline Fallback
  */
 
-const CACHE_NAME = 'agyx-v1-cache';
+const CACHE_NAME = 'agyx-v5-dispatch-radar';
 const STATIC_ASSETS = [
   '/',
-  '/static/css/app.css',
-  '/static/js/app.js',
+  '/static/css/app.css?v=5',
+  '/static/js/app.js?v=5',
   '/static/manifest.json',
   '/static/icons/icon-192.svg',
   '/static/icons/icon-512.svg',
   '/static/icons/favicon.svg',
 ];
 
-// Install Event: Pre-cache static UI shell
+// Install Event: Pre-cache static UI shell and activate immediately
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ServiceWorker] Pre-caching offline static assets');
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(STATIC_ASSETS).catch(() => {});
     })
   );
-  self.skipWaiting();
 });
 
-// Activate Event: Clean up outdated caches
+// Activate Event: Purge all legacy caches (especially agyx-v1-cache)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('[ServiceWorker] Removing old cache:', cache);
             return caches.delete(cache);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch Event: Cache-First for static assets, Network-First for API calls
+// Fetch Event: Network-First for all requests so UI updates are always immediate
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
   const url = new URL(event.request.url);
 
-  // For API calls: Network first, fall back to offline JSON if offline
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          return response;
-        })
-        .catch(() => {
-          // Offline fallback response for API
-          return new Response(
-            JSON.stringify({
-              offline: true,
-              message: 'Conexión sin red. Los datos se sincronizarán al recuperar conectividad.',
-            }),
-            {
-              status: 200,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          );
-        })
+      fetch(event.request).catch(() => {
+        return new Response(
+          JSON.stringify({
+            offline: true,
+            message: 'Conexión sin red. Los datos se sincronizarán al recuperar conectividad.',
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      })
     );
     return;
   }
 
-  // For Static Assets and Page Shell: Cache first, then Network
+  // Network-First for HTML, CSS, JS, and assets
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request)
-        .then((networkResponse) => {
-          if (
-            !networkResponse ||
-            networkResponse.status !== 200 ||
-            networkResponse.type !== 'basic'
-          ) {
-            return networkResponse;
-          }
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
           });
-          return networkResponse;
-        })
-        .catch(() => {
-          if (event.request.headers.get('accept').includes('text/html')) {
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) return cachedResponse;
+          if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
             return caches.match('/');
           }
         });
-    })
+      })
   );
 });
