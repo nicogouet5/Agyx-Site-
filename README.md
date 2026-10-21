@@ -40,7 +40,7 @@ Luego abrir en el navegador: **`http://localhost:8000`**
 
 ### Ejemplo de mapa operativo: Lira 953
 
-En la pestaña de casos, pulsa **“Usar Lira 953 como destino”**. El formulario carga una orden de 9.500 kg a las 11:30. Al evaluarla, el agente identifica esa referencia precargada como Santiago Centro y deja una propuesta `R4R` para las 21:30, sujeta a revisión del Coordinador. El panel de mapa es ilustrativo: no consulta rutas, tráfico ni permisos en vivo; la referencia se resuelve con un catálogo local de una sola dirección.
+En la pestaña de casos, pulsa **“Usar Lira 953 como destino”**. El formulario carga una orden de 9.500 kg a las 11:30. El agente identifica esa referencia precargada como Santiago Centro. Con memoria limpia retiene el caso en `R4R_INFO_INCOMPLETA`, sin asignar camión; después de registrar el rechazo humano del Caso 3 y su regla operativa, `v2` propone las 21:30 en `R4R`, sujeto a revisión del Coordinador. El panel de mapa es ilustrativo: no consulta rutas, tráfico ni permisos en vivo; la referencia se resuelve con un catálogo local de una sola dirección.
 
 PDF para revisión: `entregables/ficha_diseno_certamen2.pdf` (4 páginas), `entregables/matriz_6_pruebas.pdf` y `entregables/guia_readme.pdf`. El logo y formato están adaptados del PDF de referencia aportado por el equipo, con paleta turquesa.
 
