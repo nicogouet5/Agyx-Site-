@@ -409,6 +409,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return '<span class="badge-bloqueado">⛔ Bloqueo Riesgo</span>';
       case 'R4R_INFO_INCOMPLETA':
         return '<span class="badge-info-incompleta">⚠️ Info Incompleta</span>';
+      case 'AVAILABLE':
+        return '<span class="px-2 py-0.5 rounded-full text-[11px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">🟢 FLOTA DISPONIBLE</span>';
       default:
         return `<span class="badge-r4r">${escapeHtml(status)}</span>`;
     }
@@ -1250,31 +1252,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (hasNewOrder && data.latest_order) {
             const ord = data.latest_order;
             playIncomingOrderChime();
-            showToast(
-              `🚨 NUEVA SOLICITUD EN VIVO (${ord.case_id}): ${ord.origen} ➔ ${ord.destino} (${(ord.peso_kg || 0).toLocaleString('es-CL')} kg)`,
-              'success',
-              8000
-            );
-
-            // Show live incoming banner
-            const banner = document.getElementById('live-incoming-alert');
-            const detail = document.getElementById('live-incoming-detail');
-            const btnRev = document.getElementById('btn-live-alert-review');
-            if (banner && detail) {
-              detail.textContent = `${ord.case_id} · Cliente: ${ord.cliente_nombre || 'Portal Web'} · ${ord.origen} ➔ ${ord.destino} (${(ord.peso_kg || 0).toLocaleString('es-CL')} kg) · Tarifa IA: $${Number(ord.total_clp || 0).toLocaleString('es-CL')} CLP`;
-              banner.classList.remove('hidden');
-            }
-            if (btnRev) {
-              btnRev.onclick = () => {
-                focusProposalOnRadar(ord);
-                if (ord.estado === 'R4R') {
-                  window.openReviewModal(ord.case_id);
-                } else {
-                  switchTab('tab-queue');
-                }
-              };
-            }
-            // Automatically plot new customer order route on map
+            // Automatically plot new customer order route on map and update HUD cleanly
             focusProposalOnRadar(ord);
           }
         }
@@ -1291,37 +1269,31 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateOperatingModeButtons() {
     const btnReal = document.getElementById('btn-mode-realistic');
     const btnCert = document.getElementById('btn-mode-certamen');
+    const quickBar = document.getElementById('radar-scenarios-bar');
     if (!btnReal || !btnCert) return;
 
     if (state.operatingMode === 'realistic') {
-      btnReal.className = 'px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-sm';
-      btnCert.className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-xs font-mono transition flex items-center gap-1.5';
+      btnReal.className = 'px-3.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-sm';
+      btnCert.className = 'px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-xs font-mono transition flex items-center gap-1.5';
+      if (quickBar) quickBar.classList.add('hidden');
     } else {
-      btnReal.className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-xs font-mono transition flex items-center gap-1.5';
-      btnCert.className = 'px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40 text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-sm';
+      btnReal.className = 'px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-xs font-mono transition flex items-center gap-1.5';
+      btnCert.className = 'px-3.5 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40 text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-sm';
+      if (quickBar) quickBar.classList.remove('hidden');
     }
   }
 
   window.setOperatingMode = async function(mode) {
     try {
-      showToast(mode === 'realistic' ? 'Activando Modo Operativo Real (Limpio)...' : 'Cargando Casos de Certamen 2...', 'info');
       const res = await fetch(`/api/demo/mode/${mode}`, { method: 'POST' });
       if (res.ok) {
         state.operatingMode = mode;
         updateOperatingModeButtons();
         await refreshAllData();
-        showToast(
-          mode === 'realistic'
-            ? '✨ Modo Realista Activado: Bandeja vacía y flota 100% disponible en bases de guarda.'
-            : '📚 Casos de Certamen 2 cargados en cola R4R (Casos 1, 2 y 5).',
-          'success'
-        );
-      } else {
-        const err = await res.json();
-        showToast(`Error al cambiar modo: ${err.detail || 'Falla'}`, 'error');
+        setRadarScenario(mode === 'realistic' ? 'REALISTIC-IDLE' : 'CASO-1');
       }
     } catch (e) {
-      showToast('Error de red al cambiar modo operativo', 'error');
+      console.warn('Error al cambiar modo:', e);
     }
   };
 
@@ -1358,7 +1330,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Evaluator Mode Drawer Toggle
     const btnEvalDrawer = document.getElementById('btn-toggle-evaluator-drawer');
     const btnCloseEvalDrawer = document.getElementById('btn-close-evaluator-drawer');
-    const evalDrawer = document.getElementById('evaluator-drawer-panel');
+    const evalDrawer = document.getElementById('evaluator-rubric-drawer');
     if (btnEvalDrawer && evalDrawer) {
       btnEvalDrawer.addEventListener('click', () => {
         evalDrawer.classList.toggle('hidden');
@@ -1635,6 +1607,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- DISPATCH TACTICAL RADAR ENGINE (INSPIRED BY "DISPATCH" GAME UI) ---
   const RADAR_SCENARIOS = {
+    'REALISTIC-IDLE': {
+      caseId: 'IDLE',
+      label: '✨ EN ESPERA DE SOLICITUDES',
+      routeLabel: 'Red Gran Santiago Operativa',
+      eta: 'En Base de Guarda',
+      hora: '11:30',
+      congestionLabel: 'MONITOREO ACTIVO',
+      trucks: '6 unidades disponibles en bases',
+      schedule: 'Listo para asignar',
+      tariff: '$0 CLP',
+      status: 'AVAILABLE',
+      primaryPath: '',
+      primaryColor: '#10b981',
+      secondaryPath: '',
+      alertClass: 'bg-slate-900/60 border-slate-800',
+      alertTitle: '🟢 MONITOREO DE DESPACHO EN VIVO',
+      alertTitleColor: 'text-slate-300',
+      alertDesc: 'Bandeja operativa limpia. Ingrese una solicitud desde el formulario (/solicitar) para ver el enrutamiento, cotización IA y supervisión humana.',
+      payload: null,
+      origin: null,
+      destination: null,
+      waypoints: [],
+      zoomTarget: [-33.4450, -70.6600],
+      zoomLevel: 12,
+    },
     'CASO-1': {
       caseId: 'CASO-1',
       label: 'CASO-1 (Normal Hoy)',
@@ -1863,7 +1860,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
-  let currentRadarKey = 'CASO-3-V2';
+  let currentRadarKey = 'REALISTIC-IDLE';
 
   // --- REAL DYNAMIC SANTIAGO LEAFLET MAP CONTROLLER ---
   let leafletMap = null;
@@ -2170,8 +2167,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update direct Google Maps link button
     const btnGmaps = document.getElementById('btn-open-google-maps');
-    if (btnGmaps && sc.origin && sc.destination) {
-      btnGmaps.href = `https://www.google.com/maps/dir/?api=1&origin=${sc.origin[0]},${sc.origin[1]}&destination=${sc.destination[0]},${sc.destination[1]}&travelmode=driving`;
+    if (btnGmaps) {
+      if (sc.origin && sc.destination) {
+        btnGmaps.href = `https://www.google.com/maps/dir/?api=1&origin=${sc.origin[0]},${sc.origin[1]}&destination=${sc.destination[0]},${sc.destination[1]}&travelmode=driving`;
+        btnGmaps.classList.remove('opacity-40', 'pointer-events-none');
+      } else {
+        btnGmaps.href = '#';
+        btnGmaps.classList.add('opacity-40', 'pointer-events-none');
+      }
     }
   }
 
@@ -2438,8 +2441,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnHudEval) {
       btnHudEval.addEventListener('click', async () => {
         const sc = RADAR_SCENARIOS[currentRadarKey];
-        if (!sc || !sc.payload) return;
-        showToast(`Evaluando misión ${sc.caseId} en motor de despacho...`, 'info');
+        if (!sc || !sc.payload) {
+          switchTab('tab-queue');
+          return;
+        }
         try {
           const res = await fetch('/api/dispatch/evaluate', {
             method: 'POST',
@@ -2447,12 +2452,10 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify(sc.payload),
           });
           if (res.ok) {
-            const data = await res.json();
             await refreshAllData();
-            showToast(`✅ Misión ${sc.caseId} registrada en Cola R4R (${data.status}). auto_approved=False`, 'success');
           }
         } catch (err) {
-          showToast('Error al evaluar misión en radar.', 'error');
+          console.warn('Error al evaluar misión en radar.', err);
         }
       });
     }
@@ -2461,7 +2464,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnHudModal) {
       btnHudModal.addEventListener('click', async () => {
         const sc = RADAR_SCENARIOS[currentRadarKey];
-        if (!sc) return;
+        if (currentRadarKey === 'REALISTIC-IDLE' || !sc || !sc.payload) {
+          if (state.r4rQueue.length > 0) {
+            window.openReviewModal(state.r4rQueue[0].case_id);
+          } else {
+            switchTab('tab-queue');
+          }
+          return;
+        }
         let exists = state.r4rQueue.find(p => p.case_id === sc.caseId);
         if (!exists && sc.payload) {
           await fetch('/api/dispatch/evaluate', {
@@ -2481,6 +2491,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- TOAST NOTIFICATIONS ENGINE ---
   function showToast(message, type = 'info', duration = 4000) {
+    // In realistic / clean mode, completely silence toasts to avoid popup clutter
+    if (state.operatingMode === 'realistic' && type !== 'error') return;
     if (!el.toastContainer) return;
 
     const toast = document.createElement('div');
@@ -2532,6 +2544,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Run initialization
   setupTacticalRadarListeners();
-  setRadarScenario('CASO-3-V2');
+  setRadarScenario('REALISTIC-IDLE');
   init();
 });

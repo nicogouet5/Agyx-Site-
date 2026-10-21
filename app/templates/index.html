@@ -78,70 +78,37 @@
         </div>
       </div>
 
-      <!-- Primary Operational Actions: Realistic Mode Toggle, Client Portal Link, Quick Demo Order, Evaluator & Mobile -->
-      <div class="flex flex-wrap items-center gap-2">
+      <!-- Primary Operational Actions: Clean Mode Toggle, Client Form, and Evaluator -->
+      <div class="flex items-center gap-2.5">
         <!-- Operating Mode Switcher: Realistic (Clean, All Available) vs Certamen (Rubric Cases) -->
         <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner" role="group" aria-label="Modo de Operación">
-          <button id="btn-mode-realistic" type="button" onclick="window.setOperatingMode('realistic')" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-sm" title="Modo Operativo Real: Bandeja limpia (0 órdenes), flota 100% disponible en bases, esperando pedidos externos">
-            <span>✨ Modo Realista (Limpio)</span>
+          <button id="btn-mode-realistic" type="button" onclick="window.setOperatingMode('realistic')" class="px-3.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-sm" title="Modo Operativo Real: Bandeja limpia (0 órdenes), flota 100% disponible en bases, esperando pedidos externos">
+            <span>✨ Modo Limpio</span>
           </button>
-          <button id="btn-mode-certamen" type="button" onclick="window.setOperatingMode('certamen')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-xs font-mono transition flex items-center gap-1.5" title="Cargar los casos de prueba de la rúbrica del Certamen 2 (Casos 1, 2 y 5)">
+          <button id="btn-mode-certamen" type="button" onclick="window.setOperatingMode('certamen')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-xs font-mono transition flex items-center gap-1.5" title="Cargar los casos de prueba de la rúbrica del Certamen 2 (Casos 1, 2 y 5)">
             <span>📚 Casos Certamen</span>
           </button>
         </div>
 
-        <!-- Direct Customer Form Link & One-Click Live Simulation -->
-        <a id="btn-client-portal-link" href="/solicitar" target="_blank" rel="noopener" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-950/50 transition active:scale-95 flex items-center gap-1.5" title="Abrir el formulario en vivo que utiliza el cliente (/solicitar)">
-          <span>🌐 Formulario Cliente</span>
+        <!-- Direct Customer Form Link -->
+        <a id="btn-client-portal-link" href="/solicitar" target="_blank" rel="noopener" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-950/50 transition active:scale-95 flex items-center gap-1.5" title="Abrir el formulario en vivo que utiliza el cliente (/solicitar)">
+          <span>🌐 Abrir Formulario Cliente (/solicitar)</span>
         </a>
-        <button id="btn-quick-live-order" type="button" onclick="window.triggerQuickDemoOrder()" class="px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-mono font-bold text-xs transition active:scale-95 flex items-center gap-1.5" title="Simular la llegada instantánea de una orden de cliente externo para demostración">
-          <span>⚡ Simular Pedido en Vivo</span>
-        </button>
 
-        <button id="btn-open-share-modal" type="button" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-mono text-xs transition active:scale-95 flex items-center gap-1" title="Compartir link o código QR para que otra persona envíe una solicitud en vivo">
-          <span>📲 QR</span>
-        </button>
-        <button id="btn-toggle-evaluator-drawer" type="button" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-mono text-xs transition active:scale-95 flex items-center gap-1" title="Mostrar u ocultar herramientas de evaluación de rúbrica y PDFs del Certamen 2">
+        <!-- Evaluator Drawer Toggle for Rubrics -->
+        <button id="btn-toggle-evaluator-drawer" type="button" class="px-3 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700 font-mono text-xs transition active:scale-95 flex items-center gap-1.5" title="Mostrar u ocultar herramientas de evaluación de rúbrica y PDFs del Certamen 2">
           <span>🎓 Evaluador</span>
-        </button>
-        <button id="btn-toggle-view" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs shadow-sm transition active:scale-95" title="Alternar entre consola de escritorio y vista smartphone">
-          <span id="toggle-icon">📱</span>
         </button>
       </div>
 
     </div>
   </header>
 
-  <!-- Main Viewport Area: Can render in Desktop Full Width or inside Smartphone Simulator -->
+  <!-- Main Viewport Area: Wide layout -->
   <main id="app-viewport-wrapper" class="flex-1 flex justify-center py-4 px-2 md:px-4">
     
     <!-- DESKTOP MODE CONTAINER (Default wide layout) -->
     <div id="desktop-view-container" class="w-full max-w-7xl mx-auto flex flex-col gap-5">
-
-      <!-- LIVE INCOMING CUSTOMER ORDER BANNER (Triggered automatically when someone submits from /solicitar) -->
-      <section id="live-incoming-alert" class="hidden bg-gradient-to-r from-emerald-950/90 via-sky-950/90 to-slate-900 border-2 border-emerald-400/70 rounded-2xl p-4 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4 animate-pulse">
-        <div class="flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-2xl">
-            🔔
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-mono font-black text-[10px] uppercase">NUEVA SOLICITUD DE CLIENTE EN VIVO</span>
-              <span id="live-alert-id" class="font-mono font-bold text-sky-300 text-xs">SOL-0000</span>
-            </div>
-            <h3 id="live-alert-title" class="text-sm font-bold text-white mt-0.5">Cliente externo ha enviado un nuevo pedido</h3>
-            <p id="live-alert-detail" class="text-xs text-slate-300"></p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2 shrink-0">
-          <button id="btn-live-alert-review" type="button" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg transition">
-            ✍️ Revisar y Firmar Ahora
-          </button>
-          <button type="button" onclick="document.getElementById('live-incoming-alert').classList.add('hidden')" class="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">
-            ✕
-          </button>
-        </div>
-      </section>
 
       <!-- COLLAPSIBLE EVALUATOR / CERTAMEN 2 DRAWER (Hidden by default so main UI is 100% real operational system) -->
       <div id="evaluator-rubric-drawer" class="hidden flex flex-col gap-4 bg-slate-900/95 border border-indigo-500/40 rounded-2xl p-4 shadow-xl">
@@ -175,6 +142,9 @@
             </button>
             <button type="button" onclick="document.querySelector('[data-tab=&quot;tab-case3&quot;]')?.click()" class="px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-mono transition">
               3. Ejecutar Paso a Paso v1➔v2
+            </button>
+            <button id="btn-toggle-view" type="button" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 font-mono transition flex items-center gap-1" title="Alternar entre consola de escritorio y vista smartphone">
+              <span id="toggle-icon">📱</span> <span>Simulador Móvil</span>
             </button>
           </div>
         </div>
@@ -291,8 +261,8 @@
             </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-1.5">
-            <span class="text-[11px] text-slate-400 font-mono mr-1">Rutas Rápidas:</span>
+          <div id="radar-scenarios-bar" class="hidden flex flex-wrap items-center gap-1.5">
+            <span class="text-[11px] text-slate-400 font-mono mr-1">Rutas Rápidas Certamen:</span>
             <button type="button" data-radar-case="CASO-1" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-mono transition">
               🟢 Caso 1: Pudahuel 3.2t
             </button>
@@ -383,7 +353,7 @@
                   <!-- Secondary Split Route (Used when 2x 5t split is active) -->
                   <path id="svg-route-secondary" d="" fill="none" stroke="#38bdf8" stroke-width="3.5" class="radar-route-split-anim hidden" filter="url(#radar-glow)" />
                   <!-- Primary Tactical Route -->
-                  <path id="svg-route-primary" d="M 350 82 Q 415 155 455 240" fill="none" stroke="#10b981" stroke-width="4.5" class="radar-route-anim" filter="url(#radar-glow)" />
+                  <path id="svg-route-primary" d="" fill="none" stroke="#10b981" stroke-width="4.5" class="radar-route-anim" filter="url(#radar-glow)" />
                 </g>
 
                 <!--highway labels -->
@@ -477,40 +447,40 @@
               <div>
                 <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
                   <div>
-                    <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Misión Activa en Radar</span>
-                    <strong id="hud-case-id" class="text-sm font-mono text-sky-400">CASO-3 (v2 Nocturno)</strong>
+                    <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Misión en Radar</span>
+                    <strong id="hud-case-id" class="text-sm font-mono text-emerald-400">✨ SISTEMA EN VIVO</strong>
                   </div>
-                  <span id="hud-status-badge" class="badge-r4r">🔒 R4R Bloqueado</span>
+                  <span id="hud-status-badge" class="px-2 py-0.5 rounded-full text-[11px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">🟢 FLOTA DISPONIBLE</span>
                 </div>
 
                 <!-- Key Telemetry Metrics Grid -->
                 <div class="grid grid-cols-2 gap-2 my-3">
                   <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/90">
                     <span class="text-[10px] font-mono text-slate-400 block">RUTA / DISTANCIA</span>
-                    <strong id="hud-route-distance" class="text-xs font-mono text-white">Quilicura ➔ Centro (14.2 km)</strong>
+                    <strong id="hud-route-distance" class="text-xs font-mono text-white">Red Gran Santiago Operativa</strong>
                   </div>
                   <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/90">
                     <span class="text-[10px] font-mono text-slate-400 block">ETA &amp; CONGESTIÓN</span>
-                    <strong id="hud-eta" class="text-xs font-mono text-emerald-400">21 min (0.90x Fluido)</strong>
+                    <strong id="hud-eta" class="text-xs font-mono text-slate-300">En Base de Guarda</strong>
                   </div>
                   <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/90">
                     <span class="text-[10px] font-mono text-slate-400 block">FLOTA ASIGNADA</span>
-                    <strong id="hud-trucks" class="text-xs font-mono text-sky-300">CAM-05 (Volvo 12t)</strong>
+                    <strong id="hud-trucks" class="text-xs font-mono text-sky-300">6 unidades disponibles</strong>
                   </div>
                   <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/90">
                     <span class="text-[10px] font-mono text-slate-400 block">VENTANA / SLA</span>
-                    <strong id="hud-schedule" class="text-xs font-mono text-amber-300">Hoy 21:30 hrs (SLA 2.5h)</strong>
+                    <strong id="hud-schedule" class="text-xs font-mono text-slate-300">En espera de solicitudes</strong>
                   </div>
                 </div>
 
-                <!-- Checkpoint / Legal / Safety Alert Box -->
-                <div id="hud-alert-box" class="p-3 rounded-xl bg-emerald-950/25 border border-emerald-500/40 text-xs flex flex-col gap-1">
+                <!-- Checkpoint / Status Box -->
+                <div id="hud-alert-box" class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs flex flex-col gap-1">
                   <div class="flex items-center justify-between">
-                    <span id="hud-alert-title" class="font-bold text-emerald-300 font-mono text-[11px]">🛡️ REGLA MEMORIA VIVA APLICADA</span>
-                    <span class="text-[10px] font-mono text-slate-400">auto_approved: False</span>
+                    <span id="hud-alert-title" class="font-bold text-slate-300 font-mono text-[11px]">🟢 MONITOREO DE DESPACHO EN VIVO</span>
+                    <span class="text-[10px] font-mono text-emerald-400">0 pendientes</span>
                   </div>
-                  <p id="hud-alert-desc" class="text-[11px] text-slate-300 leading-relaxed">
-                    Carga de 9.500 kg supera límite diurno (&gt;5t) en Santiago Centro. Agente reprograma salida a ventana nocturna (21:30 hrs) o permite split 2x 5t.
+                  <p id="hud-alert-desc" class="text-[11px] text-slate-400 leading-relaxed">
+                    Bandeja operativa limpia. Ingrese una solicitud desde el formulario (/solicitar) para ver el enrutamiento, cotización IA y supervisión humana.
                   </p>
                 </div>
               </div>
@@ -518,8 +488,8 @@
               <!-- Action Buttons inside HUD -->
               <div class="flex flex-col gap-2 pt-2 border-t border-slate-800/80">
                 <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Tarifa Estimada: <strong id="hud-tariff" class="text-emerald-400">$135.000 CLP</strong></span>
-                  <span>Firma Humana: <strong class="text-amber-300">REQUERIDA</strong></span>
+                  <span>Tarifa Estimada: <strong id="hud-tariff" class="text-slate-400">$0 CLP</strong></span>
+                  <span>Supervisión: <strong class="text-emerald-400">EN ESPERA</strong></span>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                   <button type="button" id="btn-hud-evaluate" class="py-2 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs shadow transition active:scale-95">

@@ -261,11 +261,8 @@ def seed_clean_demo_state() -> None:
             ensure_ascii=False,
         )
 
-    client = InProcessApiClient(services=services)
-    # Seed only 3 clean representative cases so the UI queue starts clean and uncluttered
-    client.post("/api/demo/run-case/CASO-1", json_data={"version_mode": "v1"})
-    client.post("/api/demo/run-case/CASO-2", json_data={"version_mode": "v1"})
-    client.post("/api/demo/run-case/CASO-5", json_data={"version_mode": "v1"})
+    # Reset fleet to base depots and leave 0 proposals so dashboard starts in Modo Limpio
+    services.fleet_service.reset_live_fleet()
 
 
 if __name__ == "__main__":
