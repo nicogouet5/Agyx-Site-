@@ -38,6 +38,7 @@ class ReviewProposalRequest(APIModel):
     supervisor_name: str = Field(min_length=1, max_length=160)
     rejected_reason: Optional[str] = Field(default=None, max_length=2_000)
     signature_token: Optional[str] = Field(default=None, max_length=512)
+    proposal_backup: Optional[Dict[str, Any]] = Field(default=None)
 
 
 class InactivityRequest(APIModel):

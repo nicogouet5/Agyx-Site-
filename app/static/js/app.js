@@ -693,6 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
           case_id: state.selectedProposal.case_id,
           action: 'APPROVE',
           supervisor_name: supervisor,
+          proposal_backup: state.selectedProposal,
         }),
       });
 
@@ -735,6 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
           action: 'REJECT',
           supervisor_name: supervisor,
           rejected_reason: reason,
+          proposal_backup: state.selectedProposal,
         }),
       });
 

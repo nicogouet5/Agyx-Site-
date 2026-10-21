@@ -94,6 +94,43 @@ def review_proposal_controller(
     else:
         clean_reason = None
 
+    # Auto-recovery for serverless cold-start micro-VMs:
+    # If the proposal is not in the local container's SQLite, recover from proposal_backup or synthesize live order
+    existing_prop = container.r4r_service.get_proposal(case_id)
+    if not existing_prop:
+        backup = payload.get("proposal_backup") or {}
+        pdata = backup.get("proposal_data") or {}
+        if backup or case_id.startswith("SOL-") or case_id.startswith("PED-"):
+            camiones = backup.get("camiones") or pdata.get("camiones") or ["CAM-01"]
+            origen = backup.get("origen") or pdata.get("origen") or "Quilicura"
+            destino = backup.get("destino") or pdata.get("destino") or "Santiago"
+            fecha_hora = backup.get("fecha_hora_programada") or pdata.get("fecha_hora_programada") or "Hoy"
+            tarifa = float(backup.get("total_clp") or pdata.get("total_clp") or 65000.0)
+            sla = float(backup.get("sla_horas") or pdata.get("sla_horas") or 2.0)
+            obs = backup.get("observaciones") or pdata.get("observaciones") or "Pedido en vivo (auto-recuperado en nodo serverless)."
+            try:
+                container.r4r_service.create_proposal(
+                    case_id=case_id,
+                    camiones_asignados=camiones,
+                    origen=origen,
+                    destino=destino,
+                    fecha_hora_programada=fecha_hora,
+                    tarifa_base_clp=tarifa,
+                    recargo_clp=0.0,
+                    sla_horas=sla,
+                    estado_caso="R4R",
+                    observaciones=obs,
+                )
+                extra_meta = dict(pdata)
+                extra_meta["is_live_order"] = True
+                if backup.get("cliente_nombre"):
+                    extra_meta["cliente_nombre"] = backup["cliente_nombre"]
+                if backup.get("cliente_contacto"):
+                    extra_meta["cliente_contacto"] = backup["cliente_contacto"]
+                container.r4r_service.enrich_proposal_metadata(case_id, extra_meta)
+            except Exception:
+                pass
+
     try:
         review_result = container.r4r_service.review_proposal(
             case_id=case_id,
