@@ -291,7 +291,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // If queue is active, render mobile cards
     if (state.activeTab === 'tab-queue') {
-      const pending = state.r4rQueue.filter(p => p.estado === 'R4R');
+      let pending = state.r4rQueue.filter(p => p.estado === 'R4R');
+      if (state.operatingMode === 'realistic') {
+        pending = pending.filter(item => {
+          const cid = String(item.case_id || '').toUpperCase();
+          return !cid.startsWith('CASO-') && (item.es_pedido_cliente || cid.startsWith('SOL-') || cid.startsWith('PED-') || (item.proposal_data && item.proposal_data.is_live_order));
+        });
+      }
       if (pending.length === 0) {
         el.mobileContent.innerHTML = `
           <div class="text-center py-8 text-slate-400 text-xs">
@@ -340,11 +346,22 @@ document.addEventListener('DOMContentLoaded', () => {
     el.r4rCardsList.innerHTML = '';
 
     let items = state.r4rQueue;
+
+    // In realistic clean mode, filter out academic mock test cases CASO-1..6
+    // ONLY display live orders submitted by external clients (/solicitar)
+    if (state.operatingMode === 'realistic') {
+      items = items.filter(item => {
+        const cid = String(item.case_id || '').toUpperCase();
+        return !cid.startsWith('CASO-') && (item.es_pedido_cliente || cid.startsWith('SOL-') || cid.startsWith('PED-') || (item.proposal_data && item.proposal_data.is_live_order));
+      });
+    }
+
     if (state.queueFilter !== 'ALL') {
       items = items.filter(item => item.estado === state.queueFilter);
     }
 
-    if (el.queueBadgeCount) el.queueBadgeCount.textContent = state.r4rQueue.filter(i => i.estado === 'R4R').length;
+    const pendingCount = items.filter(i => i.estado === 'R4R').length;
+    if (el.queueBadgeCount) el.queueBadgeCount.textContent = pendingCount;
     if (el.queueVisibleCount) el.queueVisibleCount.textContent = items.length;
 
     if (items.length === 0) {
@@ -419,6 +436,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function focusProposalOnRadar(prop) {
     if (!prop) return;
     const cid = String(prop.case_id || '').toUpperCase();
+
+    // IN REALISTIC MODE: strictly forbid hardcoded academic test cases (CASO-1..6)
+    // from hijacking the radar HUD or map!
+    if (state.operatingMode === 'realistic' && cid.startsWith('CASO-')) {
+      return;
+    }
+
     if (cid === 'CASO-1') { setRadarScenario('CASO-1'); return; }
     if (cid === 'CASO-2') { setRadarScenario('CASO-2'); return; }
     if (cid === 'CASO-4') { setRadarScenario('CASO-4'); return; }
@@ -445,6 +469,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setText('hud-tariff', `$${totalCLP} CLP`);
     setText('hud-alert-title', prop.es_pedido_cliente ? `⚡ PEDIDO EN VIVO · ${prop.cliente_nombre || 'Cliente Externo'}` : `📦 ORDEN ${prop.case_id}`);
     setText('hud-alert-desc', prop.observaciones || `Carga de ${(prop.peso_kg || 0).toLocaleString('es-CL')} kg desde ${prop.origen} hacia ${prop.destino}.`);
+
+    const pendingPill = document.getElementById('hud-alert-pending-pill');
+    if (pendingPill) {
+      pendingPill.classList.remove('hidden');
+      pendingPill.textContent = prop.estado === 'APPROVED' ? 'Despacho Aprobado' : (prop.estado === 'REJECTED' ? 'Despacho Rechazado' : '1 en revisión');
+    }
 
     const statusBadge = document.getElementById('hud-status-badge');
     if (statusBadge) statusBadge.outerHTML = `<span id="hud-status-badge">${getStatusBadge(prop.estado)}</span>`;
@@ -1233,27 +1263,43 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok) return;
         const data = await res.json();
 
+        const isRealistic = state.operatingMode === 'realistic';
+        const currentTargetOrderId = isRealistic
+          ? (data.latest_live_order ? data.latest_live_order.case_id : null)
+          : data.latest_order_id;
+        const currentPendingCount = isRealistic
+          ? (data.pending_live_count ?? (data.live_orders_count || 0))
+          : data.pending_r4r_count;
+
         if (!state.syncInitialized) {
-          state.lastSyncOrderId = data.latest_order_id;
-          state.lastSyncPendingCount = data.pending_r4r_count;
+          state.lastSyncOrderId = currentTargetOrderId;
+          state.lastSyncPendingCount = currentPendingCount;
           state.syncInitialized = true;
           return;
         }
 
-        const hasNewOrder = data.latest_order_id && data.latest_order_id !== state.lastSyncOrderId;
-        const pendingChanged = data.pending_r4r_count !== state.lastSyncPendingCount;
+        const hasNewOrder = Boolean(currentTargetOrderId && currentTargetOrderId !== state.lastSyncOrderId);
+        const pendingChanged = currentPendingCount !== state.lastSyncPendingCount;
 
         if (hasNewOrder || pendingChanged) {
-          state.lastSyncOrderId = data.latest_order_id;
-          state.lastSyncPendingCount = data.pending_r4r_count;
+          state.lastSyncOrderId = currentTargetOrderId;
+          state.lastSyncPendingCount = currentPendingCount;
 
           await refreshAllData();
 
-          if (hasNewOrder && data.latest_order) {
-            const ord = data.latest_order;
-            playIncomingOrderChime();
-            // Automatically plot new customer order route on map and update HUD cleanly
-            focusProposalOnRadar(ord);
+          if (hasNewOrder) {
+            const ord = isRealistic ? data.latest_live_order : data.latest_order;
+            if (ord) {
+              playIncomingOrderChime();
+              // Automatically plot new customer order route on map and update HUD cleanly
+              focusProposalOnRadar(ord);
+            }
+          } else if (isRealistic && !currentTargetOrderId) {
+            // When there are no pending customer requests in realistic clean mode,
+            // maintain the clean idle state so phantom test cases cannot hijack the screen!
+            if (currentRadarKey !== 'REALISTIC-IDLE') {
+              setRadarScenario('REALISTIC-IDLE');
+            }
           }
         }
       } catch (err) {
@@ -1288,6 +1334,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/api/demo/mode/${mode}`, { method: 'POST' });
       if (res.ok) {
         state.operatingMode = mode;
+        state.lastSyncOrderId = null;
+        state.lastSyncPendingCount = 0;
         updateOperatingModeButtons();
         await refreshAllData();
         setRadarScenario(mode === 'realistic' ? 'REALISTIC-IDLE' : 'CASO-1');
@@ -2331,6 +2379,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (alertBox) alertBox.className = `p-3 rounded-xl border text-xs flex flex-col gap-1 ${sc.alertClass}`;
     const alertTitle = document.getElementById('hud-alert-title');
     if (alertTitle) alertTitle.className = `font-bold font-mono text-[11px] ${sc.alertTitleColor}`;
+
+    const pendingPill = document.getElementById('hud-alert-pending-pill');
+    if (pendingPill) {
+      if (scenarioKey === 'REALISTIC-IDLE') {
+        pendingPill.classList.remove('hidden');
+        pendingPill.textContent = '0 pendientes';
+      } else {
+        pendingPill.classList.add('hidden');
+      }
+    }
 
     // Update Real Leaflet Map Route, Geofence and Zoom
     updateRealMapScenario(scenarioKey);
