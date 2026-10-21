@@ -257,7 +257,9 @@ def get_live_sync_controller(
         if p.get("es_pedido_cliente") or (p.get("proposal_data") or {}).get("is_live_order") or str(p.get("case_id", "")).startswith("SOL-")
     ]
     pending_r4r = [p for p in queue if p.get("estado") == "R4R"]
+    live_order_id = live_orders[0]["case_id"] if live_orders else None
     pending_live_orders = [p for p in live_orders if p.get("estado") == "R4R"]
+    pending_live_id = pending_live_orders[0]["case_id"] if pending_live_orders else None
 
     return 200, {
         "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -267,7 +269,10 @@ def get_live_sync_controller(
         "pending_live_count": len(pending_live_orders),
         "latest_order_id": queue[0]["case_id"] if queue else None,
         "latest_order": queue[0] if queue else None,
+        "latest_live_order_id": live_order_id,
         "latest_live_order": live_orders[0] if live_orders else None,
+        "pending_live_order_id": pending_live_id,
+        "pending_live_order": pending_live_orders[0] if pending_live_orders else None,
         "queue": queue,
         "trucks": trucks,
         "bases": bases,

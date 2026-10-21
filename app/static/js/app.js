@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     lastSyncPendingCount: null,
     syncInitialized: false,
     operatingMode: 'realistic',
+    activeRadarProposal: null,
   };
 
   // --- DOM ELEMENT REFERENCES ---
@@ -67,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modalReasonError: document.getElementById('modal-reason-error'),
     btnModalApprove: document.getElementById('btn-modal-approve'),
     btnModalReject: document.getElementById('btn-modal-reject'),
+    btnModalKeepQueue: document.getElementById('btn-modal-keep-queue'),
     btnCloseModal: document.getElementById('btn-close-modal'),
     modalDialog: document.querySelector('#review-modal > div'),
 
@@ -443,6 +445,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    state.activeRadarProposal = prop;
+
     if (cid === 'CASO-1') { setRadarScenario('CASO-1'); return; }
     if (cid === 'CASO-2') { setRadarScenario('CASO-2'); return; }
     if (cid === 'CASO-4') { setRadarScenario('CASO-4'); return; }
@@ -450,6 +454,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cid === 'CASO-6') { setRadarScenario('CASO-6'); return; }
     if (cid.includes('LIRA')) { setRadarScenario('LIRA-953'); return; }
     if (cid === 'CASO-3') { setRadarScenario('CASO-3-V2'); return; }
+
+    currentRadarKey = cid;
 
     // Custom / Live Client Order Route Plotting on Real Map + HUD
     const trucks = Array.isArray(prop.camiones) && prop.camiones.length ? prop.camiones.join(' + ') : 'Sin asignar';
@@ -478,6 +484,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const statusBadge = document.getElementById('hud-status-badge');
     if (statusBadge) statusBadge.outerHTML = `<span id="hud-status-badge">${getStatusBadge(prop.estado)}</span>`;
+
+    // Dynamic update of HUD buttons for live order
+    const btnHudEval = document.getElementById('btn-hud-evaluate');
+    if (btnHudEval) {
+      btnHudEval.innerHTML = '<span>📥 Ver en Cola R4R</span>';
+    }
+
+    const btnHudModal = document.getElementById('btn-hud-open-modal');
+    if (btnHudModal) {
+      if (prop.estado === 'APPROVED') {
+        btnHudModal.innerHTML = '<span>✅ Despacho Aprobado</span>';
+        btnHudModal.className = 'py-2 px-3 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-semibold text-xs transition';
+      } else if (prop.estado === 'REJECTED') {
+        btnHudModal.innerHTML = '<span>❌ Despacho Rechazado</span>';
+        btnHudModal.className = 'py-2 px-3 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300 font-semibold text-xs transition';
+      } else {
+        btnHudModal.innerHTML = '<span>✍️ Firmar / Aprobar Despacho</span>';
+        btnHudModal.className = 'py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow transition active:scale-95';
+      }
+    }
 
     if (leafletMap && typeof L !== 'undefined') {
       const orig = Array.isArray(prop.origin_coords) && prop.origin_coords.length === 2
@@ -518,6 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function createProposalCard(prop) {
     const card = document.createElement('div');
+    card.setAttribute('data-case-id', prop.case_id);
     const isClientLive = Boolean(prop.es_pedido_cliente || String(prop.case_id || '').startsWith('PED-'));
     card.className = isClientLive
       ? 'bg-slate-900/95 border-2 border-emerald-500/50 rounded-xl p-4 flex flex-col justify-between shadow-lg hover:border-emerald-400 transition'
@@ -609,9 +636,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- HUMAN REVIEW MODAL (APPROVE & REJECT) ---
-  window.openReviewModal = function(caseId) {
-    const prop = state.r4rQueue.find(p => p.case_id === caseId);
-    if (!prop) return;
+  window.openReviewModal = async function(caseId) {
+    let prop = state.r4rQueue.find(p => p.case_id === caseId);
+    if (!prop && state.activeRadarProposal && (state.activeRadarProposal.case_id === caseId || !caseId)) {
+      prop = state.activeRadarProposal;
+    }
+    if (!prop && caseId) {
+      try {
+        const res = await fetch(`/api/r4r/${encodeURIComponent(caseId)}`);
+        if (res.ok) {
+          prop = await res.json();
+        }
+      } catch (err) {
+        console.warn('Direct proposal fetch failed', err);
+      }
+    }
+    if (!prop) {
+      showToast(`No se encontró la propuesta ${caseId || ''}`, 'warning');
+      return;
+    }
 
     state.selectedProposal = prop;
     state.modalReturnFocus = document.activeElement;
@@ -658,6 +701,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (returnFocus && typeof returnFocus.focus === 'function') returnFocus.focus();
   }
 
+  function handleKeepQueue() {
+    closeModal();
+    showToast('Propuesta retenida en cola R4R. Estado: R4R (auto_approved: False).', 'success');
+  }
+
   function handleModalKeyboard(event) {
     if (el.reviewModal.classList.contains('hidden')) return;
     if (event.key === 'Escape') {
@@ -684,28 +732,50 @@ document.addEventListener('DOMContentLoaded', () => {
   async function handleApprove() {
     if (!state.selectedProposal) return;
     const supervisor = el.modalSupervisorName.value.trim() || 'Carlos Morales';
+    const propId = state.selectedProposal.case_id;
+
+    const btnApprove = el.btnModalApprove;
+    const origHtml = btnApprove ? btnApprove.innerHTML : '';
+    if (btnApprove) {
+      btnApprove.disabled = true;
+      btnApprove.innerHTML = '<span>⏳ Firmando digitalmente y despachando...</span>';
+    }
 
     try {
       const res = await fetch('/api/r4r/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          case_id: state.selectedProposal.case_id,
+          case_id: propId,
           action: 'APPROVE',
           supervisor_name: supervisor,
           proposal_backup: state.selectedProposal,
         }),
       });
 
+      if (btnApprove) {
+        btnApprove.disabled = false;
+        btnApprove.innerHTML = origHtml;
+      }
+
       if (res.ok) {
-        showToast(`✅ Despacho ${state.selectedProposal.case_id} APROBADO por ${supervisor}.`, 'success');
+        showToast(`✅ Despacho ${propId} APROBADO por ${supervisor}.`, 'success');
+        if (state.activeRadarProposal && state.activeRadarProposal.case_id === propId) {
+          state.activeRadarProposal.estado = 'APPROVED';
+          state.activeRadarProposal.human_signature = supervisor;
+          focusProposalOnRadar(state.activeRadarProposal);
+        }
         closeModal();
         await refreshAllData();
       } else {
         const err = await res.json();
-        showToast(`Error al aprobar: ${err.detail || 'Falla de validación'}`, 'error');
+        showToast(`Error al aprobar: ${err.detail || err.error || 'Falla de validación'}`, 'error');
       }
     } catch (e) {
+      if (btnApprove) {
+        btnApprove.disabled = false;
+        btnApprove.innerHTML = origHtml;
+      }
       showToast('No se pudo contactar al servidor. La propuesta sigue pendiente; no se aprobó nada.', 'error');
     }
   }
@@ -714,6 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!state.selectedProposal) return;
     const reason = el.modalRejectedReason.value.trim();
     const supervisor = el.modalSupervisorName.value.trim() || 'Carlos Morales';
+    const propId = state.selectedProposal.case_id;
 
     // CLIENT-SIDE VALIDATION: Mandatory non-empty rejected_reason
     if (!reason) {
@@ -732,7 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          case_id: state.selectedProposal.case_id,
+          case_id: propId,
           action: 'REJECT',
           supervisor_name: supervisor,
           rejected_reason: reason,
@@ -743,6 +814,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.ok) {
         const data = await res.json();
         showToast(`❌ Propuesta rechazada. Regla destilada guardada en Memoria Viva.`, 'success');
+        if (state.activeRadarProposal && state.activeRadarProposal.case_id === propId) {
+          state.activeRadarProposal.estado = 'REJECTED';
+          state.activeRadarProposal.rejected_reason = reason;
+          focusProposalOnRadar(state.activeRadarProposal);
+        }
         closeModal();
         await refreshAllData();
       } else if (res.status === 400 || res.status === 422) {
@@ -1266,8 +1342,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
 
         const isRealistic = state.operatingMode === 'realistic';
+        const targetLiveOrder = data.latest_live_order || (data.queue && data.queue.find(p => p.es_pedido_cliente || String(p.case_id).startsWith('SOL-')));
         const currentTargetOrderId = isRealistic
-          ? (data.latest_live_order ? data.latest_live_order.case_id : null)
+          ? (data.latest_live_order_id || (targetLiveOrder ? targetLiveOrder.case_id : null))
           : data.latest_order_id;
         const currentPendingCount = isRealistic
           ? (data.pending_live_count ?? (data.live_orders_count || 0))
@@ -1277,6 +1354,9 @@ document.addEventListener('DOMContentLoaded', () => {
           state.lastSyncOrderId = currentTargetOrderId;
           state.lastSyncPendingCount = currentPendingCount;
           state.syncInitialized = true;
+          if (isRealistic && targetLiveOrder && currentPendingCount > 0) {
+            focusProposalOnRadar(targetLiveOrder);
+          }
           return;
         }
 
@@ -1290,13 +1370,13 @@ document.addEventListener('DOMContentLoaded', () => {
           await refreshAllData();
 
           if (hasNewOrder) {
-            const ord = isRealistic ? data.latest_live_order : data.latest_order;
+            const ord = isRealistic ? (targetLiveOrder || data.latest_live_order) : data.latest_order;
             if (ord) {
               playIncomingOrderChime();
               // Automatically plot new customer order route on map and update HUD cleanly
               focusProposalOnRadar(ord);
             }
-          } else if (isRealistic && !currentTargetOrderId) {
+          } else if (isRealistic && !currentTargetOrderId && currentPendingCount === 0) {
             // When there are no pending customer requests in realistic clean mode,
             // maintain the clean idle state so phantom test cases cannot hijack the screen!
             if (currentRadarKey !== 'REALISTIC-IDLE') {
@@ -1490,6 +1570,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modal Actions
     if (el.btnModalApprove) el.btnModalApprove.addEventListener('click', handleApprove);
     if (el.btnModalReject) el.btnModalReject.addEventListener('click', handleReject);
+    if (el.btnModalKeepQueue) el.btnModalKeepQueue.addEventListener('click', handleKeepQueue);
     if (el.btnCloseModal) el.btnCloseModal.addEventListener('click', closeModal);
 
     // Case 3 Step Buttons
@@ -2500,6 +2581,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnHudEval = document.getElementById('btn-hud-evaluate');
     if (btnHudEval) {
       btnHudEval.addEventListener('click', async () => {
+        if (state.activeRadarProposal) {
+          switchTab('tab-queue');
+          const card = document.querySelector(`[data-case-id="${state.activeRadarProposal.case_id}"]`);
+          if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.classList.add('ring-2', 'ring-sky-400');
+            setTimeout(() => card.classList.remove('ring-2', 'ring-sky-400'), 3000);
+          }
+          return;
+        }
         const sc = RADAR_SCENARIOS[currentRadarKey];
         if (!sc || !sc.payload) {
           switchTab('tab-queue');
@@ -2523,6 +2614,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnHudModal = document.getElementById('btn-hud-open-modal');
     if (btnHudModal) {
       btnHudModal.addEventListener('click', async () => {
+        if (state.activeRadarProposal) {
+          window.openReviewModal(state.activeRadarProposal.case_id);
+          return;
+        }
         const sc = RADAR_SCENARIOS[currentRadarKey];
         if (currentRadarKey === 'REALISTIC-IDLE' || !sc || !sc.payload) {
           if (state.r4rQueue.length > 0) {
@@ -2551,8 +2646,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- TOAST NOTIFICATIONS ENGINE ---
   function showToast(message, type = 'info', duration = 4000) {
-    // In realistic / clean mode, completely silence toasts to avoid popup clutter
-    if (state.operatingMode === 'realistic' && type !== 'error') return;
+    // In realistic mode, silence trivial background polling info, but ALWAYS display user actions, success, error and warnings
+    if (state.operatingMode === 'realistic' && type === 'info') return;
     if (!el.toastContainer) return;
 
     const toast = document.createElement('div');
