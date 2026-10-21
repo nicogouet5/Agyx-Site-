@@ -10,7 +10,9 @@ Enforces deterministic token budgeting (< 150 tokens) and strict R4R invariants.
 import json
 import os
 import sqlite3
-from datetime import datetime
+import re
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from typing import Any, Dict, List, Optional
 
 from app.config import (
@@ -21,6 +23,15 @@ from app.config import (
     MAX_TOOL_TOKENS,
 )
 from app.tools.token_optimizer import count_tokens, enforce_token_budget, distill_rule
+
+
+def parse_hhmm(value: Any) -> Optional[int]:
+    """Return minutes after midnight only for a real 24-hour HH:MM value."""
+    match = re.fullmatch(r"\s*(\d{1,2}):(\d{2})\s*", str(value or ""))
+    if not match:
+        return None
+    hour, minute = map(int, match.groups())
+    return hour * 60 + minute if hour < 24 and minute < 60 else None
 
 
 # -------------------------------------------------------------------------
@@ -111,7 +122,12 @@ def consultar_flota_disponible(
 
     # Special scenario: Caso 2 (10,000 kg load at 15:00 hrs when 12t fleet is EN_RUTA)
     # If 10,000 kg and hora_despacho >= "15:00", 12t trucks cannot depart today -> reservation for tomorrow
-    is_afternoon_heavy = (peso_float >= 10000 and hora_despacho and hora_despacho >= "15:00")
+    departure_minutes = parse_hhmm(hora_despacho)
+    is_afternoon_heavy = (peso_float >= 10000 and departure_minutes is not None and departure_minutes >= 15 * 60)
+    try:
+        requested_day = datetime.strptime(str(fecha_despacho), "%Y-%m-%d").date() if fecha_despacho and str(fecha_despacho).upper() != "HOY" else datetime.now(ZoneInfo("America/Santiago")).date()
+    except ValueError:
+        return enforce_token_budget({"status": "ERROR_VALIDACION", "candidatos": [], "proxima_reserva": None, "bloqueos_mantenimiento": [], "motivo": "fecha_despacho debe ser YYYY-MM-DD"}, max_tokens=MAX_TOOL_TOKENS)
 
     available_today = [
         t for t in matching
@@ -150,7 +166,7 @@ def consultar_flota_disponible(
             "status": "SIN_DISPONIBILIDAD_HOY",
             "candidatos": [],
             "proxima_reserva": {
-                "fecha": "2026-10-21",
+                "fecha": (requested_day + timedelta(days=1)).isoformat(),
                 "hora": "08:00",
                 "camion_id": slot_truck.get("id_camion", "CAM-06"),
                 "modelo": slot_truck.get("modelo", "Scania 12t"),
@@ -208,6 +224,19 @@ def verificar_factibilidad_ruta_urbana(
     enforces HAZMAT blocks (D.S. 298), and incorporates active Living Memory rules.
     Output is token-budgeted (<150 tokens).
     """
+    from app.services.geo_service import resolve_destination
+
+    requested_minutes = parse_hhmm(hora_solicitada)
+    if requested_minutes is None:
+        return enforce_token_budget({
+            "factible": False,
+            "zona": "NO_EVALUADA",
+            "bloqueo_legal": None,
+            "motivo": "Hora inválida: use HH:MM entre 00:00 y 23:59",
+            "leccion_memoria_viva": None,
+            "acciones_mitigacion": ["SOLICITAR_HORA_VALIDA"],
+        }, max_tokens=MAX_TOOL_TOKENS)
+
     # 1. HAZMAT Safety & D.S. 298 Legal Block (Caso 6)
     import unicodedata
     def _strip_accents(text: str) -> str:
@@ -232,7 +261,7 @@ def verificar_factibilidad_ruta_urbana(
         }, max_tokens=MAX_TOOL_TOKENS)
 
     dest_norm = _strip_accents(destino_comuna or "")
-    is_santiago_centro = any(z in dest_norm for z in ["CENTRO", "SANTIAGO CENTRO", "STGO CENTRO"])
+    is_santiago_centro = bool(resolve_destination(destino_comuna)) or any(z in dest_norm for z in ["CENTRO", "SANTIAGO CENTRO", "STGO CENTRO"])
 
     # 2. Non-restricted industrial zones (Caso 1, Caso 2)
     if not is_santiago_centro:
@@ -245,13 +274,7 @@ def verificar_factibilidad_ruta_urbana(
         }, max_tokens=MAX_TOOL_TOKENS)
 
     # 3. Santiago Centro Daytime Ban Evaluation (>5,000 kg between 07:30 and 21:00)
-    try:
-        parts = hora_solicitada.strip().split(":")
-        h_digits = "".join(c for c in parts[0] if c.isdigit())
-        m_digits = "".join(c for c in parts[1][:2] if c.isdigit())
-        minutes = int(h_digits) * 60 + int(m_digits)
-    except Exception:
-        minutes = 12 * 60
+    minutes = requested_minutes
 
     is_daytime_ban = (7 * 60 + 30) <= minutes <= (21 * 60)
     is_heavy = peso_kg > 5000
@@ -259,7 +282,7 @@ def verificar_factibilidad_ruta_urbana(
     if is_heavy and is_daytime_ban:
         # In v1 (living_memory_active=False): baseline passes or warns without mitigation solutions,
         # allowing the baseline agent to propose CAM-05 at 11:30 hrs as requested by rubric!
-        if not living_memory_active:
+        if not living_memory_active and not resolve_destination(destino_comuna):
             return enforce_token_budget({
                 "factible": True,
                 "zona": "SANTIAGO_CENTRO",

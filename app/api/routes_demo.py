@@ -181,21 +181,6 @@ def run_case_controller(
         order.update(payload)
 
     version_mode = order.get("version_mode", "v1").lower()
-    if clean_id == "CASO-3":
-        if version_mode == "v2":
-            # Ensure living memory rule is present
-            rules = container.memory_service.get_active_rules("SANTIAGO_CENTRO")
-            if not rules:
-                container.memory_service.save_feedback(
-                    case_id="CASO-3",
-                    action="REJECT",
-                    supervisor_name="Carlos Morales (Operaciones)",
-                    rejected_reason="Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t",
-                )
-        elif version_mode == "v1":
-            # For pure v1 demo, memory rule should be bypassed or cleared
-            pass
-
     status_code, result = evaluate_dispatch_controller(order, services=container)
     return status_code, {
         "case_id": clean_id,
@@ -238,7 +223,7 @@ def run_all_cases_controller(
                 "auto_approved": v1_res["evaluation"].get("auto_approved", False),
                 "proposal_id": v1_prop.get("propuesta_id") if isinstance(v1_prop, dict) else getattr(v1_prop, "propuesta_id", None),
                 "camiones": v1_camiones,
-                "passed": (v1_res["evaluation"]["status"] == "R4R"),
+                "passed": False,
             })
 
             # Simulate supervisor rejection
@@ -271,6 +256,7 @@ def run_all_cases_controller(
             _, run_res = run_case_controller(cid, services=container)
             eval_data = run_res["evaluation"]
             eval_prop = eval_data.get("proposal") or {}
+            expected = item["resultado_esperado"]
             eval_camiones = (
                 eval_prop.get("camiones") or eval_prop.get("camiones_asignados") or []
                 if isinstance(eval_prop, dict)
@@ -283,7 +269,14 @@ def run_all_cases_controller(
                 "auto_approved": eval_data.get("auto_approved", False),
                 "proposal_id": eval_prop.get("propuesta_id") if isinstance(eval_prop, dict) else getattr(eval_prop, "propuesta_id", None),
                 "camiones": eval_camiones,
-                "passed": True,
+                "passed": (
+                    eval_data["status"] == expected["estado"]
+                    and eval_data.get("auto_approved") is False
+                    and ("camiones_asignados" not in expected or eval_camiones == expected["camiones_asignados"])
+                    and ("campos_faltantes" not in expected or all(
+                        field in eval_prop.get("campos_faltantes", []) for field in expected["campos_faltantes"]
+                    ))
+                ),
             })
 
     return 200, {

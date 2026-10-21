@@ -227,7 +227,7 @@
           </td>
           <td>Orden <code>CASO-2</code>: Carga industrial de <strong>10.000 kg</strong> (25 m³) desde Quilicura a San Bernardo para hoy a las <strong>15:00 hrs</strong> (flota 12t ocupada en ruta).</td>
           <td>Detecta <code>SIN_DISPONIBILIDAD_HOY</code> para 10t a las 15:00 hrs, activa la rama del Acto 4 (<em>"SI: Reserva de pedido otro día"</em>), pre-agenda para mañana <strong>08:00 hrs</strong> con camión <code>CAM-06</code> ($120.000 CLP) en estado <code>R4R</code>.</td>
-          <td>Propuesta con <code>estado="R4R"</code>, <code>auto_approved=False</code>, <code>camiones=["CAM-06"]</code>, <code>fecha_hora_programada="2026-10-21 08:00 hrs"</code>, <code>total_clp=120000</code>.</td>
+          <td>Corrida del 20/10/2026: propuesta con <code>estado="R4R"</code>, <code>auto_approved=False</code>, <code>camiones=["CAM-06"]</code>, <code>fecha_hora_programada="2026-10-21 08:00 hrs"</code>, <code>total_clp=120000</code>. En otra fecha, el sistema calcula el día siguiente correspondiente.</td>
           <td><span class="badge badge-pass">Cumple</span></td>
           <td><code>POST /api/dispatch/evaluate</code> (CASO-2) + Bitácora R4R mostrando reserva día siguiente.</td>
           <td>Sin ajuste requerido. Conecta directamente el Pain Point #2 y el Acto 4.</td>

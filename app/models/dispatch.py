@@ -22,7 +22,7 @@ class DispatchOrderInput:
     hora_despacho: Optional[str] = None
     requested_truck_id: Optional[str] = None
     descripcion: str = ""
-    version_mode: str = "v1"  # "v1" pre-iteration, "v2" post-iteration
+    version_mode: str = "v2"  # v1 solo para reconstruir el fallo inicial
     engine_mode: str = "local"  # "local" (zero-token deterministic) or "gemini"
 
     def __post_init__(self):
@@ -30,7 +30,7 @@ class DispatchOrderInput:
             self.cargo_weight_kg = float(self.cargo_weight_kg)
         if self.cargo_volume_m3 is not None:
             self.cargo_volume_m3 = float(self.cargo_volume_m3)
-        self.version_mode = (self.version_mode or "v1").strip().lower()
+        self.version_mode = (self.version_mode or "v2").strip().lower()
         self.engine_mode = (self.engine_mode or "local").strip().lower()
 
     def to_dict(self) -> Dict[str, Any]:

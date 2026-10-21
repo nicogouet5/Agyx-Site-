@@ -12,6 +12,8 @@ from app.services.fleet_service import FleetService
 from app.services.restriction_service import RestrictionService
 from app.services.memory_service import MemoryService
 from app.services.r4r_service import R4RService
+from app.services.geo_service import resolve_destination
+from app.tools.callable_tools import parse_hhmm
 
 
 def normalize_text_nfkd(text: Any) -> str:
@@ -63,7 +65,9 @@ class LocalAgentEngine(BaseAgentEngine):
         peso_numerico = parse_numeric_weight(peso_raw)
         origen = order.get("origen", "Base Quilicura")
         destino = order.get("destino") or order.get("destino_comuna", "")
-        hora = order.get("hora_despacho") or order.get("hora_solicitada") or order.get("hora") or order.get("requested_datetime", "12:00")
+        hora_explicit = order.get("hora_despacho") or order.get("hora_solicitada") or order.get("hora") or order.get("requested_datetime")
+        hora = hora_explicit or "12:00"
+        fecha_despacho = order.get("fecha_despacho")
         tipo_carga = order.get("cargo_type") or order.get("tipo_carga", "GENERAL")
         truck_id_preferido = order.get("requested_truck_id") or order.get("truck_id_preferido")
         descripcion = order.get("descripcion", "")
@@ -81,8 +85,7 @@ class LocalAgentEngine(BaseAgentEngine):
             if "dirección" not in descripcion.lower() and "calle" not in descripcion.lower():
                 missing_fields.append("direccion_exacta")
 
-        hora_lower = str(hora).strip().lower()
-        if not hora or hora_lower in ["en la tarde", "ahora", "urgente", "hoy"]:
+        if parse_hhmm(hora) is None or (not hora_explicit and any(word in normalize_text_nfkd(descripcion) for word in ("TARDE", "AHORA"))):
             missing_fields.append("hora_exacta")
 
         if "urgente" in descripcion.lower() and (peso_numerico is None or missing_fields):
@@ -193,18 +196,13 @@ class LocalAgentEngine(BaseAgentEngine):
         # 4. CASO 3 CHECK: Urban Restriction & Living Memory
         # -------------------------------------------------------------
         dest_upper = normalize_text_nfkd(destino)
-        is_santiago_centro = any(z in dest_upper for z in ["CENTRO", "SANTIAGO CENTRO", "STGO CENTRO"])
+        mapped_destination = resolve_destination(destino)
+        is_santiago_centro = bool(mapped_destination) or any(z in dest_upper for z in ["CENTRO", "SANTIAGO CENTRO", "STGO CENTRO"])
         active_memory = self.memory_service.get_active_rules("SANTIAGO_CENTRO")
 
         if is_santiago_centro and peso_numerico > 5000.0:
             # Check if requested hour falls into municipal daytime restriction (07:30 to 21:00)
-            try:
-                h_parts = str(hora).strip().split(":")
-                h_num = int("".join(c for c in h_parts[0] if c.isdigit()))
-                m_num = int("".join(c for c in h_parts[1][:2] if c.isdigit()))
-                req_minutes = h_num * 60 + m_num
-            except Exception:
-                req_minutes = 12 * 60
+            req_minutes = parse_hhmm(hora)
 
             is_in_daytime_ban = (7 * 60 + 30) <= req_minutes <= (21 * 60)
 
@@ -214,7 +212,7 @@ class LocalAgentEngine(BaseAgentEngine):
                     case_id=case_id,
                     camiones_asignados=["CAM-05"],
                     origen=origen,
-                    destino="Santiago Centro",
+                    destino=destino,
                     fecha_hora_programada=f"{hora} hrs (Ventana Nocturna Confirmada)",
                     tarifa_base_clp=120000.0,
                     recargo_clp=15000.0 if not v1_mode else 0.0,
@@ -232,7 +230,7 @@ class LocalAgentEngine(BaseAgentEngine):
                 }
 
             # Order requested daytime: evaluate v1 vs v2
-            if v1_mode or not active_memory:
+            if v1_mode and not mapped_destination:
                 # v1: Naive planning, assigns CAM-05 at daytime 11:30 hrs ignoring municipal ban
                 proposal = self.r4r_service.create_proposal(
                     case_id=case_id,
@@ -255,19 +253,42 @@ class LocalAgentEngine(BaseAgentEngine):
                     "tokens_billed": 0,
                 }
             else:
-                # v2: Living Memory rule is active and daytime requested! Proposes compliant night window (21:30 hrs)
+                # The map flags the daytime conflict, but only validated feedback supplies
+                # the specific alternative. Without it, hold for human review.
+                if not active_memory:
+                    proposal = self.r4r_service.create_proposal(
+                        case_id=case_id,
+                        camiones_asignados=[],
+                        origen=origen,
+                        destino=destino,
+                        fecha_hora_programada="Pendiente de validación humana",
+                        tarifa_base_clp=0.0,
+                        estado_caso="R4R_INFO_INCOMPLETA",
+                        observaciones="Restricción diurna para camión >5t detectada en Santiago Centro. Sin regla operativa validada en Memoria Viva, derivar al coordinador; no asignar camión ni horario.",
+                        campos_faltantes=["regla_operativa_validada"],
+                    )
+                    return {
+                        "case_id": case_id,
+                        "status": "R4R_INFO_INCOMPLETA",
+                        "auto_approved": False,
+                        "proposal": proposal,
+                        "message": "Despacho retenido: falta una regla operativa validada para proponer una alternativa.",
+                        "tokens_billed": 0,
+                    }
+
+                # After rejection, the distilled rule supplies the night alternative.
                 distilled_lesson = active_memory[0]["distilled_rule"]
                 proposal = self.r4r_service.create_proposal(
                     case_id=case_id,
                     camiones_asignados=["CAM-05"],
                     origen=origen,
-                    destino="Santiago Centro",
+                    destino=destino,
                     fecha_hora_programada="21:30 hrs (Ventana Nocturna)",
                     tarifa_base_clp=120000.0,
                     recargo_clp=15000.0,
                     sla_horas=3.0,
                     estado_caso="R4R",
-                    observaciones=f"[v2 Memoria Viva Activa] Restricción detectada: {distilled_lesson}. Propuesta adaptada a ventana nocturna (21:30 hrs) o subdivisión en 2 unidades 5t (CAM-02 + CAM-03).",
+                    observaciones=f"[Mapa operativo / Memoria Viva] Restricción detectada: {distilled_lesson}. Propuesta adaptada a ventana nocturna (21:30 hrs) o subdivisión en 2 unidades 5t (CAM-02 + CAM-03). Requiere validar ruta y permisos con el coordinador.",
                 )
                 return {
                     "case_id": case_id,
@@ -308,11 +329,11 @@ class LocalAgentEngine(BaseAgentEngine):
         # 6. CASO 2 CHECK: Saturated Fleet & Next-Day Slot (10,000 kg at 15:00 hrs)
         # -------------------------------------------------------------
         if peso_numerico >= 10000.0:
-            fleet_res = self.fleet_service.filter_available_trucks(peso_kg=peso_numerico, hora=str(hora))
+            fleet_res = self.fleet_service.filter_available_trucks(peso_kg=peso_numerico, fecha=fecha_despacho, hora=str(hora))
             if fleet_res.get("status") == "SIN_DISPONIBILIDAD_HOY":
                 reserva = fleet_res.get("proxima_reserva") or {}
                 truck_id = reserva.get("camion_id", "CAM-06")
-                hora_reserva = f"{reserva.get('fecha', '2026-10-21')} {reserva.get('hora', '08:00')} hrs"
+                hora_reserva = f"{reserva.get('fecha')} {reserva.get('hora', '08:00')} hrs"
                 proposal = self.r4r_service.create_proposal(
                     case_id=case_id,
                     camiones_asignados=[truck_id],
@@ -337,7 +358,7 @@ class LocalAgentEngine(BaseAgentEngine):
         # -------------------------------------------------------------
         # 7. FLEET EVALUATION & SUBDIVISION HANDLING
         # -------------------------------------------------------------
-        fleet_res = self.fleet_service.filter_available_trucks(peso_kg=peso_numerico, hora=str(hora))
+        fleet_res = self.fleet_service.filter_available_trucks(peso_kg=peso_numerico, fecha=fecha_despacho, hora=str(hora))
         fleet_status = fleet_res.get("status")
         candidatos = fleet_res.get("candidatos", [])
 

@@ -6,6 +6,9 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[char]));
   // --- APPLICATION STATE ---
   const state = {
     viewMode: 'desktop', // 'desktop' | 'mobile'
@@ -78,6 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // New Order Form & Demo Cases
     dispatchForm: document.getElementById('dispatch-form'),
+    btnMapExample: document.getElementById('btn-map-example'),
+    mapResult: document.getElementById('map-result'),
     demoCaseButtons: document.querySelectorAll('.btn-demo-case'),
 
     // Memory Inspector
@@ -271,18 +276,19 @@ document.addEventListener('DOMContentLoaded', () => {
         card.className = 'p-3 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2 text-xs';
         card.innerHTML = `
           <div class="flex items-center justify-between">
-            <span class="font-bold text-sky-400 font-mono">${prop.case_id}</span>
+            <span class="font-bold text-sky-400 font-mono">${escapeHtml(prop.case_id)}</span>
             <span class="badge-r4r">🔒 R4R Bloqueado</span>
           </div>
-          <div class="text-slate-300 font-medium">${prop.origen} &rarr; ${prop.destino}</div>
+          <div class="text-slate-300 font-medium">${escapeHtml(prop.origen)} &rarr; ${escapeHtml(prop.destino)}</div>
           <div class="flex items-center justify-between text-[11px] text-slate-400">
-            <span>Camión: <strong class="text-white">${prop.camiones ? prop.camiones.join(', ') : 'Asignado'}</strong></span>
+            <span>Camión: <strong class="text-white">${escapeHtml(prop.camiones ? prop.camiones.join(', ') : 'Asignado')}</strong></span>
             <span>$${(prop.total_clp || 0).toLocaleString('es-CL')} CLP</span>
           </div>
-          <button class="w-full mt-1 py-1.5 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs transition" onclick="window.openReviewModal('${prop.case_id}')">
+          <button class="w-full mt-1 py-1.5 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs transition" data-review-action>
             ✍️ Revisar y Firmar
           </button>
         `;
+        card.querySelector('[data-review-action]')?.addEventListener('click', () => window.openReviewModal(prop.case_id));
         el.mobileContent.appendChild(card);
       });
     } else if (state.activeTab === 'tab-case3') {
@@ -341,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'R4R_INFO_INCOMPLETA':
         return '<span class="badge-info-incompleta">⚠️ Info Incompleta</span>';
       default:
-        return `<span class="badge-r4r">${status}</span>`;
+        return `<span class="badge-r4r">${escapeHtml(status)}</span>`;
     }
   }
 
@@ -356,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let actionButton = '';
     if (prop.estado === 'R4R') {
       actionButton = `
-        <button class="w-full mt-3 py-2 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs transition active:scale-95 shadow flex items-center justify-center gap-1.5" onclick="window.openReviewModal('${prop.case_id}')">
+        <button class="w-full mt-3 py-2 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs transition active:scale-95 shadow flex items-center justify-center gap-1.5" data-review-action>
           <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
           </svg>
@@ -366,13 +372,13 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (prop.estado === 'APPROVED') {
       actionButton = `
         <div class="mt-3 p-2 rounded-lg bg-emerald-950/20 border border-emerald-500/30 text-[11px] text-emerald-300">
-          <strong>Firma Digital:</strong> ${prop.human_signature || 'Carlos Morales'}
+          <strong>Nombre declarado:</strong> ${escapeHtml(prop.human_signature || 'Sin nombre')}
         </div>
       `;
     } else if (prop.estado === 'REJECTED') {
       actionButton = `
         <div class="mt-3 p-2 rounded-lg bg-rose-950/20 border border-rose-500/30 text-[11px] text-rose-300">
-          <strong>Motivo:</strong> ${prop.rejected_reason || 'Rechazado por ordenanza'}
+          <strong>Motivo:</strong> ${escapeHtml(prop.rejected_reason || 'Rechazado')}
         </div>
       `;
     }
@@ -380,14 +386,14 @@ document.addEventListener('DOMContentLoaded', () => {
     card.innerHTML = `
       <div>
         <div class="flex items-center justify-between mb-2">
-          <span class="font-mono font-bold text-xs text-sky-400">${prop.case_id}</span>
+          <span class="font-mono font-bold text-xs text-sky-400">${escapeHtml(prop.case_id)}</span>
           ${getStatusBadge(prop.estado)}
         </div>
         <div class="text-sm font-bold text-white mb-1">
-          ${prop.origen || 'Quilicura'} &rarr; ${prop.destino || 'Destino'}
+          ${escapeHtml(prop.origen || 'Quilicura')} &rarr; ${escapeHtml(prop.destino || 'Destino')}
         </div>
         <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 my-2 pt-2 border-t border-slate-800/80">
-          <div>Flota: <strong class="text-slate-200">${trucks}</strong></div>
+          <div>Flota: <strong class="text-slate-200">${escapeHtml(trucks)}</strong></div>
           <div>SLA: <strong class="text-slate-200">${sla} hrs</strong></div>
           <div>Tarifa: <strong class="text-emerald-400">$${totalCLP} CLP</strong></div>
           <div>Auto-Approve: <strong class="text-rose-400">${prop.auto_approved ? 'True' : 'False'}</strong></div>
@@ -397,6 +403,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ${actionButton}
       </div>
     `;
+
+    card.querySelector('[data-review-action]')?.addEventListener('click', () => window.openReviewModal(prop.case_id));
 
     return card;
   }
@@ -408,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
       el.r4rCardsList.innerHTML = `
         <div class="col-span-full py-12 text-center text-slate-500">
           <p class="text-amber-400 font-medium">⚠️ Cola R4R no disponible</p>
-          <p class="text-xs text-slate-400 mt-1">${errorMessage || 'No hay conexión con el servidor o la cola está vacía.'}</p>
+          <p class="text-xs text-slate-400 mt-1">${escapeHtml(errorMessage || 'No hay conexión con el servidor o la cola está vacía.')}</p>
         </div>
       `;
     }
@@ -428,12 +436,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     el.modalProposalSummary.innerHTML = `
       <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-        <span class="font-mono font-bold text-sky-400 text-xs">${prop.case_id}</span>
+        <span class="font-mono font-bold text-sky-400 text-xs">${escapeHtml(prop.case_id)}</span>
         <span class="text-amber-400 font-mono text-[10px]">auto_approved: False</span>
       </div>
-      <div class="text-white font-semibold">${prop.origen} &rarr; ${prop.destino}</div>
+      <div class="text-white font-semibold">${escapeHtml(prop.origen)} &rarr; ${escapeHtml(prop.destino)}</div>
       <div class="text-slate-400 text-[11px]">
-        Camión sugerido: <strong class="text-slate-200">${trucks}</strong> | Tarifa estimada: <strong class="text-emerald-400">$${totalCLP} CLP</strong>
+        Camión sugerido: <strong class="text-slate-200">${escapeHtml(trucks)}</strong> | Tarifa estimada: <strong class="text-emerald-400">$${totalCLP} CLP</strong>
       </div>
     `;
 
@@ -481,12 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(`Error al aprobar: ${err.detail || 'Falla de validación'}`, 'error');
       }
     } catch (e) {
-      // Local mock state update
-      state.selectedProposal.estado = 'APPROVED';
-      state.selectedProposal.human_signature = supervisor;
-      showToast(`✅ Despacho ${state.selectedProposal.case_id} Aprobado (Modo local).`, 'success');
-      closeModal();
-      renderQueue();
+      showToast('No se pudo contactar al servidor. La propuesta sigue pendiente; no se aprobó nada.', 'error');
     }
   }
 
@@ -531,12 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Error de comunicación con el servidor', 'error');
       }
     } catch (e) {
-      // Local fallback
-      state.selectedProposal.estado = 'REJECTED';
-      state.selectedProposal.rejected_reason = reason;
-      showToast(`❌ Propuesta rechazada y registrada en Memoria Viva (Modo local).`, 'success');
-      closeModal();
-      renderQueue();
+      showToast('No se pudo contactar al servidor. El rechazo no fue registrado.', 'error');
     }
   }
 
@@ -834,17 +832,17 @@ document.addEventListener('DOMContentLoaded', () => {
       card.innerHTML = `
         <div>
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-mono">${r.zone_affected || r.zone || 'GENERAL'}</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-mono">${escapeHtml(r.zone_affected || r.zone || 'GENERAL')}</span>
             <span class="text-[10px] px-2 py-0.5 rounded-full border font-mono ${tokenBadgeClass}">
               ${tokens} / 80 tokens
             </span>
           </div>
           <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80 font-mono text-xs text-slate-200 mb-2">
-            ${r.distilled_rule || r.rule_text}
+            ${escapeHtml(r.distilled_rule || r.rule_text)}
           </div>
           <div class="text-[11px] text-slate-400">
-            Autor: <span class="text-slate-300">${r.supervisor_name || r.author || 'Carlos Morales'}</span> &bull; 
-            Caso: <span class="font-mono text-sky-400">${r.source_case_id || r.case_id || 'CASO-3'}</span>
+            Autor: <span class="text-slate-300">${escapeHtml(r.supervisor_name || r.author || 'Carlos Morales')}</span> &bull;
+            Caso: <span class="font-mono text-sky-400">${escapeHtml(r.source_case_id || r.case_id || 'CASO-3')}</span>
           </div>
         </div>
       `;
@@ -866,17 +864,17 @@ document.addEventListener('DOMContentLoaded', () => {
       card.innerHTML = `
         <div>
           <div class="flex items-center justify-between mb-1">
-            <strong class="font-mono text-sky-400">${truck.id_camion}</strong>
+            <strong class="font-mono text-sky-400">${escapeHtml(truck.id_camion)}</strong>
             <span class="text-[10px] px-1.5 py-0.2 rounded font-mono ${isMaint ? 'bg-rose-500/20 text-rose-300' : 'bg-slate-800 text-slate-300'}">
-              ${truck.estado_operativo}
+              ${escapeHtml(truck.estado_operativo)}
             </span>
           </div>
-          <div class="text-white font-medium">${truck.modelo}</div>
+          <div class="text-white font-medium">${escapeHtml(truck.modelo)}</div>
           <div class="text-[11px] text-slate-400 mt-1">
             Cap: ${(truck.capacidad_kg || 0).toLocaleString()} kg / ${truck.capacidad_m3} m³
           </div>
         </div>
-        ${isMaint ? `<div class="mt-2 text-[10px] text-rose-400 font-bold">⚠️ ${truck.mantenimiento_detalle || 'Falla de frenos'}</div>` : ''}
+        ${isMaint ? `<div class="mt-2 text-[10px] text-rose-400 font-bold">⚠️ ${escapeHtml(truck.mantenimiento_detalle || 'Falla de frenos')}</div>` : ''}
       `;
       el.fleetCardsGrid.appendChild(card);
     });
@@ -989,6 +987,16 @@ document.addEventListener('DOMContentLoaded', () => {
         await submitManualDispatch();
       });
     }
+    if (el.btnMapExample) {
+      el.btnMapExample.addEventListener('click', () => {
+        document.getElementById('input-case-id').value = 'CASO-LIRA-953';
+        document.getElementById('input-destino').value = 'Lira 953, Santiago';
+        document.getElementById('input-peso').value = '9500';
+        document.getElementById('input-hora').value = '11:30';
+        document.querySelector('input[name="version-mode"][value="v2"]').checked = true;
+        el.mapResult.textContent = 'Ejemplo cargado: 9.500 kg a Lira 953 a las 11:30. Evalúa para ver la propuesta nocturna en R4R.';
+      });
+    }
 
     // Memory Actions
     if (el.btnSeedStgoRule) {
@@ -1089,6 +1097,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (res.ok) {
         const data = await res.json();
+        if (el.mapResult && data.mapa) {
+          el.mapResult.textContent = `${data.mapa.direccion}: zona ${data.mapa.zona}. ${data.message} Validación final de ruta y permisos: coordinador humano.`;
+        }
         showToast(`Evaluación completada. Estado: ${data.status}. auto_approved=False`, 'success');
         await refreshAllData();
         switchTab('tab-queue');

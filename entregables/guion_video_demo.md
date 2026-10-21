@@ -22,7 +22,7 @@
 ### 1. Problema de Negocio y Configuración del Agente (0:00 – 0:45)
 - **En pantalla:** Muestra la pantalla principal de **Agyx** (`http://localhost:8000`), la pestaña de **Flota y Restricciones** (`flota_camiones.csv` con `CAM-04` bloqueado por falla de frenos y `restricciones_viales_urbanas.csv` con la ordenanza de Santiago Centro `>5.000 kg` prohibido `07:30–21:00 hrs`) y haz clic en el botón **"Vista Móvil en Terreno (PWA)"** un par de segundos para mostrar que el Coordinador puede operar desde el celular en patio.
 - **Qué explicar:**
-  > *"Hola, somos el Grupo 2 del proyecto **Software Logístico Pymes-Fletes**. Construimos **Agyx**, un agente operativo en FastAPI + Gemini Function Calling que resuelve nuestros dos pain points del Acto 3 y Acto 4: validar disponibilidad y mantenimiento real de la flota y evitar que camiones pesados entren a zonas restringidas como Santiago Centro en horario prohibido. El agente consulta nuestra base de flota y ordenanzas viales con herramientas optimizadas en menos de 150 tokens y deja toda propuesta estrictamente en estado **R4R (Ready for Review)**: jamás se auto-aprueba por inactividad humana."*
+  > *"Hola, somos el Grupo 2 del proyecto **Software Logístico Pymes-Fletes**. Construimos **Agyx**, un prototipo local en FastAPI que evalúa disponibilidad y mantenimiento de la flota de demostración y aplica reglas viales cargadas en archivos. La implementación demostrada usa un motor determinista con herramientas de consulta y deja las propuestas en **R4R (Ready for Review)**, sin auto-aprobación por inactividad. No consulta flota ni permisos reales."*
 
 ### 2. Ejecución de un Caso Normal + Salvaguarda de Inactividad R4R (0:45 – 1:25)
 - **En pantalla:**

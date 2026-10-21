@@ -174,7 +174,7 @@ class TestTimestampEdgeCases(unittest.TestCase):
         # 25:99 is not a valid 24h clock time but passes as night window
         r_2599 = verificar_factibilidad_ruta_urbana("Quilicura", "Santiago Centro", 9500, "25:99", living_memory_active=True)
         print(f"\n[EMPIRICAL VULNERABILITY] Invalid time '25:99' factible: {r_2599['factible']}")
-        self.assertTrue(r_2599["factible"], "Confirmed: '25:99' slips through as compliant night window")
+        self.assertFalse(r_2599["factible"], "Invalid 25:99 must be rejected")
 
 
 class TestCAM04BrakeFailureBypass(unittest.TestCase):

@@ -1,8 +1,9 @@
 # Ficha de Diseño — Agente de IA "Agyx" (Certamen 2 — Grupo 2)
 
 - **Proyecto Semestral Integrador:** Software Logístico Pymes-Fletes (Grupo 2)
+- **Integrantes:** Nicolas Inostrosa, Felipe Gatica, Tomas Perez y Daniel Brambilla.
 - **Extensión:** Máximo 4 páginas (versión maquetada para exportar a PDF en `entregables/ficha_diseno_certamen2.html`)
-- **Arquitectura:** Python FastAPI + Motor Dual (Determinista 0-Tokens / Google Gemini 2.5 Flash Function Calling) + Interfaz Mobile-First PWA + Gobernanza `R4R` y Memoria Viva (`bitacora_memoria_viva.json` / SQLite)
+- **Arquitectura demostrada:** Python FastAPI + motor determinista local + interfaz móvil PWA + gobernanza `R4R` y Memoria Viva (`bitacora_memoria_viva.json` / SQLite). Gemini es experimental y no ejecuta Function Calling real en esta versión.
 
 ---
 
@@ -32,7 +33,7 @@ Las Pymes de transporte y fletes en Santiago coordinan sus despachos de forma ma
    - Llama a `generar_propuesta_r4r` guardando la propuesta en SQLite (`agyx.db`) con `estado = "R4R"` y `auto_approved = False`.
    - **Garantía de Inactividad:** Ante inactividad humana, la propuesta permanece indefinidamente en `R4R` (protegida por `CHECK (auto_approved = 0)` en base de datos). Jamás se auto-aprueba.
 5. **Paso 4 — Punto Explícito de Revisión Humana y Bucle de Memoria Viva:**
-   - **Si el humano Aprueba (`APPROVE`):** Se registra su firma y timestamp, pasando a `APPROVED`.
+   - **Si el humano Aprueba (`APPROVE`) una propuesta `R4R`:** Se registra el nombre declarado y timestamp, pasando a `APPROVED` sólo dentro del prototipo. No hay autenticación de identidad ni despacho real.
    - **Si el humano Rechaza (`REJECT`):** El backend exige obligatoriamente un `rejected_reason` no vacío (`HTTP 422` si se omite). El motivo del rechazo se guarda y destila en `data/bitacora_memoria_viva.json`, retroalimentando automáticamente al agente en las siguientes ejecuciones.
 
 ---
@@ -72,15 +73,16 @@ GOBERNANZA ESTRICTA Y R4R:
   - **Caso 4 (Límite):** Solicitud ambigua sin peso ni dirección ➔ Detiene en `R4R_INFO_INCOMPLETA` y pide los 3 datos faltantes (**Cumple**).
   - **Caso 5 (Riesgoso):** Forzar uso de `CAM-04` con falla de frenos ➔ Bloquea en `BLOQUEADO_RIESGO` y escala a taller (**Cumple**).
   - **Caso 6 (Riesgoso):** Transporte de Ácido Sulfúrico (HAZMAT D.S. 298) ➔ Bloquea en `BLOQUEADO_RIESGO` (**Cumple**).
-- **Mejora Verificada (Caso 3 `v1 ➔ v2`):** El supervisor rechaza la propuesta `v1` del Caso 3 ingresando el `rejected_reason`: *"Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t"*. La Memoria Viva destila la regla (`<80 tokens`) y al re-ejecutar el Caso 3 en **`v2`**, el agente propone ventana nocturna (`21:30 hrs`) o subdivisión en 2 camiones de 5t (**Cumple — 6/6 casos aprobados en `v2`**).
-- **Limitaciones Abiertas:** (1) Datos de GPS y taller provienen de tablas locales y no de sensores IoT en vivo; (2) Notificación final por WhatsApp al cliente tras la firma humana está simulada en la bitácora local.
+- **Mejora Verificada (Caso 3 `v1 ➔ v2`):** Antes del feedback, `v2` detecta la restricción y retiene el pedido en `R4R_INFO_INCOMPLETA`, sin camión ni horario propuesto. El supervisor rechaza la propuesta histórica `v1` e ingresa el `rejected_reason`: *"Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t"*. La Memoria Viva destila la regla (`<80 tokens`); al repetir el Caso 3 en `v2`, el agente propone `21:30 hrs` o subdivisión (**Cumple — 6/6 casos tras la iteración**). La ruta de demostración no crea esa regla automáticamente.
+- **Limitaciones Abiertas:** (1) Datos de GPS y taller provienen de tablas locales y no de sensores IoT en vivo; (2) Notificación final por WhatsApp está simulada; (3) el nombre de revisión no autentica a la persona; (4) el mapa es ilustrativo, no una ruta calculada; (5) la integración Gemini no ejecuta herramientas.
 
 ---
 
 ## 5. Enlaces y Materiales para Revisión
 
-- **Ejecución Web Local / Enlace al Prototipo:** Ejecutar `python3 -m app.main` y abrir `http://localhost:8000` (incluye modo determinista sin necesidad de API Key y soporte opcional para Google Gemini API).
-- **Suite de Verificación Automatizada:** Ejecutar `python3 tests/verify_all.py` (verifica los 6 casos, la iteración `v1 ➔ v2`, el bloqueo por inactividad `R4R` y los 135+ tests con `exit code 0`).
+- **Prototipo web de revisión:** `https://agyx-fletes-git-work-beneficios-alumno-udd.vercel.app/`. El enlace temporal completo, probado sin iniciar sesión y válido hasta el 19/11/2026, debe adjuntarse de forma separada en Canvas; no se publica su token en GitHub. El almacenamiento de Vercel es efímero: para repetir la iteración con memoria persistente, ejecutar `python3 -m app.main` y abrir `http://localhost:8000`.
+- **Suite de Verificación Automatizada:** Ejecutar `python3 tests/verify_all.py` (verifica los 6 casos, la iteración `v1 ➔ v2`, el bloqueo por inactividad `R4R` y los 143 tests con `exit code 0`).
 - **Matriz de las 6 Pruebas (Entregable B):** `entregables/matriz_6_pruebas.csv` y `entregables/matriz_6_pruebas.html`.
+- **Evidencia de ejecución reproducible:** `entregables/evidencia/corrida_6_casos.json` (entradas, resultados, fallo inicial, rechazo de prueba simulado y nueva ejecución; regenerar con `python3 -m entregables.generate_case_evidence`).
 - **Configuración para Google AI Studio / Dify:** `entregables/google_ai_studio_pack/`.
-- **Enlace al Video de Demostración:** `[INSERTAR_ENLACE_YOUTUBE_NO_ENLISTADO_AQUI]` (Guion detallado en `entregables/guion_video_demo.md`).
+- **Video de Demostración:** pendiente de grabación y enlace público (guion en `entregables/guion_video_demo.md`).

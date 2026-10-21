@@ -240,8 +240,8 @@
         <p class="doc-sub">Proyecto Semestral Integrador: <strong>Software Logístico Pymes-Fletes (Grupo 2)</strong> · Certamen 2 (2026)</p>
       </div>
       <div class="doc-meta">
-        <div><strong>Grupo 2</strong> — Integrantes del Equipo</div>
-        <div>Arquitectura: FastAPI + Gemini 2.5 Flash + R4R Memory</div>
+        <div><strong>Grupo 2</strong> — Nicolas Inostrosa · Felipe Gatica · Tomas Perez · Daniel Brambilla</div>
+        <div>Arquitectura demostrada: FastAPI + motor local + R4R Memory</div>
         <div>Extensión controlada: <strong>Página 1 de 4</strong></div>
       </div>
     </div>
@@ -335,7 +335,7 @@
         <p class="doc-sub">Configuración auditable y optimizada en tokens en <code>app/engine/</code>, <code>app/tools/</code> y <code>data/</code></p>
       </div>
       <div class="doc-meta">
-        <div>Motor Dual: Local Determinista + Gemini 2.5 Flash</div>
+        <div>Motor evaluado: local determinista · Gemini experimental</div>
         <div>Extensión controlada: <strong>Página 2 de 4</strong></div>
       </div>
     </div>
@@ -441,7 +441,7 @@ GOBERNANZA ESTRICTA Y R4R:
     <div class="ui-capture">
       <div class="ui-capture-bar">
         <span>AGYX LOGISTICS COPILOT v2.0 — Panel Coordinador de Tráfico (FastAPI + SQLite)</span>
-        <span>[Vista Escritorio] [📱 Vista Móvil en Terreno (PWA)] · Motor: Dual (Local 0-Token / Gemini 2.5 Flash)</span>
+        <span>[Vista Escritorio] [📱 Vista Móvil en Terreno (PWA)] · Motor: Local determinista</span>
       </div>
       <div class="ui-capture-body">
         <div class="grid-2">
@@ -493,7 +493,7 @@ GOBERNANZA ESTRICTA Y R4R:
     </div>
 
     <h2>4. Resultados Principales y Mejora Verificada (Iteración Caso 3: v1 ➔ v2)</h2>
-    <p>Se ejecutaron los <strong>6 casos distintos</strong> exigidos por la pauta (2 normales, 2 límite y 2 riesgosos) más la repetición verificada del <strong>Caso 3</strong> tras aplicar la mejora basada en la Memoria Viva:</p>
+    <p>Se ejecutaron los <strong>6 casos distintos</strong> exigidos por la pauta (2 normales, 2 límite y 2 riesgosos) más la repetición verificada del <strong>Caso 3</strong> tras aplicar la mejora basada en la Memoria Viva. En v2 sin regla aprendida, el pedido queda retenido sin camión ni horario; la alternativa aparece tras el rechazo humano:</p>
     <table>
       <thead>
         <tr>
@@ -563,7 +563,7 @@ GOBERNANZA ESTRICTA Y R4R:
         <p class="doc-sub">Análisis crítico de seguridad operacional, controles activos e instrucciones de reproducción</p>
       </div>
       <div class="doc-meta">
-        <div>Verificación Automatizada: 135+ Tests OK</div>
+        <div>Verificación Automatizada: 143 Tests OK</div>
         <div>Extensión controlada: <strong>Página 4 de 4</strong></div>
       </div>
     </div>
@@ -598,15 +598,15 @@ GOBERNANZA ESTRICTA Y R4R:
     <div class="box-brand" style="margin-bottom: 8px;">
       <h3>Enlaces Principales de la Entrega (Acceso Público y para <code>alonsoastroza@gmail.com</code>)</h3>
       <ul>
-        <li><strong>Repositorio / Código Fuente y Agente Ejecutable:</strong> Incluido íntegramente en la entrega y ejecutable localmente con <code>python3 -m app.main</code> (abre en <code>http://localhost:8000</code> sin requerir claves de API gracias al motor determinista integrado).</li>
-        <li><strong>Video de Demostración (Ejecución Real de Casos Normal, Límite, Riesgoso e Iteración v1➔v2):</strong> <code>[INSERTAR_ENLACE_YOUTUBE_NO_ENLISTADO_AQUI]</code> <em>(Guion técnico incluido en <code>entregables/guion_video_demo.md</code>)</em>.</li>
+        <li><strong>Prototipo web de revisión:</strong> <code>https://agyx-fletes-git-work-beneficios-alumno-udd.vercel.app/</code>. El enlace temporal completo, probado sin iniciar sesión y válido hasta el 19/11/2026, debe adjuntarse por separado en Canvas; no se publica su token en GitHub. El almacenamiento de Vercel es efímero; para reproducir la iteración con memoria persistente, ejecutar localmente <code>python3 -m app.main</code> y abrir <code>http://localhost:8000</code>.</li>
+        <li><strong>Video de Demostración (Ejecución Real de Casos Normal, Límite, Riesgoso e Iteración v1➔v2):</strong> pendiente de grabación y enlace público. <em>(Guion técnico incluido en <code>entregables/guion_video_demo.md</code>)</em>.</li>
         <li><strong>Entregable B (Matriz de las 6 Pruebas):</strong> <code>entregables/matriz_6_pruebas.csv</code> y versión visual imprimible en <code>entregables/matriz_6_pruebas.html</code>.</li>
         <li><strong>Paquete Exportado para Google AI Studio / Dify:</strong> <code>entregables/google_ai_studio_pack/</code> (contiene <code>system_instructions_v1.md</code>, <code>system_instructions_v2.md</code>, <code>function_declarations.json</code> y <code>sample_prompts_6_casos.md</code>).</li>
       </ul>
     </div>
 
     <h3>Pasos Exactos para Reproducir y Verificar el Prototipo (Sin Contraseñas ni Claves de API)</h3>
-    <pre># 1. Ejecutar el verificador maestro automatizado (corre los 6 casos en v1 y v2, valida R4R, Memoria Viva y 135+ tests):
+    <pre># 1. Ejecutar el verificador maestro automatizado (corre los 6 casos en v1 y v2, valida R4R, Memoria Viva y 143 tests):
 python3 tests/verify_all.py
 
 # 2. Iniciar el servidor web interactivo FastAPI (con fallback HTTP nativo si no hay dependencias externas):

@@ -422,6 +422,15 @@ class TestCase3IterationLoopDemoEndpoints(unittest.TestCase):
         4. Run Case 3 v2 -> reads Living Memory, schedules night window (21:30 hrs).
         5. Invariant: auto_approved is False in every single step.
         """
+        # Before feedback, v2 detects the restriction but cannot invent a remedy.
+        c_before, before = run_case_controller(
+            "CASO-3", {"version_mode": "v2", "case_id": "CASO-3-BEFORE"}, services=self.services
+        )
+        self.assertEqual(c_before, 200)
+        self.assertEqual(before["evaluation"]["status"], "R4R_INFO_INCOMPLETA")
+        self.assertEqual(before["evaluation"]["proposal"]["camiones"], [])
+        self.assertEqual(self.services.memory_service.get_active_rules("SANTIAGO_CENTRO"), [])
+
         # Step 1: Run v1
         c1, v1_res = run_case_controller("CASO-3", {"version_mode": "v1"}, services=self.services)
         self.assertEqual(c1, 200)
@@ -485,6 +494,9 @@ class TestCase3IterationLoopDemoEndpoints(unittest.TestCase):
         self.assertEqual(code, 200)
         self.assertEqual(all_res["total_executed"], 7)
         self.assertTrue(all_res["all_auto_approved_false"])
+        outcomes = {row["case_id"]: row["passed"] for row in all_res["results"]}
+        self.assertFalse(outcomes["CASO-3-v1"])
+        self.assertTrue(outcomes["CASO-3-v2"])
 
         for r in all_res["results"]:
             self.assertFalse(r["auto_approved"], f"Result {r['case_id']} had auto_approved=True!")
