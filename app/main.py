@@ -15,7 +15,10 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-from app.config import APP_DIR, BASE_DIR, DATA_DIR, SQLITE_DB_PATH
+from app.config import (
+    APP_DIR, BASE_DIR, DATA_DIR, SQLITE_DB_PATH, APP_ENV, CORS_ORIGINS,
+    MAX_REQUEST_BODY_BYTES, demo_admin_actions_enabled,
+)
 from app.services.db_service import init_db
 from app.api.dependencies import ServiceContainer, get_services
 
@@ -79,13 +82,30 @@ try:
     )
 
     # CORS Middleware configuration
+    # Local academic use stays simple. Production must explicitly opt in to browser origins.
+    allowed_origins = list(CORS_ORIGINS) or ([] if APP_ENV == "production" else ["*"])
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=allowed_origins,
         allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type", "X-Agyx-Demo-Token", "X-Request-ID"],
     )
+
+    @app.middleware("http")
+    async def enforce_request_size_limit(request: Request, call_next):
+        """Reject oversized request bodies before route parsing."""
+        raw_length = request.headers.get("content-length")
+        if raw_length:
+            try:
+                if int(raw_length) > MAX_REQUEST_BODY_BYTES:
+                    return JSONResponse(
+                        status_code=413,
+                        content={"error": "PAYLOAD_TOO_LARGE", "max_bytes": MAX_REQUEST_BODY_BYTES},
+                    )
+            except ValueError:
+                return JSONResponse(status_code=400, content={"error": "INVALID_CONTENT_LENGTH"})
+        return await call_next(request)
 
     # Mount static files and entregables
     STATIC_DIR.mkdir(parents=True, exist_ok=True)
@@ -129,6 +149,9 @@ try:
             "server": "FastAPI",
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "engine_default": "local_zero_token",
+            "environment": APP_ENV,
+            "demo_admin_actions_enabled": demo_admin_actions_enabled(),
+            "data_mode": "simulated_academic_dataset",
         }
 
     # Ensure DB is initialized on serverless cold start even if lifespan is not invoked
@@ -330,8 +353,15 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
 
-        # Read JSON body
-        content_length = int(self.headers.get("Content-Length", 0))
+        # Read JSON body, with a hard cap to keep the fallback server resilient.
+        try:
+            content_length = int(self.headers.get("Content-Length", 0))
+        except ValueError:
+            self._send_json(400, {"error": "INVALID_CONTENT_LENGTH"})
+            return
+        if content_length < 0 or content_length > MAX_REQUEST_BODY_BYTES:
+            self._send_json(413, {"error": "PAYLOAD_TOO_LARGE", "max_bytes": MAX_REQUEST_BODY_BYTES})
+            return
         body = {}
         if content_length > 0:
             raw_body = self.rfile.read(content_length).decode("utf-8")
@@ -361,11 +391,15 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
 
         # API Route: Memory Reset & Seed
         if path in ("/api/memory/reset", "/api/memory/reset/"):
-            code, res = reset_memory_controller()
+            code, res = reset_memory_controller(
+                admin_token=self.headers.get("X-Agyx-Demo-Token")
+            )
             self._send_json(code, res)
             return
         if path in ("/api/memory/seed", "/api/memory/seed/"):
-            code, res = seed_memory_controller(body)
+            code, res = seed_memory_controller(
+                body, admin_token=self.headers.get("X-Agyx-Demo-Token")
+            )
             self._send_json(code, res)
             return
 
@@ -376,7 +410,9 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
             self._send_json(code, res)
             return
         if path in ("/api/demo/run-all", "/api/demo/run-all/"):
-            code, res = run_all_cases_controller(payload=body)
+            code, res = run_all_cases_controller(
+                payload=body, admin_token=self.headers.get("X-Agyx-Demo-Token")
+            )
             self._send_json(code, res)
             return
 

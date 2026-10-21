@@ -11,6 +11,7 @@ from app.services.geo_service import resolve_destination, calculate_tactical_rou
 try:
     from fastapi import APIRouter, HTTPException, Depends, Request
     from fastapi.responses import JSONResponse
+    from app.api.schemas import DispatchEvaluationRequest
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
@@ -95,15 +96,12 @@ def evaluate_dispatch_controller(
 if HAS_FASTAPI:
     @router.post("/evaluate")
     async def evaluate_dispatch_endpoint(
-        request: Request,
+        payload: DispatchEvaluationRequest,
         services: ServiceContainer = Depends(get_services),
     ):
-        try:
-            body = await request.json()
-        except Exception:
-            raise HTTPException(status_code=400, detail="Invalid JSON body in request")
-
-        status_code, data = evaluate_dispatch_controller(body, services=services)
+        status_code, data = evaluate_dispatch_controller(
+            payload.model_dump(exclude_none=True), services=services
+        )
         if status_code >= 400:
             raise HTTPException(status_code=status_code, detail=data.get("detail", data.get("error", "Error")))
         return JSONResponse(status_code=status_code, content=data)

@@ -99,7 +99,7 @@ mindmap
    - El motivo del rechazo se destila automáticamente en una regla compacta (`<80 tokens`) dentro de `data/bitacora_memoria_viva.json` y retroalimenta al agente en futuras ejecuciones (demostrado en vivo en la iteración del **Caso 3: `v1 ➔ v2`**).
 4. **Arquitectura Python + FastAPI + Radar Táctico *"Dispatch"* + Optimización de Tokens + PWA:**
    - Herramientas verificables (`consultar_flota_disponible`, `verificar_factibilidad_ruta_urbana`, `generar_propuesta_r4r`) con pre-filtrado determinista en Python (`<150 tokens` por llamada: `69`, `86` y `88` tokens medidos).
-   - **Motor Dual Resiliente:** Por defecto utiliza el **Motor Determinista Local (0 tokens)** que garantiza reproducibilidad 100% offline en corrección automatizada, e incorpora soporte para **Google Gemini 2.5 Flash con Function Calling real** sobre las herramientas Python cuando se configura `GEMINI_API_KEY`.
+   - **Motor Dual Resiliente:** Por defecto utiliza el **Motor Determinista Local (0 tokens)** que garantiza reproducibilidad 100% offline. Cuando se configura `GEMINI_API_KEY`, Gemini 2.5 Flash puede consultar herramientas y generar una explicación para el supervisor; las reglas deterministas siguen siendo la única autoridad para R4R.
    - **Centro de Comando & Radar Táctico estilo *"Dispatch"*:** Mapa vectorial interactivo de la red vial metropolitana (`Quilicura`, `Pudahuel`, `Maipú`, `Taller Renca`, `Santiago Centro / Lira 953`, `Providencia`, `San Bernardo`) con simulación de congestión por franja horaria (`08:00`, `11:30`, `14:00`, `15:00`, `21:30`), visualización de alternativas (`v1` vs `v2 21:30` vs `Split 2x 5t`), marcadores de flota en vivo (`CAM-01`..`CAM-07`) y versión compacta sincronizada en el **Simulador Móvil en Terreno (`#mobile-simulator-frame`)**.
 
 ---
@@ -122,6 +122,20 @@ python3 -m app.main
 Luego abrir en el navegador: **`http://localhost:8000`**
 
 *(Opcional: Si tienes `uvicorn` instalado, también puedes correr `uvicorn app.main:app --reload --port 8000`)*.
+
+### Configuración robusta sin perder el modo académico
+
+Localmente no hace falta configurar variables: `APP_ENV=development` habilita los controles de demo para el certamen. En un deploy se recomienda:
+
+```bash
+APP_ENV=production
+CORS_ORIGINS=https://tu-dominio.example
+DEMO_ADMIN_TOKEN=elige-un-secreto-largo
+# Deja ENABLE_DEMO_ADMIN_ACTIONS=false (valor por defecto en producción)
+# GEMINI_API_KEY=...  # opcional: habilita explicaciones asistidas por Gemini
+```
+
+En producción, las acciones que alteran la demo (`/api/memory/reset`, `/api/memory/seed`, `/api/demo/run-all`) exigen el header `X-Agyx-Demo-Token`. El motor local mantiene la autoridad de decisión aunque Gemini esté habilitado. El endpoint `/api/health` informa el modo y si los controles administrativos de demo están abiertos.
 
 ### C. Centro de Comando Táctico *"Dispatch"* y Ejemplo Lira 953
 

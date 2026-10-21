@@ -11,6 +11,7 @@ from app.models.review import clean_human_text
 try:
     from fastapi import APIRouter, HTTPException, Depends, Request
     from fastapi.responses import JSONResponse
+    from app.api.schemas import ReviewProposalRequest, InactivityRequest
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
@@ -185,23 +186,23 @@ if HAS_FASTAPI:
         return JSONResponse(status_code=status_code, content=data)
 
     @router.post("/review")
-    async def review_proposal_endpoint(request: Request, services: ServiceContainer = Depends(get_services)):
-        try:
-            body = await request.json()
-        except Exception:
-            raise HTTPException(status_code=400, detail="Invalid JSON body")
-        status_code, data = review_proposal_controller(body, services=services)
+    async def review_proposal_endpoint(
+        payload: ReviewProposalRequest, services: ServiceContainer = Depends(get_services)
+    ):
+        status_code, data = review_proposal_controller(
+            payload.model_dump(exclude_none=True), services=services
+        )
         if status_code in (400, 404, 422, 500):
             raise HTTPException(status_code=status_code, detail=data.get("detail", data))
         return JSONResponse(status_code=status_code, content=data)
 
     @router.post("/simulate-inactivity")
-    async def simulate_inactivity_endpoint(request: Request, services: ServiceContainer = Depends(get_services)):
-        try:
-            body = await request.json()
-        except Exception:
-            raise HTTPException(status_code=400, detail="Invalid JSON body")
-        status_code, data = simulate_inactivity_controller(body, services=services)
+    async def simulate_inactivity_endpoint(
+        payload: InactivityRequest, services: ServiceContainer = Depends(get_services)
+    ):
+        status_code, data = simulate_inactivity_controller(
+            payload.model_dump(), services=services
+        )
         if status_code != 200:
             raise HTTPException(status_code=status_code, detail=data.get("detail", data))
         return JSONResponse(status_code=status_code, content=data)

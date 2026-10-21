@@ -37,6 +37,25 @@ else:
     MEMORY_JSON_PATH = str(DATA_DIR / "bitacora_memoria_viva.json")
     SQLITE_DB_PATH = str(DATA_DIR / "agyx.db")
 
+# Runtime profile. Local execution remains frictionless and the public academic
+# Vercel demo remains usable. A real operational deployment must explicitly set
+# APP_ENV=production (and its token/CORS configuration).
+APP_ENV = os.environ.get("APP_ENV", "demo" if _is_vercel else "development").strip().lower()
+CORS_ORIGINS = tuple(
+    origin.strip() for origin in os.environ.get("CORS_ORIGINS", "").split(",") if origin.strip()
+)
+DEMO_ADMIN_TOKEN = os.environ.get("DEMO_ADMIN_TOKEN", "")
+ENABLE_DEMO_ADMIN_ACTIONS = os.environ.get(
+    "ENABLE_DEMO_ADMIN_ACTIONS", "true" if APP_ENV in ("development", "test", "demo") else "false"
+).strip().lower() in ("1", "true", "yes", "on")
+MAX_REQUEST_BODY_BYTES = int(os.environ.get("MAX_REQUEST_BODY_BYTES", "65536"))
+
+
+def demo_admin_actions_enabled() -> bool:
+    """Whether destructive demo controls are intentionally open in this environment."""
+    return ENABLE_DEMO_ADMIN_ACTIONS
+
+
 # Token Optimization Thresholds
 MAX_TOOL_TOKENS = 150
 MAX_MEMORY_RULE_TOKENS = 80

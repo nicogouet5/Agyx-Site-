@@ -6,6 +6,7 @@ preconfigured Certamen 2 test cases (1 to 6), and test matrix execution.
 from typing import Dict, Any, Optional, Tuple, List
 from app.api.dependencies import ServiceContainer, get_services
 from app.api.routes_dispatch import evaluate_dispatch_controller
+from app.security import require_demo_admin
 
 try:
     from fastapi import APIRouter, HTTPException, Depends, Request
@@ -194,11 +195,12 @@ def run_case_controller(
 def run_all_cases_controller(
     payload: Optional[Dict[str, Any]] = None,
     services: Optional[ServiceContainer] = None,
+    admin_token: Optional[str] = None,
 ) -> Tuple[int, Dict[str, Any]]:
-    """
-    Executes all 6 test cases in sequence and returns the consolidated test matrix.
-    Includes both Caso 3 v1 (pre-iteration) and Caso 3 v2 (post-iteration).
-    """
+    """Runs the destructive full demo only in authorized demo administration mode."""
+    allowed, error = require_demo_admin(admin_token)
+    if not allowed:
+        return 403, error
     container = services or ServiceContainer.get_instance()
     results = []
 
@@ -318,5 +320,9 @@ if HAS_FASTAPI:
             body = await request.json()
         except Exception:
             pass
-        status_code, data = run_all_cases_controller(payload=body, services=services)
+        status_code, data = run_all_cases_controller(
+            payload=body,
+            services=services,
+            admin_token=request.headers.get("X-Agyx-Demo-Token"),
+        )
         return JSONResponse(status_code=status_code, content=data)

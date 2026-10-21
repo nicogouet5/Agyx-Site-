@@ -122,6 +122,8 @@ class GeminiAgentEngine(BaseAgentEngine):
         if not self.is_available():
             res = self.local_engine.evaluate_order(order, v1_mode=v1_mode)
             res["engine_used"] = "local_deterministic_fallback"
+            res["gemini_status"] = "disabled_no_api_key"
+            res["decision_authority"] = "deterministic_rules"
             return res
 
         try:
@@ -171,21 +173,51 @@ class GeminiAgentEngine(BaseAgentEngine):
                         except Exception as tool_err:
                             gemini_trace.append({"tool": fn_name, "args": fn_args, "error": str(tool_err)})
 
-                # Run local engine verification to guarantee exact schema & R4R invariant compliance
+                # Gemini is an assistant, never the decision authority. Feed trusted tool
+                # outputs back in a second bounded request so it can produce an operator
+                # explanation, while the local engine still enforces all R4R invariants.
+                tool_digest = json.dumps(gemini_trace, ensure_ascii=False, default=str)[:6000]
+                explanation = ""
+                try:
+                    explanation_response = client.models.generate_content(
+                        model=self.model_name,
+                        contents=(
+                            "Usa exclusivamente los siguientes resultados de herramientas confiables "
+                            "para explicar al supervisor la propuesta. No apruebes, no inventes datos "
+                            "y responde en máximo 120 palabras en español.\n"
+                            f"Orden: {json.dumps(order, ensure_ascii=False)}\n"
+                            f"Resultados: {tool_digest}"
+                        ),
+                        config=types.GenerateContentConfig(temperature=0.1, max_output_tokens=220),
+                    )
+                    explanation = str(getattr(explanation_response, "text", "") or "").strip()[:1200]
+                except Exception:
+                    # Explanation is optional; a provider issue must never weaken dispatch safeguards.
+                    explanation = ""
+
                 res = self.local_engine.evaluate_order(order, v1_mode=v1_mode)
-                res["engine_used"] = f"gemini_function_calling ({self.model_name}) + deterministic_r4r_guard"
+                res["engine_used"] = f"gemini_assisted ({self.model_name}) + deterministic_r4r_guard"
+                res["gemini_status"] = "assisted"
+                res["decision_authority"] = "deterministic_rules"
                 res["gemini_tool_trace"] = gemini_trace
+                if explanation:
+                    res["gemini_operator_explanation"] = explanation
                 res["auto_approved"] = False
                 return res
 
             res = self.local_engine.evaluate_order(order, v1_mode=v1_mode)
             res["engine_used"] = "local_deterministic_fallback"
+            res["gemini_status"] = "no_tool_calls"
+            res["decision_authority"] = "deterministic_rules"
             return res
 
-        except Exception as e:
-            # Graceful fallback on network timeout, quota, or missing library
+        except Exception:
+            # Graceful fallback on network timeout, quota, or missing library. Do not expose
+            # provider internals to the browser response.
             res = self.local_engine.evaluate_order(order, v1_mode=v1_mode)
-            res["engine_used"] = f"local_deterministic_fallback (gemini error: {str(e)[:50]})"
+            res["engine_used"] = "local_deterministic_fallback"
+            res["gemini_status"] = "fallback_provider_error"
+            res["decision_authority"] = "deterministic_rules"
             return res
 
     @staticmethod

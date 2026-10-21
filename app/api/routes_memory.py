@@ -6,6 +6,7 @@ Guarantees distilled rules remain strictly within the <80 tokens budget.
 """
 from typing import Dict, Any, Optional, Tuple
 from app.api.dependencies import ServiceContainer, get_services
+from app.security import require_demo_admin
 
 try:
     from fastapi import APIRouter, HTTPException, Depends, Request
@@ -68,8 +69,12 @@ def get_memory_controller(
 
 def reset_memory_controller(
     services: Optional[ServiceContainer] = None,
+    admin_token: Optional[str] = None,
 ) -> Tuple[int, Dict[str, Any]]:
-    """Resets Living Memory to a completely clean state (clears active rules & feedback)."""
+    """Resets memory, only when the local demo mode or demo-admin token permits it."""
+    allowed, error = require_demo_admin(admin_token)
+    if not allowed:
+        return 403, error
     container = services or ServiceContainer.get_instance()
     container.memory_service.reset_memory()
     return 200, {
@@ -82,11 +87,12 @@ def reset_memory_controller(
 def seed_memory_controller(
     payload: Optional[Dict[str, Any]] = None,
     services: Optional[ServiceContainer] = None,
+    admin_token: Optional[str] = None,
 ) -> Tuple[int, Dict[str, Any]]:
-    """
-    Seeds standard supervisor feedback rule (Caso 3 Santiago Centro daytime ban)
-    to facilitate immediate v2 post-iteration testing and demo.
-    """
+    """Seeds the academic rule only in authorized demo administration mode."""
+    allowed, error = require_demo_admin(admin_token)
+    if not allowed:
+        return 403, error
     container = services or ServiceContainer.get_instance()
     data = payload or {}
 
@@ -125,8 +131,10 @@ if HAS_FASTAPI:
         return JSONResponse(status_code=status_code, content=data)
 
     @router.post("/reset")
-    async def reset_memory_endpoint(services: ServiceContainer = Depends(get_services)):
-        status_code, data = reset_memory_controller(services=services)
+    async def reset_memory_endpoint(request: Request, services: ServiceContainer = Depends(get_services)):
+        status_code, data = reset_memory_controller(
+            services=services, admin_token=request.headers.get("X-Agyx-Demo-Token")
+        )
         return JSONResponse(status_code=status_code, content=data)
 
     @router.post("/seed")
@@ -139,7 +147,11 @@ if HAS_FASTAPI:
             body = await request.json()
         except Exception:
             pass
-        status_code, data = seed_memory_controller(payload=body, services=services)
+        status_code, data = seed_memory_controller(
+            payload=body,
+            services=services,
+            admin_token=request.headers.get("X-Agyx-Demo-Token"),
+        )
         if status_code != 200:
             raise HTTPException(status_code=status_code, detail=data.get("detail", "Error"))
         return JSONResponse(status_code=status_code, content=data)
