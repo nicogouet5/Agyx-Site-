@@ -1166,6 +1166,11 @@ document.addEventListener('DOMContentLoaded', () => {
       alertTitleColor: 'text-emerald-300',
       alertDesc: 'Vespucio Norte sin restricción municipal para 3.200 kg. Unidad CAM-02 asignada en estado R4R esperando firma del supervisor.',
       payload: { case_id: 'CASO-1', origen: 'Quilicura', destino: 'Pudahuel', cargo_weight_kg: 3200, hora_despacho: '14:00', version_mode: 'v2' },
+      origin: [-33.3600, -70.6900],
+      destination: [-33.4350, -70.7600],
+      waypoints: [[-33.3600, -70.6900], [-33.3850, -70.7350], [-33.4350, -70.7600]],
+      zoomTarget: [-33.3975, -70.7250],
+      zoomLevel: 12,
     },
     'CASO-2': {
       caseId: 'CASO-2',
@@ -1186,6 +1191,11 @@ document.addEventListener('DOMContentLoaded', () => {
       alertTitleColor: 'text-amber-300',
       alertDesc: 'Carga pesada de 10.000 kg a las 15:00 hrs con unidades 12t ocupadas en ruta. Agyx activa reserva de slot prioritario para mañana 08:00 hrs en R4R.',
       payload: { case_id: 'CASO-2', origen: 'Quilicura', destino: 'San Bernardo', cargo_weight_kg: 10000, hora_despacho: '15:00', version_mode: 'v2' },
+      origin: [-33.3600, -70.6900],
+      destination: [-33.5900, -70.7000],
+      waypoints: [[-33.3600, -70.6900], [-33.4050, -70.6800], [-33.4503, -70.6600], [-33.5200, -70.6850], [-33.5900, -70.7000]],
+      zoomTarget: [-33.4750, -70.6950],
+      zoomLevel: 11,
     },
     'CASO-3-V1': {
       caseId: 'CASO-3',
@@ -1206,6 +1216,11 @@ document.addEventListener('DOMContentLoaded', () => {
       alertTitleColor: 'text-rose-300',
       alertDesc: 'En v1 (sin Memoria Viva), el agente asigna CAM-05 (12t) a las 11:30 hrs hacia Santiago Centro, infringiendo la prohibición diurna >5.000 kg (07:30–21:00). El supervisor debe rechazar en R4R.',
       payload: { case_id: 'CASO-3', origen: 'Quilicura', destino: 'Santiago Centro', cargo_weight_kg: 9500, hora_despacho: '11:30', version_mode: 'v1' },
+      origin: [-33.3600, -70.6900],
+      destination: [-33.4503, -70.6441],
+      waypoints: [[-33.3600, -70.6900], [-33.4050, -70.6800], [-33.4410, -70.6600], [-33.4503, -70.6441]],
+      zoomTarget: [-33.4503, -70.6441],
+      zoomLevel: 13,
     },
     'CASO-3-V2': {
       caseId: 'CASO-3',
@@ -1226,6 +1241,11 @@ document.addEventListener('DOMContentLoaded', () => {
       alertTitleColor: 'text-emerald-300',
       alertDesc: 'Carga de 9.500 kg supera límite diurno (>5t) en Santiago Centro. Agente inyecta regla destilada (<80 tokens) y reprograma salida a ventana nocturna (21:30 hrs).',
       payload: { case_id: 'CASO-3', origen: 'Quilicura', destino: 'Santiago Centro', cargo_weight_kg: 9500, hora_despacho: '11:30', version_mode: 'v2' },
+      origin: [-33.3600, -70.6900],
+      destination: [-33.4503, -70.6441],
+      waypoints: [[-33.3600, -70.6900], [-33.4050, -70.6800], [-33.4410, -70.6600], [-33.4503, -70.6441]],
+      zoomTarget: [-33.4503, -70.6441],
+      zoomLevel: 13,
     },
     'CASO-3-SPLIT': {
       caseId: 'CASO-3',
@@ -1246,6 +1266,12 @@ document.addEventListener('DOMContentLoaded', () => {
       alertTitleColor: 'text-sky-300',
       alertDesc: 'Alternativa de Memoria Viva para despacho diurno inmediato: divide 9.500 kg en 2 camiones de 4.750 kg (CAM-02 + CAM-03), cumpliendo el tope municipal <= 5.000 kg.',
       payload: { case_id: 'CASO-3', origen: 'Quilicura', destino: 'Santiago Centro', cargo_weight_kg: 9500, hora_despacho: '11:30', version_mode: 'v2' },
+      origin: [-33.3600, -70.6900],
+      destination: [-33.4503, -70.6441],
+      waypoints: [[-33.3600, -70.6900], [-33.4050, -70.6800], [-33.4410, -70.6600], [-33.4503, -70.6441]],
+      secondaryWaypoints: [[-33.3600, -70.6900], [-33.4050, -70.6800], [-33.4150, -70.6100], [-33.4300, -70.6150], [-33.4503, -70.6441]],
+      zoomTarget: [-33.4200, -70.6550],
+      zoomLevel: 12,
     },
     'CASO-4': {
       caseId: 'CASO-4',
@@ -1266,6 +1292,11 @@ document.addEventListener('DOMContentLoaded', () => {
       alertTitleColor: 'text-amber-300',
       alertDesc: 'Solicitud "mandar unos pallets urgentes al centro ahora en la tarde" carece de peso_kg, direccion_exacta y hora_exacta. El agente jamás adivina datos críticos.',
       payload: { case_id: 'CASO-4', descripcion: 'Necesito mandar unos pallets urgentes al centro ahora en la tarde.', version_mode: 'v1' },
+      origin: [-33.3600, -70.6900],
+      destination: [-33.4503, -70.6441],
+      waypoints: [[-33.3600, -70.6900]],
+      zoomTarget: [-33.3600, -70.6900],
+      zoomLevel: 13,
     },
     'CASO-5': {
       caseId: 'CASO-5',
@@ -1286,6 +1317,11 @@ document.addEventListener('DOMContentLoaded', () => {
       alertTitleColor: 'text-rose-400',
       alertDesc: 'Solicitud expresa de forzar salida de CAM-04 rechazada automáticamente. Telemetría reporta falla crítica de frenos de aire (disco y compresor) en Taller Renca.',
       payload: { case_id: 'CASO-5', origen: 'Quilicura', destino: 'Maipú', cargo_weight_kg: 4000, truck_id_preferido: 'CAM-04', hora_despacho: '10:00', version_mode: 'v1' },
+      origin: [-33.4050, -70.6800],
+      destination: [-33.5100, -70.7600],
+      waypoints: [[-33.4050, -70.6800], [-33.4050, -70.6800]],
+      zoomTarget: [-33.4050, -70.6800],
+      zoomLevel: 14,
     },
     'CASO-6': {
       caseId: 'CASO-6',
@@ -1306,6 +1342,11 @@ document.addEventListener('DOMContentLoaded', () => {
       alertTitleColor: 'text-purple-300',
       alertDesc: 'Transporte de cargas peligrosas Clase 8 (Ácido Sulfúrico) requiere resolución sanitaria SEREMI y camión certificado ADR. Orden bloqueada y escalada a Gerencia.',
       payload: { case_id: 'CASO-6', origen: 'Quilicura', destino: 'Santiago Centro', cargo_weight_kg: 4000, tipo_carga: 'ACIDO_SULFURICO', hora_despacho: '14:00', version_mode: 'v1' },
+      origin: [-33.3600, -70.6900],
+      destination: [-33.4503, -70.6441],
+      waypoints: [[-33.3600, -70.6900], [-33.3850, -70.6800]],
+      zoomTarget: [-33.4050, -70.6800],
+      zoomLevel: 12,
     },
     'LIRA-953': {
       caseId: 'CASO-LIRA-953',
@@ -1322,14 +1363,319 @@ document.addEventListener('DOMContentLoaded', () => {
       primaryColor: '#38bdf8',
       secondaryPath: '',
       alertClass: 'bg-sky-950/30 border-sky-500/40',
-      alertTitle: '📍 GEORREFERENCIACIÓN LIRA 953 (-33.4542, -70.6386)',
+      alertTitle: '📍 GEORREFERENCIACIÓN LIRA 953 (-33.4503, -70.6441)',
       alertTitleColor: 'text-sky-300',
       alertDesc: 'El motor geoespacial resuelve Lira 953 dentro del polígono SANTIAGO_CENTRO. Detecta 9.500 kg en horario diurno (11:30) y exige validación de regla u horario nocturno 21:30.',
       payload: { case_id: 'CASO-LIRA-953', origen: 'Quilicura', destino: 'Lira 953, Santiago', cargo_weight_kg: 9500, hora_despacho: '11:30', version_mode: 'v2' },
+      origin: [-33.3600, -70.6900],
+      destination: [-33.4503, -70.6441],
+      waypoints: [[-33.3600, -70.6900], [-33.4050, -70.6800], [-33.4410, -70.6600], [-33.4503, -70.6441]],
+      zoomTarget: [-33.4503, -70.6441],
+      zoomLevel: 14,
     },
   };
 
   let currentRadarKey = 'CASO-3-V2';
+
+  // --- REAL DYNAMIC SANTIAGO LEAFLET MAP CONTROLLER ---
+  let leafletMap = null;
+  const tileLayers = {};
+  let geofenceLayer = null;
+  let activeRouteLine = null;
+  let activeSecondaryRouteLine = null;
+  let realMapFleetMarkers = [];
+
+  const SANTIAGO_NODES_DATA = {
+    'QUILICURA': { name: 'HUB QUILICURA', coords: [-33.3600, -70.6900], color: '#38bdf8', role: 'Base Central · Patio Operativo (CAM-01, 02, 03, 05)' },
+    'RENCA': { name: 'TALLER RENCA', coords: [-33.4050, -70.6800], color: '#ef4444', role: 'Mantenimiento · Bloqueo Falla Frenos CAM-04 (Caso 5)' },
+    'PUDAHUEL': { name: 'CD PUDAHUEL', coords: [-33.4350, -70.7600], color: '#10b981', role: 'CD Logístico Poniente · Destino Caso 1 (3.2t)' },
+    'MAIPU': { name: 'MAIPÚ', coords: [-33.5100, -70.7600], color: '#38bdf8', role: 'Polígono Industrial Poniente-Sur' },
+    'SANTIAGO_CENTRO': { name: 'SANTIAGO CENTRO (Lira 953)', coords: [-33.4503, -70.6441], color: '#fbbf24', role: 'Control Municipal >5t (07:30-21:00) · Caso 3 v1➔v2' },
+    'PROVIDENCIA': { name: 'PROVIDENCIA', coords: [-33.4300, -70.6150], color: '#f59e0b', role: 'Eje Comercial Oriente · Vía Alternativa Split 5t' },
+    'SAN_BERNARDO': { name: 'SAN BERNARDO', coords: [-33.5900, -70.7000], color: '#38bdf8', role: 'Planta Industrial Sur · Destino Caso 2 (10t)' },
+  };
+
+  function initRealLeafletMap() {
+    const container = document.getElementById('dispatch-real-map');
+    if (!container || leafletMap || typeof L === 'undefined') return;
+
+    try {
+      leafletMap = L.map('dispatch-real-map', {
+        center: [-33.4450, -70.6600],
+        zoom: 12,
+        minZoom: 10,
+        maxZoom: 18,
+        zoomControl: true,
+        attributionControl: true,
+      });
+
+      // CartoDB Dark Matter (Tactical Dispatch Default)
+      tileLayers['carto-dark'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19
+      });
+
+      // OpenStreetMap / Google standard streets
+      tileLayers['osm-streets'] = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        subdomains: 'abc',
+        maxZoom: 19
+      });
+
+      // Esri Satellite
+      tileLayers['esri-satellite'] = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; DigitalGlobe, GeoEye, Earthstar Geographics',
+        maxZoom: 18
+      });
+
+      // Add default dark layer
+      tileLayers['carto-dark'].addTo(leafletMap);
+
+      // Santiago Centro Exclusion Geofence Polygon (>5.000 kg 07:30–21:00)
+      const geofenceCoords = [
+        [-33.4300, -70.6720],
+        [-33.4320, -70.6380],
+        [-33.4580, -70.6350],
+        [-33.4680, -70.6550],
+        [-33.4520, -70.6800],
+      ];
+
+      geofenceLayer = L.polygon(geofenceCoords, {
+        color: '#f59e0b',
+        weight: 2,
+        dashArray: '6, 6',
+        fillColor: '#f59e0b',
+        fillOpacity: 0.12,
+      }).addTo(leafletMap);
+
+      geofenceLayer.bindPopup(`
+        <div class="tactical-leaflet-popup">
+          <div class="font-mono font-bold text-amber-300 text-xs flex items-center gap-1.5 border-b border-amber-500/30 pb-1 mb-1.5">
+            <span>⚠️ ORDENANZA N° 84 · SANTIAGO CENTRO</span>
+          </div>
+          <p class="text-slate-300 text-[11px] leading-relaxed">
+            <strong>Prohibición Diurna:</strong> Camiones de más de <strong>5.000 kg</strong> tienen acceso restringido de <strong>07:30 a 21:00 hrs</strong>.
+          </p>
+          <div class="mt-2 text-[10px] text-emerald-400 font-mono">
+            ✓ Ventana nocturna autorizada: 21:30–06:30 hrs<br>
+            ✓ Alternativa diurna: Split táctico 2x camiones 5t
+          </div>
+        </div>
+      `, { className: 'tactical-leaflet-popup' });
+
+      // Render Comuna Hub Nodes
+      renderRealMapNodes();
+
+      // Setup Layer Buttons
+      document.querySelectorAll('.map-layer-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const layerKey = btn.getAttribute('data-map-layer');
+          if (tileLayers[layerKey]) {
+            Object.values(tileLayers).forEach(l => {
+              if (leafletMap.hasLayer(l)) leafletMap.removeLayer(l);
+            });
+            tileLayers[layerKey].addTo(leafletMap);
+            document.querySelectorAll('.map-layer-btn').forEach(b => {
+              b.classList.remove('active-layer', 'bg-sky-500/20', 'text-sky-300', 'border-sky-500/40');
+              b.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
+            });
+            btn.classList.add('active-layer', 'bg-sky-500/20', 'text-sky-300', 'border-sky-500/40');
+            btn.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700');
+          }
+        });
+      });
+
+      // Setup GPS Focus buttons
+      document.querySelectorAll('[data-map-focus]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const focusKey = btn.getAttribute('data-map-focus');
+          focusRealMap(focusKey);
+        });
+      });
+
+      // Mode Switcher Listeners
+      const btnReal = document.getElementById('btn-mode-realmap');
+      const btnSvg = document.getElementById('btn-mode-svg');
+      const realMapDiv = document.getElementById('dispatch-real-map');
+      const svgMap = document.getElementById('dispatch-tactical-svg');
+
+      if (btnReal && btnSvg && realMapDiv && svgMap) {
+        btnReal.addEventListener('click', () => {
+          realMapDiv.classList.remove('hidden');
+          svgMap.classList.add('hidden');
+          btnReal.className = 'px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-sky-500/20 text-sky-300 border border-sky-500/40 transition active:scale-95 flex items-center gap-1.5';
+          btnSvg.className = 'px-2.5 py-1 rounded-md text-xs font-mono font-medium text-slate-400 hover:text-slate-200 transition active:scale-95 flex items-center gap-1.5';
+          if (leafletMap) {
+            setTimeout(() => leafletMap.invalidateSize(), 50);
+          }
+        });
+
+        btnSvg.addEventListener('click', () => {
+          realMapDiv.classList.add('hidden');
+          svgMap.classList.remove('hidden');
+          btnSvg.className = 'px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-sky-500/20 text-sky-300 border border-sky-500/40 transition active:scale-95 flex items-center gap-1.5';
+          btnReal.className = 'px-2.5 py-1 rounded-md text-xs font-mono font-medium text-slate-400 hover:text-slate-200 transition active:scale-95 flex items-center gap-1.5';
+        });
+      }
+
+      // Draw initial scenario route
+      updateRealMapScenario(currentRadarKey);
+
+    } catch (err) {
+      console.warn('Leaflet map initialization fallback to SVG', err);
+    }
+  }
+
+  function focusRealMap(focusKey) {
+    if (!leafletMap) return;
+    switch (focusKey) {
+      case 'CENTRO':
+        leafletMap.flyTo([-33.4503, -70.6441], 14, { duration: 1.2 });
+        break;
+      case 'QUILICURA':
+        leafletMap.flyTo([-33.3600, -70.6900], 14, { duration: 1.2 });
+        break;
+      case 'RENCA':
+        leafletMap.flyTo([-33.4050, -70.6800], 14.5, { duration: 1.2 });
+        break;
+      case 'ALL':
+      default:
+        leafletMap.flyTo([-33.4450, -70.6600], 12, { duration: 1.2 });
+        break;
+    }
+  }
+
+  function renderRealMapNodes() {
+    if (!leafletMap || typeof L === 'undefined') return;
+    Object.entries(SANTIAGO_NODES_DATA).forEach(([key, node]) => {
+      const icon = L.divIcon({
+        className: 'node-leaflet-marker',
+        html: `
+          <div class="node-leaflet-dot" style="background-color: ${node.color}; box-shadow: 0 0 10px ${node.color};"></div>
+          <div class="node-leaflet-label">${node.name}</div>
+        `,
+        iconSize: [110, 34],
+        iconAnchor: [55, 6],
+      });
+
+      const marker = L.marker(node.coords, { icon }).addTo(leafletMap);
+      marker.on('click', () => {
+        const insp = document.getElementById('radar-inspector-text');
+        if (insp) {
+          insp.innerHTML = `📍 <strong>${escapeHtml(node.name)}</strong> · ${node.role} (GPS: ${node.coords[0].toFixed(4)}, ${node.coords[1].toFixed(4)})`;
+        }
+      });
+      marker.bindPopup(`
+        <div class="tactical-leaflet-popup">
+          <strong class="text-sky-300 font-mono text-xs block">${escapeHtml(node.name)}</strong>
+          <span class="text-slate-400 text-[10px] block mt-0.5">GPS: ${node.coords[0]}, ${node.coords[1]}</span>
+          <p class="text-slate-200 text-[11px] mt-1">${escapeHtml(node.role)}</p>
+        </div>
+      `, { className: 'tactical-leaflet-popup' });
+    });
+  }
+
+  function renderRealMapFleet(fleetMarkersList) {
+    if (!leafletMap || typeof L === 'undefined' || !Array.isArray(fleetMarkersList)) return;
+
+    // Remove existing fleet markers
+    realMapFleetMarkers.forEach(m => leafletMap.removeLayer(m));
+    realMapFleetMarkers = [];
+
+    fleetMarkersList.forEach(m => {
+      if (typeof m.lat !== 'number' || typeof m.lng !== 'number') return;
+      const isLocked = m.blocked || m.status === 'EN_MANTENIMIENTO';
+      const isEnRuta = m.status === 'EN_RUTA';
+      const pillClass = isLocked ? 'fleet-pill-blocked' : (isEnRuta ? 'fleet-pill-en-ruta' : 'fleet-pill-available');
+
+      const icon = L.divIcon({
+        className: 'fleet-leaflet-marker',
+        html: `<div class="fleet-leaflet-pill ${pillClass}">🚛 ${escapeHtml(m.id)}</div>`,
+        iconSize: [68, 22],
+        iconAnchor: [34, 11],
+      });
+
+      const marker = L.marker([m.lat, m.lng], { icon }).addTo(leafletMap);
+      marker.on('click', () => {
+        const insp = document.getElementById('radar-inspector-text');
+        if (insp) {
+          insp.innerHTML = `🚛 <strong>${escapeHtml(m.id)}</strong> (${escapeHtml(m.modelo)}, máx ${(m.capacidad_kg || 0).toLocaleString('es-CL')} kg) — Estado: <strong class="${isLocked ? 'text-rose-400' : 'text-sky-300'}">${escapeHtml(m.status)}</strong> · ${escapeHtml(m.detail)}`;
+        }
+      });
+      marker.bindPopup(`
+        <div class="tactical-leaflet-popup">
+          <div class="flex items-center justify-between border-b border-slate-700 pb-1 mb-1.5">
+            <strong class="${isLocked ? 'text-rose-400' : 'text-sky-300'} font-mono text-xs">🚛 ${escapeHtml(m.id)}</strong>
+            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded ${isLocked ? 'bg-rose-950 text-rose-300 border border-rose-600' : 'bg-slate-800 text-slate-300'}">${escapeHtml(m.status)}</span>
+          </div>
+          <p class="text-slate-200 text-[11px]"><strong>Modelo:</strong> ${escapeHtml(m.modelo)} (Máx ${(m.capacidad_kg || 0).toLocaleString('es-CL')} kg)</p>
+          <p class="text-slate-300 text-[10px] mt-1">${escapeHtml(m.detail)}</p>
+          <p class="text-slate-400 text-[9px] font-mono mt-1">GPS: ${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}</p>
+        </div>
+      `, { className: 'tactical-leaflet-popup' });
+
+      realMapFleetMarkers.push(marker);
+    });
+  }
+
+  function updateRealMapScenario(scenarioKey) {
+    if (!leafletMap || typeof L === 'undefined') return;
+    const sc = RADAR_SCENARIOS[scenarioKey];
+    if (!sc) return;
+
+    // Remove existing route lines
+    if (activeRouteLine) {
+      leafletMap.removeLayer(activeRouteLine);
+      activeRouteLine = null;
+    }
+    if (activeSecondaryRouteLine) {
+      leafletMap.removeLayer(activeSecondaryRouteLine);
+      activeSecondaryRouteLine = null;
+    }
+
+    // Draw primary route
+    if (Array.isArray(sc.waypoints) && sc.waypoints.length > 1) {
+      activeRouteLine = L.polyline(sc.waypoints, {
+        color: sc.primaryColor || '#10b981',
+        weight: 5,
+        opacity: 0.92,
+        dashArray: '10, 6',
+      }).addTo(leafletMap);
+    }
+
+    // Draw secondary split route if defined
+    if (Array.isArray(sc.secondaryWaypoints) && sc.secondaryWaypoints.length > 1) {
+      activeSecondaryRouteLine = L.polyline(sc.secondaryWaypoints, {
+        color: '#38bdf8',
+        weight: 4,
+        opacity: 0.88,
+        dashArray: '8, 6',
+      }).addTo(leafletMap);
+    }
+
+    // Update Geofence visual state based on scenario
+    if (geofenceLayer) {
+      if (scenarioKey === 'CASO-3-V1') {
+        geofenceLayer.setStyle({ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.28 });
+      } else if (scenarioKey === 'CASO-3-V2') {
+        geofenceLayer.setStyle({ color: '#10b981', fillColor: '#10b981', fillOpacity: 0.18 });
+      } else {
+        geofenceLayer.setStyle({ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.12 });
+      }
+    }
+
+    // Smoothly flyTo zoom target
+    if (sc.zoomTarget && sc.zoomLevel) {
+      leafletMap.flyTo(sc.zoomTarget, sc.zoomLevel, { duration: 1.1 });
+    }
+
+    // Update direct Google Maps link button
+    const btnGmaps = document.getElementById('btn-open-google-maps');
+    if (btnGmaps && sc.origin && sc.destination) {
+      btnGmaps.href = `https://www.google.com/maps/dir/?api=1&origin=${sc.origin[0]},${sc.origin[1]}&destination=${sc.destination[0]},${sc.destination[1]}&travelmode=driving`;
+    }
+  }
 
   async function fetchTacticalNetwork(hora = '11:30') {
     try {
@@ -1419,6 +1765,20 @@ document.addEventListener('DOMContentLoaded', () => {
         fleetLayer.appendChild(g);
       });
     }
+
+    // Update Leaflet geofence polygon style
+    if (geofenceLayer) {
+      if (net.santiago_centro_daytime_ban_active === false) {
+        geofenceLayer.setStyle({ color: '#10b981', fillColor: '#10b981', fillOpacity: 0.18 });
+      } else {
+        geofenceLayer.setStyle({ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.12 });
+      }
+    }
+
+    // Update Leaflet Live Fleet Markers
+    if (Array.isArray(net.fleet_markers)) {
+      renderRealMapFleet(net.fleet_markers);
+    }
   }
 
   function setRadarScenario(scenarioKey) {
@@ -1471,6 +1831,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const alertTitle = document.getElementById('hud-alert-title');
     if (alertTitle) alertTitle.className = `font-bold font-mono text-[11px] ${sc.alertTitleColor}`;
 
+    // Update Real Leaflet Map Route, Geofence and Zoom
+    updateRealMapScenario(scenarioKey);
+
     // Sync Mobile Mini Radar
     setText('mob-radar-case', sc.label);
     setText('mob-radar-route', sc.routeLabel);
@@ -1504,6 +1867,24 @@ document.addEventListener('DOMContentLoaded', () => {
     setText('hud-schedule', `${prop.fecha_hora_programada || tmap.hora_evaluada} (SLA ${prop.sla_horas || 2}h)`);
     setText('hud-tariff', `$${totalClp.toLocaleString('es-CL')} CLP`);
     setText('hud-alert-desc', prop.observaciones || evalData.message || '');
+
+    // Synchronize Real Leaflet Map
+    if (leafletMap && typeof L !== 'undefined' && tmap.origin_node && tmap.destination_node) {
+      const origCoords = [tmap.origin_node.lat || -33.3600, tmap.origin_node.lng || -70.6900];
+      const destCoords = [tmap.destination_node.lat || -33.4503, tmap.destination_node.lng || -70.6441];
+      if (activeRouteLine) leafletMap.removeLayer(activeRouteLine);
+      activeRouteLine = L.polyline([origCoords, destCoords], {
+        color: evalData.status === 'BLOQUEADO_RIESGO' ? '#ef4444' : '#10b981',
+        weight: 5,
+        dashArray: '10, 6',
+      }).addTo(leafletMap);
+      leafletMap.flyTo(destCoords, 13, { duration: 1.0 });
+
+      const btnGmaps = document.getElementById('btn-open-google-maps');
+      if (btnGmaps) {
+        btnGmaps.href = `https://www.google.com/maps/dir/?api=1&origin=${origCoords[0]},${origCoords[1]}&destination=${destCoords[0]},${destCoords[1]}&travelmode=driving`;
+      }
+    }
 
     setText('mob-radar-case', caseId);
     setText('mob-radar-route', `${tmap.origin_node?.nombre || 'Origen'} ➔ ${tmap.destination_node?.nombre || 'Destino'} (${tmap.distance_km} km)`);
@@ -1595,6 +1976,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.openReviewModal(sc.caseId);
       });
     }
+
+    // Initialize Real Dynamic Leaflet Map
+    initRealLeafletMap();
   }
 
   // --- TOAST NOTIFICATIONS ENGINE ---

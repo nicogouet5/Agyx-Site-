@@ -54,6 +54,8 @@ SANTIAGO_NODES: Dict[str, Dict[str, Any]] = {
         "comuna": "Quilicura",
         "x": 220,
         "y": 48,
+        "lat": -33.3600,
+        "lng": -70.6900,
         "tipo": "HUB_BASE",
         "descripcion": "Centro de Distribución Principal Pymes-Fletes (CAM-01, CAM-02, CAM-03, CAM-05, CAM-07)",
     },
@@ -63,6 +65,8 @@ SANTIAGO_NODES: Dict[str, Dict[str, Any]] = {
         "comuna": "Renca",
         "x": 255,
         "y": 102,
+        "lat": -33.4050,
+        "lng": -70.6800,
         "tipo": "TALLER_MANTENIMIENTO",
         "descripcion": "Taller Mecánico Central — CAM-04 bloqueado por falla crítica de frenos de aire",
     },
@@ -72,6 +76,8 @@ SANTIAGO_NODES: Dict[str, Dict[str, Any]] = {
         "comuna": "Pudahuel",
         "x": 92,
         "y": 138,
+        "lat": -33.4350,
+        "lng": -70.7600,
         "tipo": "ZONA_INDUSTRIAL",
         "descripcion": "Parque Logístico Pudahuel / ENEA (Zona Industrial 24/7 sin restricción de tonelaje)",
     },
@@ -81,6 +87,8 @@ SANTIAGO_NODES: Dict[str, Dict[str, Any]] = {
         "comuna": "Maipú",
         "x": 122,
         "y": 228,
+        "lat": -33.5100,
+        "lng": -70.7600,
         "tipo": "ZONA_INDUSTRIAL",
         "descripcion": "Corredor Camino a Melipilla / Maipú Poniente",
     },
@@ -90,6 +98,8 @@ SANTIAGO_NODES: Dict[str, Dict[str, Any]] = {
         "comuna": "Santiago Centro",
         "x": 365,
         "y": 156,
+        "lat": -33.4503,
+        "lng": -70.6441,
         "tipo": "ZONA_RESTRINGIDA",
         "descripcion": "Anillo Interior Santiago Centro / Lira 953 — Ordenanza N° 84 prohíbe >5.000 kg entre 07:30 y 21:00 hrs",
     },
@@ -99,6 +109,8 @@ SANTIAGO_NODES: Dict[str, Dict[str, Any]] = {
         "comuna": "Providencia",
         "x": 515,
         "y": 98,
+        "lat": -33.4300,
+        "lng": -70.6150,
         "tipo": "ZONA_COMERCIAL",
         "descripcion": "Eje Providencia / Costanera — Restricción >8.000 kg en punta mañana (07:30–10:00 hrs)",
     },
@@ -108,6 +120,8 @@ SANTIAGO_NODES: Dict[str, Dict[str, Any]] = {
         "comuna": "San Bernardo",
         "x": 340,
         "y": 258,
+        "lat": -33.5900,
+        "lng": -70.7000,
         "tipo": "ZONA_INDUSTRIAL_SUR",
         "descripcion": "Polo Industrial Ruta 5 Sur — Unidad CAM-06 (12t) en ruta hoy, slot reserva mañana 08:00 hrs",
     },
@@ -121,7 +135,8 @@ SANTIAGO_CORRIDORS: Dict[str, Dict[str, Any]] = {
         "destino": "PUDAHUEL",
         "distancia_km": 18.4,
         "svg_path": "M 220,48 Q 120,68 92,138",
-        "midpoint": {"x": 142, "y": 84},
+        "waypoints": [[-33.3600, -70.6900], [-33.3850, -70.7350], [-33.4350, -70.7600]],
+        "midpoint": {"x": 142, "y": 84, "lat": -33.3850, "lng": -70.7350},
     },
     "VESPUCIO_PONIENTE": {
         "id": "VESPUCIO_PONIENTE",
@@ -130,7 +145,8 @@ SANTIAGO_CORRIDORS: Dict[str, Dict[str, Any]] = {
         "destino": "MAIPU",
         "distancia_km": 24.5,
         "svg_path": "M 220,48 Q 120,68 92,138 L 122,228",
-        "midpoint": {"x": 105, "y": 182},
+        "waypoints": [[-33.3600, -70.6900], [-33.4350, -70.7600], [-33.5100, -70.7600]],
+        "midpoint": {"x": 105, "y": 182, "lat": -33.4700, "lng": -70.7600},
     },
     "AUTOPISTA_CENTRAL_CENTRO": {
         "id": "AUTOPISTA_CENTRAL_CENTRO",
@@ -140,7 +156,8 @@ SANTIAGO_CORRIDORS: Dict[str, Dict[str, Any]] = {
         "distancia_km": 16.8,
         "svg_path": "M 220,48 L 255,102 L 365,156",
         "split_svg_path": "M 220,48 Q 345,76 365,156",
-        "midpoint": {"x": 308, "y": 128},
+        "waypoints": [[-33.3600, -70.6900], [-33.4050, -70.6800], [-33.4410, -70.6600], [-33.4503, -70.6441]],
+        "midpoint": {"x": 308, "y": 128, "lat": -33.4250, "lng": -70.6650},
     },
     "RUTA_5_SUR": {
         "id": "RUTA_5_SUR",
@@ -149,7 +166,8 @@ SANTIAGO_CORRIDORS: Dict[str, Dict[str, Any]] = {
         "destino": "SAN_BERNARDO",
         "distancia_km": 29.2,
         "svg_path": "M 220,48 L 255,102 L 352,190 L 340,258",
-        "midpoint": {"x": 345, "y": 212},
+        "waypoints": [[-33.3600, -70.6900], [-33.4050, -70.6800], [-33.4503, -70.6600], [-33.5200, -70.6850], [-33.5900, -70.7000]],
+        "midpoint": {"x": 345, "y": 212, "lat": -33.5000, "lng": -70.6800},
     },
     "COSTANERA_NORTE": {
         "id": "COSTANERA_NORTE",
@@ -158,7 +176,8 @@ SANTIAGO_CORRIDORS: Dict[str, Dict[str, Any]] = {
         "destino": "PROVIDENCIA",
         "distancia_km": 19.0,
         "svg_path": "M 220,48 L 255,102 Q 385,78 515,98",
-        "midpoint": {"x": 405, "y": 88},
+        "waypoints": [[-33.3600, -70.6900], [-33.4050, -70.6800], [-33.4150, -70.6100], [-33.4300, -70.6150]],
+        "midpoint": {"x": 405, "y": 88, "lat": -33.4150, "lng": -70.6300},
     },
 }
 
@@ -389,16 +408,24 @@ def get_network_telemetry(
         corridors_list.append(entry)
 
     fleet_markers = [
-        {"id": "CAM-01", "modelo": "Hyundai HD78 3.5t", "capacidad_kg": 3500, "nodo": "QUILICURA", "node_id": "QUILICURA", "x": 310, "y": 54, "estado": "DISPONIBLE", "status": "DISPONIBLE", "blocked": False, "detail": "En Base Quilicura — Disponible (Carga liviana <=3.000 kg)"},
-        {"id": "CAM-02", "modelo": "Mercedes Atego 5t", "capacidad_kg": 5000, "nodo": "QUILICURA", "node_id": "QUILICURA", "x": 365, "y": 54, "estado": "DISPONIBLE", "status": "DISPONIBLE", "blocked": False, "detail": "En Base Quilicura — Disponible (Caso 1 / Split 5t)"},
-        {"id": "CAM-03", "modelo": "Mercedes Atego 5t", "capacidad_kg": 5000, "nodo": "QUILICURA", "node_id": "QUILICURA", "x": 418, "y": 54, "estado": "DISPONIBLE", "status": "DISPONIBLE", "blocked": False, "detail": "En Base Quilicura — Disponible (Split 2x 5t)"},
-        {"id": "CAM-04", "modelo": "VW Delivery 8t", "capacidad_kg": 8000, "nodo": "RENCA", "node_id": "RENCA", "x": 295, "y": 195, "estado": "EN_MANTENIMIENTO", "status": "EN_MANTENIMIENTO", "blocked": True, "alerta": "Falla crítica de frenos de aire", "detail": "BLOQUEADO EN TALLER RENCA: Falla crítica de frenos de aire (Caso 5)"},
-        {"id": "CAM-05", "modelo": "Volvo VM 12t", "capacidad_kg": 12000, "nodo": "QUILICURA", "node_id": "QUILICURA", "x": 395, "y": 106, "estado": "DISPONIBLE", "status": "DISPONIBLE", "blocked": False, "detail": "En Base Quilicura — Disponible (12t Caso 3 v1/v2)"},
-        {"id": "CAM-06", "modelo": "Scania P250 12t", "capacidad_kg": 12000, "nodo": "SAN_BERNARDO", "node_id": "SAN_BERNARDO", "x": 445, "y": 350, "estado": "EN_RUTA", "status": "EN_RUTA", "blocked": False, "alerta": "Reserva mañana 08:00 hrs", "detail": "En Ruta Sur — Próximo slot mañana 08:00 hrs (Caso 2)"},
-        {"id": "CAM-07", "modelo": "Scania G360 15t", "capacidad_kg": 15000, "nodo": "PUDAHUEL", "node_id": "PUDAHUEL", "x": 155, "y": 182, "estado": "EN_RUTA", "status": "EN_RUTA", "blocked": False, "detail": "En Ruta Poniente — Retorno mañana 08:00 hrs"},
+        {"id": "CAM-01", "modelo": "Hyundai HD78 3.5t", "capacidad_kg": 3500, "nodo": "QUILICURA", "node_id": "QUILICURA", "x": 310, "y": 54, "lat": -33.3610, "lng": -70.6910, "estado": "DISPONIBLE", "status": "DISPONIBLE", "blocked": False, "detail": "En Base Quilicura — Disponible (Carga liviana <=3.000 kg)"},
+        {"id": "CAM-02", "modelo": "Mercedes Atego 5t", "capacidad_kg": 5000, "nodo": "QUILICURA", "node_id": "QUILICURA", "x": 365, "y": 54, "lat": -33.3600, "lng": -70.6880, "estado": "DISPONIBLE", "status": "DISPONIBLE", "blocked": False, "detail": "En Base Quilicura — Disponible (Caso 1 / Split 5t)"},
+        {"id": "CAM-03", "modelo": "Mercedes Atego 5t", "capacidad_kg": 5000, "nodo": "QUILICURA", "node_id": "QUILICURA", "x": 418, "y": 54, "lat": -33.3590, "lng": -70.6920, "estado": "DISPONIBLE", "status": "DISPONIBLE", "blocked": False, "detail": "En Base Quilicura — Disponible (Split 2x 5t)"},
+        {"id": "CAM-04", "modelo": "VW Delivery 8t", "capacidad_kg": 8000, "nodo": "RENCA", "node_id": "RENCA", "x": 295, "y": 195, "lat": -33.4050, "lng": -70.6800, "estado": "EN_MANTENIMIENTO", "status": "EN_MANTENIMIENTO", "blocked": True, "alerta": "Falla crítica de frenos de aire", "detail": "BLOQUEADO EN TALLER RENCA: Falla crítica de frenos de aire (Caso 5)"},
+        {"id": "CAM-05", "modelo": "Volvo VM 12t", "capacidad_kg": 12000, "nodo": "QUILICURA", "node_id": "QUILICURA", "x": 395, "y": 106, "lat": -33.3620, "lng": -70.6870, "estado": "DISPONIBLE", "status": "DISPONIBLE", "blocked": False, "detail": "En Base Quilicura — Disponible (12t Caso 3 v1/v2)"},
+        {"id": "CAM-06", "modelo": "Scania P250 12t", "capacidad_kg": 12000, "nodo": "SAN_BERNARDO", "node_id": "SAN_BERNARDO", "x": 445, "y": 350, "lat": -33.5900, "lng": -70.7000, "estado": "EN_RUTA", "status": "EN_RUTA", "blocked": False, "alerta": "Reserva mañana 08:00 hrs", "detail": "En Ruta Sur — Próximo slot mañana 08:00 hrs (Caso 2)"},
+        {"id": "CAM-07", "modelo": "Scania G360 15t", "capacidad_kg": 15000, "nodo": "PUDAHUEL", "node_id": "PUDAHUEL", "x": 155, "y": 182, "lat": -33.4350, "lng": -70.7600, "estado": "EN_RUTA", "status": "EN_RUTA", "blocked": False, "detail": "En Ruta Poniente — Retorno mañana 08:00 hrs"},
     ]
 
     sample_cg = _compute_corridor_congestion("AUTOPISTA_CENTRAL_CENTRO", mins, is_daytime_ban_triggered=False)
+
+    geofence_coords = [
+        [-33.4300, -70.6720],
+        [-33.4320, -70.6380],
+        [-33.4580, -70.6350],
+        [-33.4680, -70.6550],
+        [-33.4520, -70.6800],
+    ]
 
     return {
         "hora": hora,
@@ -412,7 +439,10 @@ def get_network_telemetry(
             "peso_max_diurno_kg": 5000,
             "ordenanza": "Ordenanza Municipal N° 84 Santiago Centro",
             "memoria_viva_activa": active_memory,
+            "polygon_coords": geofence_coords,
         },
+        "geofence_polygon_coords": geofence_coords,
+        "map_center": {"lat": -33.4450, "lng": -70.6600, "zoom": 12},
         "nodos": SANTIAGO_NODES,
         "corredores": corridors_state,
         "corridors": corridors_list,

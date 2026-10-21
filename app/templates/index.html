@@ -45,8 +45,12 @@
     }
   </script>
 
+  <!-- Leaflet CSS & JS for Real Dynamic Santiago Dispatch Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
   <!-- Comprehensive Local CSS Fallback (active if CDN is unavailable or offline) -->
-  <link rel="stylesheet" href="/static/css/app.css?v=5">
+  <link rel="stylesheet" href="/static/css/app.css?v=6">
   <script>
     // Purge legacy Cache-First Service Worker cache ('agyx-v1-cache') so the Dispatch Map is always visible
     if ('caches' in window) {
@@ -202,9 +206,19 @@
             </div>
           </div>
 
-          <!-- Time / Congestion Controls & Collapse Toggle -->
+          <!-- Mode Switcher, Time / Congestion Controls & Collapse Toggle -->
           <div class="flex flex-wrap items-center gap-2 text-xs">
-            <label for="radar-time-select" class="text-[11px] text-slate-400 font-mono">⏱️ Hora / Tráfico:</label>
+            <!-- Map Mode Selector: Real GPS Map vs Schematic SVG Radar -->
+            <div class="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-700/80 shadow-inner">
+              <button id="btn-mode-realmap" type="button" class="px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-sky-500/20 text-sky-300 border border-sky-500/40 transition active:scale-95 flex items-center gap-1.5" title="Mapa Real de Santiago con calles, autopistas y GPS interactivo">
+                <span>🛰️ Mapa Real GPS</span>
+              </button>
+              <button id="btn-mode-svg" type="button" class="px-2.5 py-1 rounded-md text-xs font-mono font-medium text-slate-400 hover:text-slate-200 transition active:scale-95 flex items-center gap-1.5" title="Radar Vectorial Esquemático Dispatch">
+                <span>⚡ Radar SVG</span>
+              </button>
+            </div>
+
+            <label for="radar-time-select" class="text-[11px] text-slate-400 font-mono">⏱️ Hora:</label>
             <select id="radar-time-select" class="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-sky-300 font-mono text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none">
               <option value="08:00">08:00 — Punta Mañana (1.55x)</option>
               <option value="11:30" selected>11:30 — Restricción Diurna Centro (1.25x)</option>
@@ -218,8 +232,43 @@
           </div>
         </div>
 
-        <!-- Quick Scenario / Rubric Cases Selector Bar -->
+        <!-- Quick Scenario / Rubric Cases Selector Bar & Real Map Layer Bar -->
         <div id="radar-body-container" class="flex flex-col gap-3.5">
+          <!-- Real Map Controls Bar (Layers + Quick Focus + Google Maps External Link) -->
+          <div id="realmap-controls-bar" class="flex flex-wrap items-center justify-between gap-2 bg-slate-900/80 border border-slate-800/90 rounded-xl px-3 py-1.5 text-xs font-mono">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="text-slate-400 text-[11px]">Capa:</span>
+              <button type="button" data-map-layer="carto-dark" class="map-layer-btn active-layer px-2.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 text-[11px] transition">
+                🌑 Carto Dark (Dispatch)
+              </button>
+              <button type="button" data-map-layer="osm-streets" class="map-layer-btn px-2.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] transition">
+                🗺️ Google / OSM Calles
+              </button>
+              <button type="button" data-map-layer="esri-satellite" class="map-layer-btn px-2.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] transition">
+                🛰️ Satélite
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="text-slate-400 text-[11px]">Enfoque GPS:</span>
+              <button type="button" data-map-focus="CENTRO" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-[11px] transition" title="Centrar en Santiago Centro (Lira 953)">
+                📍 Lira 953 Centro
+              </button>
+              <button type="button" data-map-focus="QUILICURA" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30 text-[11px] transition" title="Centrar en Base Quilicura">
+                🏢 Hub Quilicura
+              </button>
+              <button type="button" data-map-focus="RENCA" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-rose-300 border border-rose-500/30 text-[11px] transition" title="Centrar en Taller Renca (CAM-04)">
+                🔧 Taller Renca
+              </button>
+              <button type="button" data-map-focus="ALL" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] transition" title="Ver red metropolitana completa">
+                🌐 Vista RM
+              </button>
+              <a id="btn-open-google-maps" href="https://www.google.com/maps/dir/?api=1&origin=-33.3600,-70.6900&destination=-33.4503,-70.6441" target="_blank" rel="noopener" class="px-2 py-0.5 rounded bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 text-[11px] flex items-center gap-1 transition" title="Abrir coordenadas GPS de la ruta en Google Maps">
+                <span>↗ Google Maps</span>
+              </a>
+            </div>
+          </div>
+
           <div class="flex flex-wrap items-center gap-1.5">
             <span class="text-[11px] text-slate-400 font-mono mr-1">Rutas Rápidas:</span>
             <button type="button" data-radar-case="CASO-1" class="radar-case-btn px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-mono transition">
@@ -239,17 +288,17 @@
             </button>
           </div>
 
-          <!-- Split View: Left Interactive Vector Map (8 cols) | Right Telemetry & Governance HUD (4 cols) -->
+          <!-- Split View: Left Interactive Map (8 cols) | Right Telemetry & Governance HUD (4 cols) -->
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
             
-            <!-- Left: Interactive SVG Tactical Map -->
-            <div class="lg:col-span-8 tactical-canvas-wrap flex flex-col justify-between min-h-[340px]">
+            <!-- Left: Interactive Real Santiago Map & SVG Tactical Canvas -->
+            <div class="lg:col-span-8 tactical-canvas-wrap flex flex-col justify-between min-h-[380px]">
               <div class="tactical-scanline" aria-hidden="true"></div>
 
               <!-- Top Map Overlay Bar -->
               <div class="relative z-10 flex flex-wrap items-center justify-between gap-2 px-3.5 pt-2.5 text-[10px] font-mono text-slate-400">
                 <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded bg-slate-900/90 border border-slate-700 text-sky-300">GRID: 33°26'S 70°39'W</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-900/90 border border-slate-700 text-sky-300">GPS: 33°27'S 70°39'W</span>
                   <span id="radar-zone-banner" class="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300">
                     ZONA EXCLUSIÓN SANTIAGO CENTRO: &gt;5.000 kg (07:30–21:00)
                   </span>
@@ -261,8 +310,11 @@
                 </div>
               </div>
 
-              <!-- Interactive SVG Canvas -->
-              <svg id="dispatch-tactical-svg" viewBox="0 0 820 430" class="w-full h-auto select-none relative z-10" role="img" aria-label="Mapa Táctico Interactivo de Despacho en Santiago de Chile">
+              <!-- REAL DYNAMIC SANTIAGO LEAFLET MAP CONTAINER -->
+              <div id="dispatch-real-map" class="w-full h-[380px] md:h-[430px] rounded-xl relative z-10" aria-label="Mapa Dinámico Real de Santiago con Calles y Autopistas"></div>
+
+              <!-- Interactive SVG Canvas (Secondary / Vector mode) -->
+              <svg id="dispatch-tactical-svg" viewBox="0 0 820 430" class="w-full h-auto select-none relative z-10 hidden" role="img" aria-label="Mapa Táctico Interactivo de Despacho en Santiago de Chile">
                 <defs>
                   <filter id="radar-glow" x="-20%" y="-20%" width="140%" height="140%">
                     <feGaussianBlur stdDeviation="3.5" result="blur" />
@@ -1059,6 +1111,6 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-2"></div>
 
   <!-- App Main JavaScript Controller -->
-  <script src="/static/js/app.js?v=5"></script>
+  <script src="/static/js/app.js?v=6"></script>
 </body>
 </html>
