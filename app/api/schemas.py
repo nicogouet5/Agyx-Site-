@@ -33,6 +33,7 @@ class DispatchEvaluationRequest(APIModel):
 
 
 class ReviewProposalRequest(APIModel):
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
     case_id: str = Field(min_length=1, max_length=100)
     action: Literal["APPROVE", "REJECT"]
     supervisor_name: str = Field(min_length=1, max_length=160)
