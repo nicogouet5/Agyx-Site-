@@ -5,7 +5,7 @@
   },
   "active_rules": [
     {
-      "id": "RULE-20261021040536458881-5176cb",
+      "id": "RULE-20261021043830065188-b59a88",
       "case_id": "CASO-3",
       "raw_reason": "Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t",
       "distilled_rule": "[SANTIAGO_CENTRO] >5.000kg prohibido 07:30-21:00. Solución: reprogramar 21:30 hrs o 2x camiones 5t.",
@@ -17,14 +17,14 @@
       "token_count": 28,
       "active": true,
       "supervisor_name": "Carlos Morales (Jefe de Operaciones)",
-      "created_at": "2026-10-21T04:05:36.458881Z"
+      "created_at": "2026-10-21T04:38:30.065188Z"
     }
   ],
   "feedback_history": [
     {
-      "entry_id": "FEEDBACK-20261021040536458881-5176cb",
+      "entry_id": "FEEDBACK-20261021043830065188-b59a88",
       "case_id": "CASO-3",
-      "timestamp": "2026-10-21T04:05:36.458881Z",
+      "timestamp": "2026-10-21T04:38:30.065188Z",
       "supervisor_name": "Carlos Morales (Jefe de Operaciones)",
       "action": "REJECT",
       "rejected_reason": "Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t",
@@ -32,177 +32,13 @@
       "token_count": 28
     }
   ],
-  "proposals_log": [
-    {
-      "propuesta_id": "PROP-20261021-CASO-1",
-      "case_id": "CASO-1",
-      "created_at": "2026-10-21T04:05:36.466260Z",
-      "origen": "Quilicura",
-      "destino": "Pudahuel",
-      "fecha_hora_programada": "14:00",
-      "camiones": [
-        "CAM-02"
-      ],
-      "tarifa_base_clp": 65000.0,
-      "recargo_clp": 0.0,
-      "total_clp": 65000.0,
-      "sla_horas": 2.0,
-      "estado": "R4R",
-      "auto_approved": false,
-      "requiere_firma_humana": true,
-      "campos_faltantes": [],
-      "bloqueo_legal": null,
-      "bloqueos_mantenimiento": [],
-      "observaciones": "Despacho directo factible hoy con flota inmediata en base Quilicura.",
-      "human_signature": null,
-      "review_timestamp": null,
-      "rejected_reason": null
-    },
-    {
-      "propuesta_id": "PROP-20261021-CASO-2",
-      "case_id": "CASO-2",
-      "created_at": "2026-10-21T04:05:36.473218Z",
-      "origen": "Quilicura",
-      "destino": "San Bernardo",
-      "fecha_hora_programada": "2026-10-22 08:00 hrs",
-      "camiones": [
-        "CAM-06"
-      ],
-      "tarifa_base_clp": 120000.0,
-      "recargo_clp": 0.0,
-      "total_clp": 120000.0,
-      "sla_horas": 4.0,
-      "estado": "R4R",
-      "auto_approved": false,
-      "requiere_firma_humana": true,
-      "campos_faltantes": [],
-      "bloqueo_legal": null,
-      "bloqueos_mantenimiento": [],
-      "observaciones": "[Acto 4 Reserva] Flota pesada de 12t se encuentra en ruta hoy. Se programa reserva preferente para mañana a las 08:00 hrs.",
-      "human_signature": null,
-      "review_timestamp": null,
-      "rejected_reason": null
-    },
-    {
-      "propuesta_id": "PROP-20261021-CASO-5",
-      "case_id": "CASO-5",
-      "created_at": "2026-10-21T04:05:36.479106Z",
-      "origen": "Quilicura",
-      "destino": "Maipú",
-      "fecha_hora_programada": "10:00",
-      "camiones": [],
-      "tarifa_base_clp": 0.0,
-      "recargo_clp": 0.0,
-      "total_clp": 0.0,
-      "sla_horas": 0.0,
-      "estado": "BLOQUEADO_RIESGO",
-      "auto_approved": false,
-      "requiere_firma_humana": true,
-      "campos_faltantes": [],
-      "bloqueo_legal": null,
-      "bloqueos_mantenimiento": [
-        {
-          "id": "CAM-04",
-          "bloqueado": true,
-          "motivo": "Falla crítica de frenos de aire (disco y compresor)",
-          "severidad": "CRITICO",
-          "accion": "BLOQUEADO_RIESGO_ESCALAR_OPERACIONES"
-        }
-      ],
-      "observaciones": "Alerta de Seguridad Crítica: Camión CAM-04 presenta falla crítica de frenos de aire en taller Renca. Asignación terminantemente bloqueada.",
-      "human_signature": null,
-      "review_timestamp": null,
-      "rejected_reason": null
-    }
-  ],
-  "propuestas_r4r": [
-    {
-      "propuesta_id": "PROP-20261021-CASO-1",
-      "case_id": "CASO-1",
-      "created_at": "2026-10-21T04:05:36.466260Z",
-      "origen": "Quilicura",
-      "destino": "Pudahuel",
-      "fecha_hora_programada": "14:00",
-      "camiones": [
-        "CAM-02"
-      ],
-      "tarifa_base_clp": 65000.0,
-      "recargo_clp": 0.0,
-      "total_clp": 65000.0,
-      "sla_horas": 2.0,
-      "estado": "R4R",
-      "auto_approved": false,
-      "requiere_firma_humana": true,
-      "campos_faltantes": [],
-      "bloqueo_legal": null,
-      "bloqueos_mantenimiento": [],
-      "observaciones": "Despacho directo factible hoy con flota inmediata en base Quilicura.",
-      "human_signature": null,
-      "review_timestamp": null,
-      "rejected_reason": null
-    },
-    {
-      "propuesta_id": "PROP-20261021-CASO-2",
-      "case_id": "CASO-2",
-      "created_at": "2026-10-21T04:05:36.473218Z",
-      "origen": "Quilicura",
-      "destino": "San Bernardo",
-      "fecha_hora_programada": "2026-10-22 08:00 hrs",
-      "camiones": [
-        "CAM-06"
-      ],
-      "tarifa_base_clp": 120000.0,
-      "recargo_clp": 0.0,
-      "total_clp": 120000.0,
-      "sla_horas": 4.0,
-      "estado": "R4R",
-      "auto_approved": false,
-      "requiere_firma_humana": true,
-      "campos_faltantes": [],
-      "bloqueo_legal": null,
-      "bloqueos_mantenimiento": [],
-      "observaciones": "[Acto 4 Reserva] Flota pesada de 12t se encuentra en ruta hoy. Se programa reserva preferente para mañana a las 08:00 hrs.",
-      "human_signature": null,
-      "review_timestamp": null,
-      "rejected_reason": null
-    },
-    {
-      "propuesta_id": "PROP-20261021-CASO-5",
-      "case_id": "CASO-5",
-      "created_at": "2026-10-21T04:05:36.479106Z",
-      "origen": "Quilicura",
-      "destino": "Maipú",
-      "fecha_hora_programada": "10:00",
-      "camiones": [],
-      "tarifa_base_clp": 0.0,
-      "recargo_clp": 0.0,
-      "total_clp": 0.0,
-      "sla_horas": 0.0,
-      "estado": "BLOQUEADO_RIESGO",
-      "auto_approved": false,
-      "requiere_firma_humana": true,
-      "campos_faltantes": [],
-      "bloqueo_legal": null,
-      "bloqueos_mantenimiento": [
-        {
-          "id": "CAM-04",
-          "bloqueado": true,
-          "motivo": "Falla crítica de frenos de aire (disco y compresor)",
-          "severidad": "CRITICO",
-          "accion": "BLOQUEADO_RIESGO_ESCALAR_OPERACIONES"
-        }
-      ],
-      "observaciones": "Alerta de Seguridad Crítica: Camión CAM-04 presenta falla crítica de frenos de aire en taller Renca. Asignación terminantemente bloqueada.",
-      "human_signature": null,
-      "review_timestamp": null,
-      "rejected_reason": null
-    }
-  ],
+  "proposals_log": [],
+  "propuestas_r4r": [],
   "bitacora_feedback": [
     {
-      "entry_id": "FEEDBACK-20261021040536458881-5176cb",
+      "entry_id": "FEEDBACK-20261021043830065188-b59a88",
       "case_id": "CASO-3",
-      "timestamp": "2026-10-21T04:05:36.458881Z",
+      "timestamp": "2026-10-21T04:38:30.065188Z",
       "supervisor_name": "Carlos Morales (Jefe de Operaciones)",
       "action": "REJECT",
       "rejected_reason": "Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t",
@@ -212,7 +48,7 @@
   ],
   "living_memory_rules": [
     {
-      "id": "RULE-20261021040536458881-5176cb",
+      "id": "RULE-20261021043830065188-b59a88",
       "case_id": "CASO-3",
       "raw_reason": "Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t",
       "distilled_rule": "[SANTIAGO_CENTRO] >5.000kg prohibido 07:30-21:00. Solución: reprogramar 21:30 hrs o 2x camiones 5t.",
@@ -224,7 +60,7 @@
       "token_count": 28,
       "active": true,
       "supervisor_name": "Carlos Morales (Jefe de Operaciones)",
-      "created_at": "2026-10-21T04:05:36.458881Z"
+      "created_at": "2026-10-21T04:38:30.065188Z"
     }
   ]
 }

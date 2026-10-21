@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     lastSyncOrderId: null,
     lastSyncPendingCount: null,
     syncInitialized: false,
+    operatingMode: 'realistic',
   };
 
   // --- DOM ELEMENT REFERENCES ---
@@ -129,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ]);
     const timeSelect = document.getElementById('radar-time-select');
     await fetchTacticalNetwork(timeSelect ? timeSelect.value : '11:30');
+    updateOperatingModeButtons();
   }
 
   async function fetchBases() {
@@ -346,11 +348,44 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el.queueVisibleCount) el.queueVisibleCount.textContent = items.length;
 
     if (items.length === 0) {
-      el.r4rCardsList.innerHTML = `
-        <div class="col-span-full py-12 text-center text-slate-500">
-          <p>No hay órdenes en la cola con el filtro seleccionado (${state.queueFilter}).</p>
-        </div>
-      `;
+      if (state.queueFilter === 'ALL') {
+        el.r4rCardsList.innerHTML = `
+          <div class="col-span-full bg-slate-900/90 border border-emerald-500/30 rounded-2xl p-6 sm:p-8 text-center flex flex-col items-center justify-center gap-4 shadow-xl">
+            <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 flex items-center justify-center text-3xl shadow-lg shadow-emerald-500/10">
+              🟢
+            </div>
+            <div class="max-w-xl">
+              <div class="flex items-center justify-center gap-2 mb-1.5">
+                <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/40">
+                  MODO OPERATIVO REAL · BANDEJA LISTA
+                </span>
+                <span class="text-xs text-slate-400 font-mono">0 Pendientes</span>
+              </div>
+              <h3 class="text-base font-bold text-white">Toda la Flota Disponible en sus Bases Operativas</h3>
+              <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                No hay órdenes pendientes en este momento. Las 6 unidades operativas están estacionadas en sus recintos de guarda (<strong class="text-white">Hub Quilicura, CD Pudahuel, Patio San Bernardo</strong>) listas para recibir solicitudes de clientes externos en tiempo real vía <strong class="text-sky-300">/solicitar</strong>.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-3 pt-1">
+              <a href="/solicitar" target="_blank" rel="noopener" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/50 transition active:scale-95 flex items-center gap-2">
+                <span>🌐 Abrir Formulario Cliente (/solicitar)</span>
+              </a>
+              <button type="button" onclick="window.triggerQuickDemoOrder()" class="px-4 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/40 text-sky-300 font-mono font-bold text-xs transition active:scale-95 flex items-center gap-2">
+                <span>⚡ Simular Llegada de Pedido en Vivo</span>
+              </button>
+              <button type="button" onclick="window.setOperatingMode('certamen')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition">
+                <span>📚 Cargar Casos Certamen 2</span>
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        el.r4rCardsList.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-500">
+            <p>No hay órdenes en la cola con el filtro seleccionado (${state.queueFilter}).</p>
+          </div>
+        `;
+      }
       return;
     }
 
@@ -1251,6 +1286,69 @@ document.addEventListener('DOMContentLoaded', () => {
     pollSync();
     setInterval(pollSync, 3500);
   }
+
+  // --- OPERATIONAL MODE (REALISTIC VS CERTAMEN) & CLIENT TRIGGER ---
+  function updateOperatingModeButtons() {
+    const btnReal = document.getElementById('btn-mode-realistic');
+    const btnCert = document.getElementById('btn-mode-certamen');
+    if (!btnReal || !btnCert) return;
+
+    if (state.operatingMode === 'realistic') {
+      btnReal.className = 'px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-sm';
+      btnCert.className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-xs font-mono transition flex items-center gap-1.5';
+    } else {
+      btnReal.className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-xs font-mono transition flex items-center gap-1.5';
+      btnCert.className = 'px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40 text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-sm';
+    }
+  }
+
+  window.setOperatingMode = async function(mode) {
+    try {
+      showToast(mode === 'realistic' ? 'Activando Modo Operativo Real (Limpio)...' : 'Cargando Casos de Certamen 2...', 'info');
+      const res = await fetch(`/api/demo/mode/${mode}`, { method: 'POST' });
+      if (res.ok) {
+        state.operatingMode = mode;
+        updateOperatingModeButtons();
+        await refreshAllData();
+        showToast(
+          mode === 'realistic'
+            ? '✨ Modo Realista Activado: Bandeja vacía y flota 100% disponible en bases de guarda.'
+            : '📚 Casos de Certamen 2 cargados en cola R4R (Casos 1, 2 y 5).',
+          'success'
+        );
+      } else {
+        const err = await res.json();
+        showToast(`Error al cambiar modo: ${err.detail || 'Falla'}`, 'error');
+      }
+    } catch (e) {
+      showToast('Error de red al cambiar modo operativo', 'error');
+    }
+  };
+
+  window.triggerQuickDemoOrder = async function() {
+    try {
+      showToast('Simulando llegada de pedido de cliente en vivo...', 'info');
+      const res = await fetch('/api/demo/trigger-client-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        playIncomingOrderChime();
+        showToast(`🚨 Nuevo pedido cliente recibido: ${data.case_id || 'SOL-0000'} (Cotizado por IA)`, 'success');
+        await refreshAllData();
+        if (data.tactical_map) {
+          focusProposalOnRadar(data);
+        }
+      } else {
+        const err = await res.json();
+        showToast(`Error al simular pedido: ${err.detail || 'Falla'}`, 'error');
+      }
+    } catch (e) {
+      showToast('Error de red al simular pedido en vivo', 'error');
+    }
+  };
 
   // --- PRESETS & DISPATCH FORM ---
   function setupEventListeners() {

@@ -10,7 +10,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <link rel="stylesheet" href="/static/css/app.css?v=8">
+  <link rel="stylesheet" href="/static/css/app.css?v=10">
 </head>
 <body class="bg-[#090d16] text-slate-100 min-h-screen flex flex-col selection:bg-sky-500 selection:text-white">
 
@@ -536,6 +536,30 @@
       clientMap.fitBounds(L.latLngBounds([origCoords, destCoords]), { padding: [45, 45] });
     }
 
+    let previousClientStatus = null;
+    let truckMarker = null;
+
+    function playClientSuccessChime() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 arpeggio
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
+          gain.gain.setValueAtTime(0.12, ctx.currentTime + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.08);
+          osc.stop(ctx.currentTime + idx * 0.08 + 0.35);
+        });
+      } catch (e) {}
+    }
+
     function updateStatusVisuals(status, signature, rejectedReason, reviewTime) {
       const badge = document.getElementById('trk-status-badge');
       const supBox = document.getElementById('trk-supervisor-box');
@@ -543,16 +567,33 @@
       const supTitle = document.getElementById('trk-sup-title');
       const supDetail = document.getElementById('trk-sup-detail');
 
-      if (status === 'APPROVED') {
-        badge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5';
-        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>✅ APROBADO Y CAMIÓN EN RUTA</span>';
+      // Chime if status transitioned to APPROVED in real time
+      if (status === 'APPROVED' && previousClientStatus && previousClientStatus !== 'APPROVED') {
+        playClientSuccessChime();
+      }
+      previousClientStatus = status;
 
-        supBox.className = 'p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/30 flex items-center justify-between gap-3';
-        supIcon.className = 'w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-lg';
-        supIcon.textContent = '✅';
-        supTitle.className = 'text-xs font-bold text-emerald-300';
+      if (status === 'APPROVED') {
+        badge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 shadow-lg shadow-emerald-950/40';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span><span>✅ APROBADO Y CAMIÓN EN RUTA</span>';
+
+        supBox.className = 'p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/40 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xl';
+        supIcon.className = 'w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-xl shrink-0';
+        supIcon.textContent = '🚚';
+        supTitle.className = 'text-sm font-bold text-emerald-300';
         supTitle.textContent = `¡Despacho Autorizado en Vivo por ${signature || 'Supervisor de Operaciones'}!`;
         supDetail.textContent = `Tu camión asignado ha salido de su base operativa y se encuentra EN RUTA hacia tu destino. (${reviewTime ? new Date(reviewTime).toLocaleTimeString('es-CL') : 'Ahora'})`;
+
+        // If not already rendered, add a link to supervisor center inside banner
+        if (!document.getElementById('btn-view-supervisor-link')) {
+          const supLink = document.createElement('a');
+          supLink.id = 'btn-view-supervisor-link';
+          supLink.href = '/';
+          supLink.target = '_blank';
+          supLink.className = 'mt-2 sm:mt-0 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-bold flex items-center gap-1.5 shrink-0 transition';
+          supLink.innerHTML = '<span>🖥️ Ver Centro de Mando</span>';
+          supBox.appendChild(supLink);
+        }
       } else if (status === 'REJECTED') {
         badge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5';
         badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>❌ RECHAZADO / OBSERVADO POR SUPERVISOR</span>';
@@ -562,7 +603,7 @@
         supIcon.textContent = '❌';
         supTitle.className = 'text-xs font-bold text-rose-300';
         supTitle.textContent = `Solicitud Observada por ${signature || 'Supervisor'}`;
-        supDetail.textContent = `Motivo informado: "${rejectedReason || 'Restricción operativa'}". Puedes ajustar la hora o peso en el formulario y volver a enviar.`;
+        supDetail.textContent = `Motivo informado: "${rejectedReason || 'Restricción operativa'}". La regla ha sido registrada en la Memoria Viva. Puedes ajustar la hora o peso en el formulario y volver a enviar.`;
       } else if (status === 'BLOQUEADO_RIESGO') {
         badge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5';
         badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>🛑 BLOQUEADO POR SEGURIDAD / NORMATIVA</span>';
@@ -577,12 +618,22 @@
         badge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5';
         badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span><span>⏳ EN REVISIÓN POR SUPERVISOR (R4R)</span>';
 
-        supBox.className = 'p-4 rounded-xl border border-amber-500/30 bg-amber-950/20 flex items-center justify-between gap-3';
-        supIcon.className = 'w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-lg';
+        supBox.className = 'p-4 rounded-xl border border-amber-500/30 bg-amber-950/20 flex flex-col sm:flex-row items-center justify-between gap-3';
+        supIcon.className = 'w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-lg shrink-0';
         supIcon.textContent = '⏳';
         supTitle.className = 'text-xs font-bold text-amber-200';
         supTitle.textContent = 'Solicitud en Cola R4R — Esperando Firma del Supervisor en el Centro de Control...';
         supDetail.textContent = 'El estado cambiará en tiempo real en esta pantalla apenas el supervisor apruebe o rechace tu pedido.';
+
+        if (!document.getElementById('btn-view-supervisor-link')) {
+          const supLink = document.createElement('a');
+          supLink.id = 'btn-view-supervisor-link';
+          supLink.href = '/';
+          supLink.target = '_blank';
+          supLink.className = 'mt-2 sm:mt-0 px-3 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/40 text-sky-300 text-xs font-mono font-bold flex items-center gap-1.5 shrink-0 transition';
+          supLink.innerHTML = '<span>🖥️ Ver Pantalla Supervisor (/)</span>';
+          supBox.appendChild(supLink);
+        }
       }
     }
 

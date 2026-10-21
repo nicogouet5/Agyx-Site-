@@ -50,7 +50,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
   <!-- Comprehensive Local CSS Fallback (active if CDN is unavailable or offline) -->
-  <link rel="stylesheet" href="/static/css/app.css?v=9">
+  <link rel="stylesheet" href="/static/css/app.css?v=10">
   <script>
     // The current service worker removes obsolete caches during activation.
     // Do not unregister it here: that would disable PWA updates after every cache migration.
@@ -78,20 +78,34 @@
         </div>
       </div>
 
-      <!-- Primary Operational Actions: Client Portal Link + QR, Evaluator Mode & Mobile View -->
+      <!-- Primary Operational Actions: Realistic Mode Toggle, Client Portal Link, Quick Demo Order, Evaluator & Mobile -->
       <div class="flex flex-wrap items-center gap-2">
-        <a href="/solicitar" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-950/50 transition active:scale-95 flex items-center gap-1.5" title="Abrir el formulario de solicitud en vivo que usa el cliente externo">
-          <span>🌐 Abrir Formulario Cliente (/solicitar)</span>
+        <!-- Operating Mode Switcher: Realistic (Clean, All Available) vs Certamen (Rubric Cases) -->
+        <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner" role="group" aria-label="Modo de Operación">
+          <button id="btn-mode-realistic" type="button" onclick="window.setOperatingMode('realistic')" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-sm" title="Modo Operativo Real: Bandeja limpia (0 órdenes), flota 100% disponible en bases, esperando pedidos externos">
+            <span>✨ Modo Realista (Limpio)</span>
+          </button>
+          <button id="btn-mode-certamen" type="button" onclick="window.setOperatingMode('certamen')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-xs font-mono transition flex items-center gap-1.5" title="Cargar los casos de prueba de la rúbrica del Certamen 2 (Casos 1, 2 y 5)">
+            <span>📚 Casos Certamen</span>
+          </button>
+        </div>
+
+        <!-- Direct Customer Form Link & One-Click Live Simulation -->
+        <a id="btn-client-portal-link" href="/solicitar" target="_blank" rel="noopener" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-950/50 transition active:scale-95 flex items-center gap-1.5" title="Abrir el formulario en vivo que utiliza el cliente (/solicitar)">
+          <span>🌐 Formulario Cliente</span>
         </a>
-        <button id="btn-open-share-modal" type="button" class="px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-mono font-bold text-xs transition active:scale-95 flex items-center gap-1.5" title="Compartir link o código QR para que otra persona envíe una solicitud en vivo">
-          <span>📲 Compartir Link / QR</span>
+        <button id="btn-quick-live-order" type="button" onclick="window.triggerQuickDemoOrder()" class="px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-mono font-bold text-xs transition active:scale-95 flex items-center gap-1.5" title="Simular la llegada instantánea de una orden de cliente externo para demostración">
+          <span>⚡ Simular Pedido en Vivo</span>
         </button>
-        <button id="btn-toggle-evaluator-drawer" type="button" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-mono text-xs transition active:scale-95 flex items-center gap-1.5" title="Mostrar u ocultar herramientas de evaluación de rúbrica y PDFs del Certamen 2">
-          <span>🎓 Modo Evaluador</span>
+
+        <button id="btn-open-share-modal" type="button" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-mono text-xs transition active:scale-95 flex items-center gap-1" title="Compartir link o código QR para que otra persona envíe una solicitud en vivo">
+          <span>📲 QR</span>
         </button>
-        <button id="btn-toggle-view" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs shadow-sm transition active:scale-95" title="Alternar entre consola de escritorio y vista smartphone">
+        <button id="btn-toggle-evaluator-drawer" type="button" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-mono text-xs transition active:scale-95 flex items-center gap-1" title="Mostrar u ocultar herramientas de evaluación de rúbrica y PDFs del Certamen 2">
+          <span>🎓 Evaluador</span>
+        </button>
+        <button id="btn-toggle-view" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs shadow-sm transition active:scale-95" title="Alternar entre consola de escritorio y vista smartphone">
           <span id="toggle-icon">📱</span>
-          <span id="toggle-label">Vista Móvil</span>
         </button>
       </div>
 

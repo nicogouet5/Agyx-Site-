@@ -52,6 +52,8 @@ from app.api.routes_demo import (
     get_demo_cases_controller,
     run_case_controller,
     run_all_cases_controller,
+    set_operating_mode_controller,
+    trigger_demo_client_order_controller,
 )
 
 STATIC_DIR = APP_DIR / "static"
@@ -474,7 +476,16 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
             self._send_json(code, res)
             return
 
-        # API Route: Demo Run Case & Run All
+        # API Route: Demo Run Case & Run All & Operating Mode
+        if path.startswith("/api/demo/mode/"):
+            mode_name = path[len("/api/demo/mode/"):].strip("/")
+            code, res = set_operating_mode_controller(mode_name)
+            self._send_json(code, res)
+            return
+        if path in ("/api/demo/trigger-client-order", "/api/demo/trigger-client-order/"):
+            code, res = trigger_demo_client_order_controller(payload=body)
+            self._send_json(code, res)
+            return
         if path.startswith("/api/demo/run-case/"):
             case_id = path[len("/api/demo/run-case/"):].strip()
             code, res = run_case_controller(case_id, payload=body)

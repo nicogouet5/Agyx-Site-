@@ -369,3 +369,32 @@ class R4RService:
             message=f"Order '{case_id}' remains strictly locked in {current_status} after {idle_minutes} minutes of inactivity. Zero auto-approval guaranteed.",
         )
         return resp.to_dict()
+
+    def clear_all_proposals(self) -> int:
+        """
+        Clears all proposals from the R4R queue for a pristine, realistic operational mode.
+        Returns the number of cleared proposals.
+        """
+        conn = sqlite3.connect(self.db_path)
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM r4r_proposals")
+        count = cur.fetchone()[0]
+        cur.execute("DELETE FROM r4r_proposals")
+        conn.commit()
+        conn.close()
+
+        if os.path.exists(self.storage_path):
+            try:
+                with open(self.storage_path, "r", encoding="utf-8") as fp:
+                    data = json.load(fp)
+                data["propuestas_r4r"] = []
+                data["proposals_log"] = []
+                tmp = str(self.storage_path) + ".tmp"
+                with open(tmp, "w", encoding="utf-8") as fp:
+                    json.dump(data, fp, indent=2, ensure_ascii=False)
+                os.replace(tmp, self.storage_path)
+            except Exception:
+                pass
+
+        return count
+

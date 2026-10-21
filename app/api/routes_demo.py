@@ -288,10 +288,110 @@ def run_all_cases_controller(
     }
 
 
+def set_operating_mode_controller(
+    mode: str,
+    services: Optional[ServiceContainer] = None,
+) -> Tuple[int, Dict[str, Any]]:
+    """
+    Switches between:
+    - 'realistic': pristine, empty queue, all operational fleet units available in home depot bases.
+    - 'certamen': reloads academic Certamen 2 rubric cases (CASO-1, CASO-2, CASO-5).
+    """
+    container = services or ServiceContainer.get_instance()
+    clean_mode = str(mode or "realistic").strip().lower()
+
+    if clean_mode in ("realistic", "real", "limpio"):
+        container.r4r_service.clear_all_proposals()
+        container.fleet_service.reset_live_fleet()
+        return 200, {
+            "status": "OK",
+            "mode": "realistic",
+            "message": "Centro Operativo en Modo Real: 0 órdenes en cola, flota 100% disponible en sus bases de guarda, esperando solicitudes externas vía /solicitar.",
+            "pending_orders": 0,
+        }
+    elif clean_mode in ("certamen", "rubrica", "casos"):
+        container.r4r_service.clear_all_proposals()
+        container.fleet_service.reset_live_fleet()
+        run_case_controller("CASO-1", services=container)
+        run_case_controller("CASO-2", services=container)
+        run_case_controller("CASO-5", services=container)
+        queue = container.r4r_service.get_queue()
+        return 200, {
+            "status": "OK",
+            "mode": "certamen",
+            "message": "Casos de Certamen 2 cargados en la cola R4R (CASO-1, CASO-2, CASO-5).",
+            "pending_orders": len(queue),
+        }
+    else:
+        return 400, {
+            "error": "INVALID_MODE",
+            "detail": f"Modo desconocido '{mode}'. Use 'realistic' o 'certamen'.",
+        }
+
+
+def trigger_demo_client_order_controller(
+    payload: Optional[Dict[str, Any]] = None,
+    services: Optional[ServiceContainer] = None,
+) -> Tuple[int, Dict[str, Any]]:
+    """
+    Simulates an instant external customer freight submission (as if submitted via /solicitar).
+    Allows 1-click end-to-end demonstration of the live dispatch loop.
+    """
+    from app.api.routes_dispatch import submit_live_order_controller
+    import random
+    container = services or ServiceContainer.get_instance()
+    
+    order_data: Dict[str, Any] = {
+        "case_id": f"SOL-{random.randint(1000, 9999)}",
+        "cliente_nombre": "Distribuidora Los Andes SpA",
+        "cliente_contacto": "+56 9 7312 8841",
+        "origen_comuna": "Quilicura",
+        "origen_direccion": "Centro Industrial Lo Boza 420",
+        "destino_comuna": "Las Condes",
+        "destino_direccion": "Av. Apoquindo 4500",
+        "peso_kg": 3800.0,
+        "volumen_m3": 9.5,
+        "tipo_carga": "GENERAL",
+        "descripcion_carga": "8 pallets de equipamiento comercial e insumos industriales",
+        "hora_despacho": "14:30",
+        "hora_solicitada": "14:30",
+        "is_live_order": True,
+    }
+    if payload and isinstance(payload, dict):
+        order_data.update(payload)
+
+    return submit_live_order_controller(order_data, services=container)
+
+
 if HAS_FASTAPI:
     @router.get("/cases")
     async def get_demo_cases_endpoint():
         status_code, data = get_demo_cases_controller()
+        return JSONResponse(status_code=status_code, content=data)
+
+    @router.post("/mode/{mode_name}")
+    async def set_operating_mode_endpoint(
+        mode_name: str,
+        services: ServiceContainer = Depends(get_services),
+    ):
+        status_code, data = set_operating_mode_controller(mode_name, services=services)
+        if status_code >= 400:
+            raise HTTPException(status_code=status_code, detail=data.get("detail", "Error"))
+        return JSONResponse(status_code=status_code, content=data)
+
+    @router.post("/trigger-client-order")
+    async def trigger_client_order_endpoint(
+        request: Request,
+        services: ServiceContainer = Depends(get_services),
+    ):
+        body = {}
+        try:
+            body = await request.json()
+        except Exception:
+            pass
+        status_code, data = trigger_demo_client_order_controller(body, services=services)
+        if status_code >= 400:
+            raise HTTPException(status_code=status_code, detail=data.get("detail", "Error"))
         return JSONResponse(status_code=status_code, content=data)
 
     @router.post("/run-case/{case_id}")
@@ -326,3 +426,4 @@ if HAS_FASTAPI:
             admin_token=request.headers.get("X-Agyx-Demo-Token"),
         )
         return JSONResponse(status_code=status_code, content=data)
+
