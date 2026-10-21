@@ -106,22 +106,13 @@ try:
     app.include_router(fleet_router)
     app.include_router(demo_router)
 
-    # Template Rendering / Web UI Routes
-    try:
-        from fastapi.templating import Jinja2Templates
-        templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-    except Exception:
-        templates = None
-
+    # The UI is a static HTML document; no template rendering is required.
     @app.get("/", response_class=HTMLResponse)
     @app.get("/index.html", response_class=HTMLResponse)
     async def serve_index(request: Request):
         index_file = TEMPLATES_DIR / "index.html"
-        if templates and index_file.exists():
-            return templates.TemplateResponse("index.html", {"request": request, "title": "Agyx"})
         if index_file.exists():
-            with open(index_file, "r", encoding="utf-8") as f:
-                return HTMLResponse(content=f.read(), status_code=200)
+            return HTMLResponse(content=index_file.read_text(encoding="utf-8"), status_code=200)
         return HTMLResponse(
             content="<h1>Agyx Operational AI Agent</h1><p>Web UI index.html not yet generated in templates/.</p>",
             status_code=200,
