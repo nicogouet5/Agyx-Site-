@@ -1,13 +1,14 @@
 """
 app/api/routes_fleet.py
-FastAPI router and controller for fleet vehicles, maintenance locks (CAM-04 brake failure),
-and municipal urban restrictions.
+FastAPI router and controller for fleet vehicles, physical depot bases ("lugares donde se guardan"),
+maintenance locks (CAM-04 brake failure), live status updates, and municipal urban restrictions.
 """
 from typing import Dict, Any, Optional, Tuple
 from app.api.dependencies import ServiceContainer, get_services
+from app.services.geo_service import get_network_telemetry
 
 try:
-    from fastapi import APIRouter, HTTPException, Depends
+    from fastapi import APIRouter, HTTPException, Depends, Request
     from fastapi.responses import JSONResponse
     HAS_FASTAPI = True
 except ImportError:
@@ -25,13 +26,54 @@ router = APIRouter(prefix="/api", tags=["Fleet & Restrictions"])
 def get_fleet_controller(
     services: Optional[ServiceContainer] = None,
 ) -> Tuple[int, Dict[str, Any]]:
-    """Retrieves full fleet list with maintenance and availability statuses."""
+    """Retrieves full fleet list with live status, home bases ('lugares donde se guardan'), and availability."""
     container = services or ServiceContainer.get_instance()
-    trucks = container.fleet_service.get_all_trucks()
+    trucks = container.fleet_service.get_all_trucks_enriched()
+    bases = container.fleet_service.get_bases_summary()
     return 200, {
         "total": len(trucks),
-        "trucks": [t.to_dict() for t in trucks],
+        "trucks": trucks,
+        "bases": bases,
     }
+
+
+def get_bases_controller(
+    services: Optional[ServiceContainer] = None,
+) -> Tuple[int, Dict[str, Any]]:
+    """Retrieves the 4 physical storage/maintenance bases and their parked vs en-route trucks."""
+    container = services or ServiceContainer.get_instance()
+    bases = container.fleet_service.get_bases_summary()
+    return 200, {
+        "total": len(bases),
+        "bases": bases,
+    }
+
+
+def update_truck_status_controller(
+    truck_id: str,
+    payload: Dict[str, Any],
+    services: Optional[ServiceContainer] = None,
+) -> Tuple[int, Dict[str, Any]]:
+    """Updates a truck's live operational status (e.g., returning to base or dispatching)."""
+    container = services or ServiceContainer.get_instance()
+    if not isinstance(payload, dict):
+        return 400, {"error": "INVALID_PAYLOAD", "detail": "Payload debe ser un objeto JSON"}
+    estado = str(payload.get("estado_operativo") or payload.get("status") or "DISPONIBLE").strip().upper()
+    try:
+        res = container.fleet_service.update_truck_live_status(
+            truck_id=truck_id,
+            estado_operativo=estado,
+            ubicacion_actual=payload.get("ubicacion_actual"),
+            lat=payload.get("lat"),
+            lng=payload.get("lng"),
+            active_order_id=payload.get("active_order_id"),
+            destino_actual=payload.get("destino_actual"),
+        )
+        return 200, res
+    except KeyError as ke:
+        return 404, {"error": "TRUCK_NOT_FOUND", "detail": str(ke)}
+    except ValueError as ve:
+        return 403, {"error": "SAFETY_LOCK_ACTIVE", "detail": str(ve)}
 
 
 def get_truck_controller(
@@ -70,16 +112,13 @@ def get_zone_restriction_controller(
     return 200, rst.to_dict()
 
 
-from app.services.geo_service import get_network_telemetry
-
-
 def get_tactical_network_controller(
     hora: str = "14:00",
     services: Optional[ServiceContainer] = None,
 ) -> Tuple[int, Dict[str, Any]]:
     """Retrieves full Santiago tactical network telemetry, corridors, and live fleet markers."""
     container = services or ServiceContainer.get_instance()
-    trucks = [t.to_dict() for t in container.fleet_service.get_all_trucks()]
+    trucks = container.fleet_service.get_all_trucks_enriched()
     return 200, get_network_telemetry(hora=hora, trucks=trucks)
 
 
@@ -95,6 +134,26 @@ if HAS_FASTAPI:
     @router.get("/fleet")
     async def get_fleet_endpoint(services: ServiceContainer = Depends(get_services)):
         status_code, data = get_fleet_controller(services=services)
+        return JSONResponse(status_code=status_code, content=data)
+
+    @router.get("/bases")
+    async def get_bases_endpoint(services: ServiceContainer = Depends(get_services)):
+        status_code, data = get_bases_controller(services=services)
+        return JSONResponse(status_code=status_code, content=data)
+
+    @router.post("/fleet/{truck_id}/status")
+    async def update_truck_status_endpoint(
+        truck_id: str,
+        request: Request,
+        services: ServiceContainer = Depends(get_services),
+    ):
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        status_code, data = update_truck_status_controller(truck_id, body, services=services)
+        if status_code >= 400:
+            raise HTTPException(status_code=status_code, detail=data.get("detail", "Error"))
         return JSONResponse(status_code=status_code, content=data)
 
     @router.get("/fleet/{truck_id}")

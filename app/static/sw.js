@@ -3,11 +3,12 @@
  * Agyx PWA Service Worker — Network-First with Offline Fallback
  */
 
-const CACHE_NAME = 'agyx-v8-accessible-offline';
+const CACHE_NAME = 'agyx-v9-live-dispatch-os';
 const STATIC_ASSETS = [
   '/',
-  '/static/css/app.css?v=8',
-  '/static/js/app.js?v=8',
+  '/solicitar',
+  '/static/css/app.css?v=9',
+  '/static/js/app.js?v=9',
   '/static/manifest.json',
   '/static/icons/icon-192.svg',
   '/static/icons/icon-512.svg',

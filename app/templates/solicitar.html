@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Agyx — Solicitar Flete y Seguimiento en Vivo | Región Metropolitana</title>
+  <meta name="description" content="Portal interactivo de clientes Agyx. Cotiza tu flete en Santiago, recibe evaluación inmediata por IA y sigue la aprobación de despacho en tiempo real.">
+  <meta name="theme-color" content="#090d16">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <link rel="stylesheet" href="/static/css/app.css?v=8">
+</head>
+<body class="bg-[#090d16] text-slate-100 min-h-screen flex flex-col selection:bg-sky-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center shadow-lg shadow-sky-500/20 font-black text-white text-lg">
+          A
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">Agyx <span class="text-sky-400 font-mono text-xs sm:text-sm">CLIENT PORTAL</span></h1>
+            <span class="px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> EN VIVO
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Solicitud de Transporte de Carga · Evaluación IA Instantánea y Despacho R4R en Tiempo Real</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="/" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs font-mono flex items-center gap-1.5 transition">
+          <span>🖥️ Ir al Centro de Control (Supervisor)</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- LEFT COLUMN: ORDER REQUEST FORM (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-4">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+          <div>
+            <span class="text-[10px] font-mono uppercase tracking-wider text-sky-400 block">NUEVA ORDEN DE TRANSPORTE</span>
+            <h2 class="text-base font-bold text-white">Formulario de Solicitud de Flete</h2>
+          </div>
+          <span class="text-xs font-mono text-slate-400 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">RM · Santiago</span>
+        </div>
+
+        <!-- Quick Presets for fast testing -->
+        <div class="mb-4">
+          <span class="text-[11px] font-mono text-slate-400 block mb-1.5">⚡ Autocompletar ejemplo rápido (opcional):</span>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="fillPreset('COMERCIAL')" class="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-sky-300 text-[11px] font-mono transition">
+              📦 Las Condes (3.8t · Normal)
+            </button>
+            <button type="button" onclick="fillPreset('CENTRO_PESADO')" class="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-amber-300 text-[11px] font-mono transition">
+              🏛️ Lira 953 Centro (6.5t · Restricción)
+            </button>
+            <button type="button" onclick="fillPreset('INDUSTRIAL_SUR')" class="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-emerald-300 text-[11px] font-mono transition">
+              🏗️ San Bernardo (10t · Pesado)
+            </button>
+            <button type="button" onclick="fillPreset('HAZMAT')" class="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-rose-300 text-[11px] font-mono transition">
+              ☣️ Carga Química (Riesgo)
+            </button>
+          </div>
+        </div>
+
+        <form id="live-client-form" class="space-y-4">
+          <!-- 1. Datos del Cliente -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Nombre o Empresa *</label>
+              <input type="text" id="cli-nombre" required placeholder="Ej: Constructora Andina SpA" value="Importadora del Pacífico" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:border-sky-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Teléfono / Contacto *</label>
+              <input type="text" id="cli-contacto" required placeholder="Ej: +56 9 8421 0092" value="+56 9 8421 0092" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:border-sky-500 focus:outline-none">
+            </div>
+          </div>
+
+          <!-- 2. Origen -->
+          <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800/90 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-sky-400">📍 PUNTO DE RETIRO (ORIGEN)</span>
+              <span class="text-[10px] font-mono text-slate-400">Región Metropolitana</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Comuna de Origen</label>
+                <select id="cli-origen-comuna" class="w-full px-2.5 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:border-sky-500 focus:outline-none">
+                  <option value="Quilicura" selected>Quilicura (Hub Central)</option>
+                  <option value="Pudahuel">Pudahuel (ENEA / SCL)</option>
+                  <option value="Renca">Renca</option>
+                  <option value="Maipú">Maipú</option>
+                  <option value="Santiago Centro">Santiago Centro</option>
+                  <option value="Providencia">Providencia</option>
+                  <option value="Las Condes">Las Condes</option>
+                  <option value="San Bernardo">San Bernardo</option>
+                  <option value="Cerrillos">Cerrillos</option>
+                  <option value="Estación Central">Estación Central</option>
+                  <option value="Huechuraba">Huechuraba</option>
+                  <option value="Conchalí">Conchalí</option>
+                  <option value="Recoleta">Recoleta</option>
+                  <option value="Independencia">Independencia</option>
+                  <option value="Ñuñoa">Ñuñoa</option>
+                  <option value="Macul">Macul</option>
+                  <option value="La Florida">La Florida</option>
+                  <option value="Puente Alto">Puente Alto</option>
+                  <option value="San Miguel">San Miguel</option>
+                  <option value="La Cisterna">La Cisterna</option>
+                  <option value="Colina">Colina / Chicureo</option>
+                  <option value="Lampa">Lampa</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Dirección de Retiro</label>
+                <input type="text" id="cli-origen-dir" placeholder="Ej: Panamericana Norte 16500" value="Centro Industrial Lo Boza 420" class="w-full px-2.5 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:border-sky-500 focus:outline-none">
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Destino -->
+          <div class="p-3 rounded-xl bg-slate-950/70 border border-sky-500/30 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-emerald-400">🏁 PUNTO DE ENTREGA (DESTINO)</span>
+              <span class="text-[10px] font-mono text-sky-300">💡 Puedes hacer clic en el mapa para fijar pin</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Comuna de Destino *</label>
+                <select id="cli-destino-comuna" class="w-full px-2.5 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:border-sky-500 focus:outline-none">
+                  <option value="Las Condes" selected>Las Condes</option>
+                  <option value="Santiago Centro">Santiago Centro</option>
+                  <option value="Providencia">Providencia</option>
+                  <option value="Pudahuel">Pudahuel</option>
+                  <option value="Maipú">Maipú</option>
+                  <option value="San Bernardo">San Bernardo</option>
+                  <option value="Quilicura">Quilicura</option>
+                  <option value="Renca">Renca</option>
+                  <option value="Vitacura">Vitacura</option>
+                  <option value="Ñuñoa">Ñuñoa</option>
+                  <option value="La Reina">La Reina</option>
+                  <option value="Macul">Macul</option>
+                  <option value="Peñalolén">Peñalolén</option>
+                  <option value="La Florida">La Florida</option>
+                  <option value="Puente Alto">Puente Alto</option>
+                  <option value="Estación Central">Estación Central</option>
+                  <option value="Cerrillos">Cerrillos</option>
+                  <option value="San Miguel">San Miguel</option>
+                  <option value="San Joaquín">San Joaquín</option>
+                  <option value="La Cisterna">La Cisterna</option>
+                  <option value="El Bosque">El Bosque</option>
+                  <option value="Huechuraba">Huechuraba</option>
+                  <option value="Recoleta">Recoleta</option>
+                  <option value="Independencia">Independencia</option>
+                  <option value="Colina">Colina / Chicureo</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Calle y Número Exacto *</label>
+                <input type="text" id="cli-destino-dir" required placeholder="Ej: Av. Apoquindo 4500 o Lira 953" value="Av. Apoquindo 4500" class="w-full px-2.5 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:border-sky-500 focus:outline-none">
+              </div>
+            </div>
+            <input type="hidden" id="cli-dest-lat" value="">
+            <input type="hidden" id="cli-dest-lng" value="">
+            <div id="custom-pin-indicator" class="hidden text-[11px] font-mono text-sky-300 bg-sky-950/50 border border-sky-500/30 rounded px-2 py-1 flex items-center justify-between">
+              <span id="custom-pin-text">Pin GPS personalizado activo</span>
+              <button type="button" onclick="clearCustomPin()" class="text-rose-300 hover:underline">Limpiar pin</button>
+            </div>
+          </div>
+
+          <!-- 4. Carga y Horario -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div>
+              <label class="block text-[11px] text-slate-300 mb-1">Peso (kg) *</label>
+              <input type="number" id="cli-peso" required min="50" max="30000" step="50" value="3800" class="w-full px-2.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:border-sky-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-300 mb-1">Volumen (m³)</label>
+              <input type="number" id="cli-volumen" min="1" max="90" step="1" value="16" class="w-full px-2.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:border-sky-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-300 mb-1">Hora Entrega *</label>
+              <input type="time" id="cli-hora" required value="14:30" class="w-full px-2.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:border-sky-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-300 mb-1">Tipo Carga</label>
+              <select id="cli-tipo-carga" class="w-full px-2 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white focus:border-sky-500 focus:outline-none">
+                <option value="GENERAL" selected>📦 General</option>
+                <option value="HAZMAT">☣️ Peligrosa (HAZMAT)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1">Descripción de Mercadería / Instrucciones</label>
+            <input type="text" id="cli-descripcion" placeholder="Ej: 8 pallets de equipamiento electrónico, requiere rampa" value="8 pallets de equipamiento comercial" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:border-sky-500 focus:outline-none">
+          </div>
+
+          <button type="submit" id="btn-submit-order" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-sm shadow-lg shadow-sky-500/25 transition active:scale-98 flex items-center justify-center gap-2">
+            <span>🚀 Cotizar y Enviar Solicitud al Agente Agyx</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: LIVE TRACKING STATUS + REAL GOOGLE MAP (7 cols) -->
+    <section class="lg:col-span-7 flex flex-col gap-4">
+
+      <!-- LIVE ORDER EVALUATION & REAL-TIME SUPERVISOR TRACKER -->
+      <div id="live-order-tracker-card" class="bg-slate-900/95 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div id="tracker-empty-state" class="flex flex-col sm:flex-row items-center justify-between gap-4 py-2">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-xl">
+              🤖
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-white">Agente Operativo Agyx Listo para Evaluar</h3>
+              <p class="text-xs text-slate-400">Completa el formulario y envía tu pedido. Verás aquí la cotización inmediata, el camión asignado y la firma en vivo del Supervisor.</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-400 whitespace-nowrap">
+            Sincronización 3s activa
+          </span>
+        </div>
+
+        <!-- Populated dynamically when order is submitted -->
+        <div id="tracker-active-state" class="hidden space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2.5">
+              <span class="text-xs font-mono text-slate-400">ORDEN ID:</span>
+              <span id="trk-order-id" class="px-2.5 py-0.5 rounded-md bg-sky-500/20 border border-sky-500/40 text-sky-300 font-mono font-bold text-sm">SOL-0000</span>
+              <span id="trk-client-name" class="text-xs text-slate-300 font-medium"></span>
+            </div>
+            <div id="trk-status-badge" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+              <span>⏳ EN REVISIÓN POR SUPERVISOR (R4R)</span>
+            </div>
+          </div>
+
+          <!-- KPIs Summary Row -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <span class="text-[10px] font-mono text-slate-400 block">TARIFA ESTIMADA</span>
+              <span id="trk-price" class="text-base font-bold text-emerald-400 font-mono">$0 CLP</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <span class="text-[10px] font-mono text-slate-400 block">CAMIÓN ASIGNADO</span>
+              <span id="trk-trucks" class="text-sm font-bold text-sky-300 font-mono">—</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <span class="text-[10px] font-mono text-slate-400 block">DISTANCIA / ETA</span>
+              <span id="trk-distance-eta" class="text-sm font-bold text-white font-mono">— km · — min</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <span class="text-[10px] font-mono text-slate-400 block">VENTANA PROGRAMADA</span>
+              <span id="trk-schedule" class="text-xs font-bold text-amber-300 font-mono">—</span>
+            </div>
+          </div>
+
+          <!-- Agent Explanation & Observations -->
+          <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-sky-400 font-bold">🧠 DICTAMEN DEL AGENTE AGYX</span>
+              <a id="trk-gmaps-link" href="#" target="_blank" rel="noopener" class="text-[11px] font-mono text-indigo-300 hover:underline">↗ Ver ruta en Google Maps</a>
+            </div>
+            <p id="trk-observations" class="text-xs text-slate-200 leading-relaxed"></p>
+          </div>
+
+          <!-- Real-Time Supervisor Resolution Banner -->
+          <div id="trk-supervisor-box" class="p-4 rounded-xl border border-amber-500/30 bg-amber-950/20 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div id="trk-sup-icon" class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-base">
+                ⏳
+              </div>
+              <div>
+                <h4 id="trk-sup-title" class="text-xs font-bold text-amber-200">Esperando Firma del Supervisor en el Centro de Control...</h4>
+                <p id="trk-sup-detail" class="text-[11px] text-slate-300 mt-0.5">Esta pantalla se actualizará automáticamente en cuanto el supervisor apruebe o rechace tu solicitud.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE REAL SANTIAGO GOOGLE MAP -->
+      <div class="bg-slate-900/95 border border-slate-800 rounded-2xl p-4 shadow-xl flex-1 flex flex-col gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span class="text-[10px] font-mono uppercase tracking-wider text-sky-400 block">GEORREFERENCIACIÓN EN VIVO</span>
+            <h3 class="text-sm font-bold text-white">Mapa Táctico de Ruta y Cobertura Gran Santiago</h3>
+          </div>
+          <div class="flex items-center gap-1.5 text-xs font-mono">
+            <button type="button" data-cli-layer="google-dark" class="cli-layer-btn px-2.5 py-1 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 text-[11px]">
+              🌑 Táctico
+            </button>
+            <button type="button" data-cli-layer="google-streets" class="cli-layer-btn px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[11px]">
+              🗺️ Google Calles
+            </button>
+            <button type="button" data-cli-layer="google-hybrid" class="cli-layer-btn px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[11px]">
+              🛰️ Satélite
+            </button>
+          </div>
+        </div>
+
+        <div id="client-real-map" class="w-full h-[380px] sm:h-[430px] rounded-xl border border-slate-800 overflow-hidden relative z-0"></div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-400">
+          <span>💡 Haz clic en cualquier punto del mapa para fijar las coordenadas exactas de entrega.</span>
+          <span class="text-amber-300">⚠️ Polígono Ámbar: Restricción &gt;5.000 kg en Santiago Centro (07:30–21:00)</span>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    let clientMap = null;
+    let clientLayers = {};
+    let routeLine = null;
+    let originMarker = null;
+    let destMarker = null;
+    let activeOrderId = null;
+    let pollTimer = null;
+
+    function initClientMap() {
+      clientMap = L.map('client-real-map', {
+        center: [-33.4350, -70.6500],
+        zoom: 12,
+        minZoom: 10,
+        maxZoom: 19,
+      });
+
+      clientLayers['google-dark'] = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        subdomains: ['0', '1', '2', '3'],
+        className: 'tactical-dark-tile',
+        attribution: '&copy; Google Maps &mdash; Agyx Client Portal',
+        maxZoom: 20
+      });
+      clientLayers['google-streets'] = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        subdomains: ['0', '1', '2', '3'],
+        attribution: '&copy; Google Maps',
+        maxZoom: 20
+      });
+      clientLayers['google-hybrid'] = L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        subdomains: ['0', '1', '2', '3'],
+        attribution: '&copy; Google Maps',
+        maxZoom: 20
+      });
+
+      clientLayers['google-dark'].addTo(clientMap);
+
+      // Santiago Centro Exclusion Geofence
+      L.polygon([
+        [-33.4300, -70.6720],
+        [-33.4320, -70.6380],
+        [-33.4580, -70.6350],
+        [-33.4680, -70.6550],
+        [-33.4520, -70.6800],
+      ], {
+        color: '#f59e0b',
+        weight: 2,
+        dashArray: '6, 6',
+        fillColor: '#f59e0b',
+        fillOpacity: 0.12,
+      }).addTo(clientMap).bindPopup('<strong>Ordenanza Santiago Centro</strong><br>Prohibición diurna &gt;5.000 kg (07:30 a 21:00 hrs)');
+
+      // Hub Quilicura Marker
+      originMarker = L.circleMarker([-33.3600, -70.6900], {
+        radius: 7,
+        color: '#38bdf8',
+        fillColor: '#0284c7',
+        fillOpacity: 0.9,
+        weight: 2
+      }).addTo(clientMap).bindPopup('🏢 Base Operativa Quilicura (Origen)');
+
+      // Click on map to pick custom destination coordinates
+      clientMap.on('click', (e) => {
+        const lat = e.latlng.lat.toFixed(5);
+        const lng = e.latlng.lng.toFixed(5);
+        document.getElementById('cli-dest-lat').value = lat;
+        document.getElementById('cli-dest-lng').value = lng;
+        const ind = document.getElementById('custom-pin-indicator');
+        const txt = document.getElementById('custom-pin-text');
+        ind.classList.remove('hidden');
+        txt.textContent = `📍 Pin GPS fijado en (${lat}, ${lng})`;
+
+        if (destMarker) clientMap.removeLayer(destMarker);
+        destMarker = L.circleMarker([lat, lng], {
+          radius: 8,
+          color: '#10b981',
+          fillColor: '#059669',
+          fillOpacity: 0.95,
+          weight: 2
+        }).addTo(clientMap).bindPopup(`🏁 Punto de Entrega Seleccionado<br>(${lat}, ${lng})`).openPopup();
+      });
+
+      document.querySelectorAll('.cli-layer-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-cli-layer');
+          Object.values(clientLayers).forEach(l => {
+            if (clientMap.hasLayer(l)) clientMap.removeLayer(l);
+          });
+          clientLayers[key].addTo(clientMap);
+          document.querySelectorAll('.cli-layer-btn').forEach(b => {
+            b.className = 'cli-layer-btn px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[11px]';
+          });
+          btn.className = 'cli-layer-btn px-2.5 py-1 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 text-[11px]';
+        });
+      });
+    }
+
+    function clearCustomPin() {
+      document.getElementById('cli-dest-lat').value = '';
+      document.getElementById('cli-dest-lng').value = '';
+      document.getElementById('custom-pin-indicator').classList.add('hidden');
+      if (destMarker) {
+        clientMap.removeLayer(destMarker);
+        destMarker = null;
+      }
+    }
+
+    function fillPreset(type) {
+      clearCustomPin();
+      if (type === 'COMERCIAL') {
+        document.getElementById('cli-nombre').value = 'Importadora del Pacífico';
+        document.getElementById('cli-origen-comuna').value = 'Quilicura';
+        document.getElementById('cli-origen-dir').value = 'Centro Industrial Lo Boza 420';
+        document.getElementById('cli-destino-comuna').value = 'Las Condes';
+        document.getElementById('cli-destino-dir').value = 'Av. Apoquindo 4500';
+        document.getElementById('cli-peso').value = '3800';
+        document.getElementById('cli-volumen').value = '16';
+        document.getElementById('cli-hora').value = '14:30';
+        document.getElementById('cli-tipo-carga').value = 'GENERAL';
+        document.getElementById('cli-descripcion').value = '8 pallets de equipamiento comercial';
+      } else if (type === 'CENTRO_PESADO') {
+        document.getElementById('cli-nombre').value = 'Distribuidora Central Ltda.';
+        document.getElementById('cli-origen-comuna').value = 'Quilicura';
+        document.getElementById('cli-origen-dir').value = 'Panamericana Norte 16500';
+        document.getElementById('cli-destino-comuna').value = 'Santiago Centro';
+        document.getElementById('cli-destino-dir').value = 'Lira 953';
+        document.getElementById('cli-peso').value = '6500';
+        document.getElementById('cli-volumen').value = '24';
+        document.getElementById('cli-hora').value = '11:30';
+        document.getElementById('cli-tipo-carga').value = 'GENERAL';
+        document.getElementById('cli-descripcion').value = 'Repuestos automotrices pesados para bodega Lira 953';
+      } else if (type === 'INDUSTRIAL_SUR') {
+        document.getElementById('cli-nombre').value = 'Maestranza Metales Sur';
+        document.getElementById('cli-origen-comuna').value = 'Quilicura';
+        document.getElementById('cli-origen-dir').value = 'Parque Industrial San Ignacio';
+        document.getElementById('cli-destino-comuna').value = 'San Bernardo';
+        document.getElementById('cli-destino-dir').value = 'Av. Jorge Alessandri 10800';
+        document.getElementById('cli-peso').value = '10000';
+        document.getElementById('cli-volumen').value = '35';
+        document.getElementById('cli-hora').value = '15:00';
+        document.getElementById('cli-tipo-carga').value = 'GENERAL';
+        document.getElementById('cli-descripcion').value = 'Estructuras metálicas industriales';
+      } else if (type === 'HAZMAT') {
+        document.getElementById('cli-nombre').value = 'Química Industrial Chile';
+        document.getElementById('cli-origen-comuna').value = 'Quilicura';
+        document.getElementById('cli-origen-dir').value = 'Panamericana Norte 18000';
+        document.getElementById('cli-destino-comuna').value = 'Pudahuel';
+        document.getElementById('cli-destino-dir').value = 'Parque ENEA Poniente';
+        document.getElementById('cli-peso').value = '4000';
+        document.getElementById('cli-volumen').value = '14';
+        document.getElementById('cli-hora').value = '12:00';
+        document.getElementById('cli-tipo-carga').value = 'HAZMAT';
+        document.getElementById('cli-descripcion').value = 'Tambores de Ácido Sulfúrico concentrado (Corrosivo Clase 8)';
+      }
+    }
+
+    function renderOrderEvaluation(data) {
+      document.getElementById('tracker-empty-state').classList.add('hidden');
+      document.getElementById('tracker-active-state').classList.remove('hidden');
+
+      const prop = data.proposal || data.stored_proposal || {};
+      const tmap = data.tactical_map || {};
+      const caseId = data.case_id || prop.case_id || 'SOL-LIVE';
+      activeOrderId = caseId;
+
+      document.getElementById('trk-order-id').textContent = caseId;
+      document.getElementById('trk-client-name').textContent = `· ${data.cliente_nombre || ''}`;
+      document.getElementById('trk-price').textContent = `$${Number(prop.total_clp || 0).toLocaleString('es-CL')} CLP`;
+      const trucks = prop.camiones || prop.camiones_asignados || [];
+      document.getElementById('trk-trucks').textContent = trucks.length ? trucks.join(' + ') : 'Sin asignar';
+      document.getElementById('trk-distance-eta').textContent = `${tmap.distance_km || 18} km · ~${tmap.eta_minutes || 28} min`;
+      document.getElementById('trk-schedule').textContent = prop.fecha_hora_programada || tmap.hora_evaluada || 'Hoy';
+      document.getElementById('trk-observations').textContent = prop.observaciones || data.explanation || 'Evaluación completada.';
+
+      const gmapsLink = document.getElementById('trk-gmaps-link');
+      if (tmap.google_maps_url) {
+        gmapsLink.href = tmap.google_maps_url;
+      }
+
+      updateStatusVisuals(data.status || prop.estado || 'R4R', prop.human_signature, prop.rejected_reason, prop.review_timestamp);
+
+      // Draw route on map
+      if (routeLine) clientMap.removeLayer(routeLine);
+      if (originMarker) clientMap.removeLayer(originMarker);
+      if (destMarker) clientMap.removeLayer(destMarker);
+
+      const origCoords = tmap.origin_coords || [-33.3600, -70.6900];
+      const destCoords = tmap.destination_coords || [-33.4503, -70.6441];
+      const waypoints = tmap.waypoints || [origCoords, destCoords];
+
+      originMarker = L.circleMarker(origCoords, {
+        radius: 7,
+        color: '#38bdf8',
+        fillColor: '#0284c7',
+        fillOpacity: 0.95,
+        weight: 2
+      }).addTo(clientMap).bindPopup(`📍 Origen: ${tmap.origen_nombre || 'Retiro'}`);
+
+      destMarker = L.circleMarker(destCoords, {
+        radius: 8,
+        color: tmap.route_color || '#10b981',
+        fillColor: tmap.route_color || '#10b981',
+        fillOpacity: 0.95,
+        weight: 2
+      }).addTo(clientMap).bindPopup(`🏁 Destino: ${tmap.destino_nombre || 'Entrega'}`).openPopup();
+
+      routeLine = L.polyline(waypoints, {
+        color: tmap.route_color || '#10b981',
+        weight: 5,
+        opacity: 0.9,
+        dashArray: '10, 6'
+      }).addTo(clientMap);
+
+      clientMap.fitBounds(L.latLngBounds([origCoords, destCoords]), { padding: [45, 45] });
+    }
+
+    function updateStatusVisuals(status, signature, rejectedReason, reviewTime) {
+      const badge = document.getElementById('trk-status-badge');
+      const supBox = document.getElementById('trk-supervisor-box');
+      const supIcon = document.getElementById('trk-sup-icon');
+      const supTitle = document.getElementById('trk-sup-title');
+      const supDetail = document.getElementById('trk-sup-detail');
+
+      if (status === 'APPROVED') {
+        badge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>✅ APROBADO Y CAMIÓN EN RUTA</span>';
+
+        supBox.className = 'p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/30 flex items-center justify-between gap-3';
+        supIcon.className = 'w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-lg';
+        supIcon.textContent = '✅';
+        supTitle.className = 'text-xs font-bold text-emerald-300';
+        supTitle.textContent = `¡Despacho Autorizado en Vivo por ${signature || 'Supervisor de Operaciones'}!`;
+        supDetail.textContent = `Tu camión asignado ha salido de su base operativa y se encuentra EN RUTA hacia tu destino. (${reviewTime ? new Date(reviewTime).toLocaleTimeString('es-CL') : 'Ahora'})`;
+      } else if (status === 'REJECTED') {
+        badge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>❌ RECHAZADO / OBSERVADO POR SUPERVISOR</span>';
+
+        supBox.className = 'p-4 rounded-xl border border-rose-500/40 bg-rose-950/30 flex items-center justify-between gap-3';
+        supIcon.className = 'w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-lg';
+        supIcon.textContent = '❌';
+        supTitle.className = 'text-xs font-bold text-rose-300';
+        supTitle.textContent = `Solicitud Observada por ${signature || 'Supervisor'}`;
+        supDetail.textContent = `Motivo informado: "${rejectedReason || 'Restricción operativa'}". Puedes ajustar la hora o peso en el formulario y volver a enviar.`;
+      } else if (status === 'BLOQUEADO_RIESGO') {
+        badge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>🛑 BLOQUEADO POR SEGURIDAD / NORMATIVA</span>';
+
+        supBox.className = 'p-4 rounded-xl border border-rose-500/40 bg-rose-950/30 flex items-center justify-between gap-3';
+        supIcon.className = 'w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-lg';
+        supIcon.textContent = '🛑';
+        supTitle.className = 'text-xs font-bold text-rose-300';
+        supTitle.textContent = 'Bloqueo Automático de Seguridad / Regulación D.S. 298';
+        supDetail.textContent = 'El Agente Agyx detuvo preventivamente la orden por tratarse de carga peligrosa sin certificación ADR o unidad con bloqueo mecánico.';
+      } else {
+        badge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span><span>⏳ EN REVISIÓN POR SUPERVISOR (R4R)</span>';
+
+        supBox.className = 'p-4 rounded-xl border border-amber-500/30 bg-amber-950/20 flex items-center justify-between gap-3';
+        supIcon.className = 'w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-lg';
+        supIcon.textContent = '⏳';
+        supTitle.className = 'text-xs font-bold text-amber-200';
+        supTitle.textContent = 'Solicitud en Cola R4R — Esperando Firma del Supervisor en el Centro de Control...';
+        supDetail.textContent = 'El estado cambiará en tiempo real en esta pantalla apenas el supervisor apruebe o rechace tu pedido.';
+      }
+    }
+
+    async function pollOrderStatus() {
+      if (!activeOrderId) return;
+      try {
+        const res = await fetch(`/api/r4r/${encodeURIComponent(activeOrderId)}`);
+        if (res.ok) {
+          const prop = await res.json();
+          updateStatusVisuals(prop.estado, prop.human_signature, prop.rejected_reason, prop.review_timestamp);
+        }
+      } catch (err) {
+        // Silent retry on next tick
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initClientMap();
+
+      const form = document.getElementById('live-client-form');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btn-submit-order');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ Evaluando ruta, flota y ordenanzas con Agente Agyx...</span>';
+
+        const payload = {
+          cliente_nombre: document.getElementById('cli-nombre').value,
+          cliente_contacto: document.getElementById('cli-contacto').value,
+          origen_comuna: document.getElementById('cli-origen-comuna').value,
+          origen_direccion: document.getElementById('cli-origen-dir').value,
+          destino_comuna: document.getElementById('cli-destino-comuna').value,
+          destino_direccion: document.getElementById('cli-destino-dir').value,
+          dest_lat: document.getElementById('cli-dest-lat').value || null,
+          dest_lng: document.getElementById('cli-dest-lng').value || null,
+          peso_kg: parseFloat(document.getElementById('cli-peso').value || '0'),
+          volumen_m3: parseFloat(document.getElementById('cli-volumen').value || '12'),
+          hora_despacho: document.getElementById('cli-hora').value,
+          tipo_carga: document.getElementById('cli-tipo-carga').value,
+          descripcion_carga: document.getElementById('cli-descripcion').value,
+        };
+
+        try {
+          const res = await fetch('/api/live/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            renderOrderEvaluation(data);
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(pollOrderStatus, 3000);
+          } else {
+            alert('Error al procesar solicitud: ' + (data.detail || 'Verifique los datos'));
+          }
+        } catch (err) {
+          alert('Error de conexión con el servidor Agyx.');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -3,13 +3,40 @@
     "system": "Agyx Operational AI Agent",
     "version": "1.0.0"
   },
-  "active_rules": [],
-  "feedback_history": [],
+  "active_rules": [
+    {
+      "id": "RULE-20261021040536458881-5176cb",
+      "case_id": "CASO-3",
+      "raw_reason": "Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t",
+      "distilled_rule": "[SANTIAGO_CENTRO] >5.000kg prohibido 07:30-21:00. Solución: reprogramar 21:30 hrs o 2x camiones 5t.",
+      "zone_affected": "SANTIAGO_CENTRO",
+      "mitigation_actions": [
+        "REPROGRAMAR_NOCTURNO_2130",
+        "SUBDIVIDIR_2X_5T"
+      ],
+      "token_count": 28,
+      "active": true,
+      "supervisor_name": "Carlos Morales (Jefe de Operaciones)",
+      "created_at": "2026-10-21T04:05:36.458881Z"
+    }
+  ],
+  "feedback_history": [
+    {
+      "entry_id": "FEEDBACK-20261021040536458881-5176cb",
+      "case_id": "CASO-3",
+      "timestamp": "2026-10-21T04:05:36.458881Z",
+      "supervisor_name": "Carlos Morales (Jefe de Operaciones)",
+      "action": "REJECT",
+      "rejected_reason": "Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t",
+      "distilled_rule": "[SANTIAGO_CENTRO] >5.000kg prohibido 07:30-21:00. Solución: reprogramar 21:30 hrs o 2x camiones 5t.",
+      "token_count": 28
+    }
+  ],
   "proposals_log": [
     {
       "propuesta_id": "PROP-20261021-CASO-1",
       "case_id": "CASO-1",
-      "created_at": "2026-10-21T02:46:00.394937Z",
+      "created_at": "2026-10-21T04:05:36.466260Z",
       "origen": "Quilicura",
       "destino": "Pudahuel",
       "fecha_hora_programada": "14:00",
@@ -34,10 +61,10 @@
     {
       "propuesta_id": "PROP-20261021-CASO-2",
       "case_id": "CASO-2",
-      "created_at": "2026-10-21T02:46:00.402058Z",
+      "created_at": "2026-10-21T04:05:36.473218Z",
       "origen": "Quilicura",
       "destino": "San Bernardo",
-      "fecha_hora_programada": "2026-10-21 08:00 hrs",
+      "fecha_hora_programada": "2026-10-22 08:00 hrs",
       "camiones": [
         "CAM-06"
       ],
@@ -59,7 +86,7 @@
     {
       "propuesta_id": "PROP-20261021-CASO-5",
       "case_id": "CASO-5",
-      "created_at": "2026-10-21T02:46:00.408008Z",
+      "created_at": "2026-10-21T04:05:36.479106Z",
       "origen": "Quilicura",
       "destino": "Maipú",
       "fecha_hora_programada": "10:00",
@@ -92,7 +119,7 @@
     {
       "propuesta_id": "PROP-20261021-CASO-1",
       "case_id": "CASO-1",
-      "created_at": "2026-10-21T02:46:00.394937Z",
+      "created_at": "2026-10-21T04:05:36.466260Z",
       "origen": "Quilicura",
       "destino": "Pudahuel",
       "fecha_hora_programada": "14:00",
@@ -117,10 +144,10 @@
     {
       "propuesta_id": "PROP-20261021-CASO-2",
       "case_id": "CASO-2",
-      "created_at": "2026-10-21T02:46:00.402058Z",
+      "created_at": "2026-10-21T04:05:36.473218Z",
       "origen": "Quilicura",
       "destino": "San Bernardo",
-      "fecha_hora_programada": "2026-10-21 08:00 hrs",
+      "fecha_hora_programada": "2026-10-22 08:00 hrs",
       "camiones": [
         "CAM-06"
       ],
@@ -142,7 +169,7 @@
     {
       "propuesta_id": "PROP-20261021-CASO-5",
       "case_id": "CASO-5",
-      "created_at": "2026-10-21T02:46:00.408008Z",
+      "created_at": "2026-10-21T04:05:36.479106Z",
       "origen": "Quilicura",
       "destino": "Maipú",
       "fecha_hora_programada": "10:00",
@@ -171,6 +198,33 @@
       "rejected_reason": null
     }
   ],
-  "bitacora_feedback": [],
-  "living_memory_rules": []
+  "bitacora_feedback": [
+    {
+      "entry_id": "FEEDBACK-20261021040536458881-5176cb",
+      "case_id": "CASO-3",
+      "timestamp": "2026-10-21T04:05:36.458881Z",
+      "supervisor_name": "Carlos Morales (Jefe de Operaciones)",
+      "action": "REJECT",
+      "rejected_reason": "Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t",
+      "distilled_rule": "[SANTIAGO_CENTRO] >5.000kg prohibido 07:30-21:00. Solución: reprogramar 21:30 hrs o 2x camiones 5t.",
+      "token_count": 28
+    }
+  ],
+  "living_memory_rules": [
+    {
+      "id": "RULE-20261021040536458881-5176cb",
+      "case_id": "CASO-3",
+      "raw_reason": "Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t",
+      "distilled_rule": "[SANTIAGO_CENTRO] >5.000kg prohibido 07:30-21:00. Solución: reprogramar 21:30 hrs o 2x camiones 5t.",
+      "zone_affected": "SANTIAGO_CENTRO",
+      "mitigation_actions": [
+        "REPROGRAMAR_NOCTURNO_2130",
+        "SUBDIVIDIR_2X_5T"
+      ],
+      "token_count": 28,
+      "active": true,
+      "supervisor_name": "Carlos Morales (Jefe de Operaciones)",
+      "created_at": "2026-10-21T04:05:36.458881Z"
+    }
+  ]
 }

@@ -50,7 +50,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
   <!-- Comprehensive Local CSS Fallback (active if CDN is unavailable or offline) -->
-  <link rel="stylesheet" href="/static/css/app.css?v=8">
+  <link rel="stylesheet" href="/static/css/app.css?v=9">
   <script>
     // The current service worker removes obsolete caches during activation.
     // Do not unregister it here: that would disable PWA updates after every cache migration.
@@ -58,53 +58,40 @@
 </head>
 <body class="min-h-full flex flex-col bg-slate-950 font-sans antialiased text-slate-100 selection:bg-sky-500 selection:text-white">
 
-  <!-- Top Global Bar: System Status, Certamen 2 Rubric & View Mode Switcher -->
-  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-3 shadow-md">
+  <!-- Top Global Bar: Live Dispatch OS Status, Client Portal Link & Evaluator Drawer Toggle -->
+  <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3 shadow-md">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
       
-      <!-- Logo & Branding -->
+      <!-- Logo & Live Branding -->
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20 text-white font-black text-xl">
           A
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-lg font-bold tracking-tight text-white">Agyx Logística</h1>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/30 font-medium">Pymes-Fletes</span>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">Grupo 2</span>
+            <h1 class="text-lg font-bold tracking-tight text-white">Agyx <span class="text-sky-400 font-mono text-sm">LIVE DISPATCH OS</span></h1>
+            <span id="live-sync-indicator" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> SINC 3s ACTIVA
+            </span>
           </div>
-          <p class="text-xs text-slate-400">Gobernanza R4R &bull; Memoria Viva v1➔v2 &bull; Optimización de Tokens</p>
-          <p class="text-[10px] mt-0.5 text-amber-300">Entorno académico: flota, tráfico y restricciones son datos simulados; requiere validación humana.</p>
+          <p class="text-xs text-slate-400">Centro de Comando Logístico RM &bull; Flota y Bases en Vivo &bull; Gobernanza R4R + Memoria Viva</p>
         </div>
       </div>
 
-      <!-- Engine & Safeguard Badges -->
-      <div class="hidden md:flex items-center gap-2 text-xs">
-        <div id="engine-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Motor: <strong class="text-white" id="engine-name-label">Local Determinista (0 Tokens)</strong></span>
-        </div>
-        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono">
-          <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"/>
-          </svg>
-          <span>Salvaguarda R4R: Inactividad = BLOQUEO ACTIVO</span>
-        </div>
-      </div>
-
-      <!-- Interactive View Toggle & Deliverables Quick Links -->
+      <!-- Primary Operational Actions: Client Portal Link + QR, Evaluator Mode & Mobile View -->
       <div class="flex flex-wrap items-center gap-2">
-        <div class="hidden md:flex items-center gap-1.5 bg-slate-950/90 border border-slate-700/80 rounded-xl px-2.5 py-1 text-xs shadow-inner">
-          <span class="text-slate-400 font-semibold text-[11px] uppercase tracking-wider mr-1">📄 Rúbrica:</span>
-          <a href="/entregables/mini_landing_flujo_agentico.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 font-mono font-bold transition flex items-center gap-1" title="Mini Landing Page & Flujo Agéntico (PDF 1 pág)"><span>🚀 Landing PDF</span></a>
-          <a href="/entregables/ficha_diseno_certamen2.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-mono font-bold transition flex items-center gap-1" title="Ficha Oficial de Diseño (Exactamente 4 páginas A4)"><span>📋 Ficha PDF (4p)</span></a>
-          <a href="/entregables/matriz_6_pruebas.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 font-mono transition flex items-center gap-1" title="Matriz de 6 Pruebas + Repetición Caso 3 (PDF)"><span>📊 Matriz PDF</span></a>
-          <a href="/entregables/guia_readme.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 font-mono transition flex items-center gap-1" title="Guía de Uso README (PDF 1 pág)"><span>📘 Guía PDF</span></a>
-          <a href="https://github.com/nicogouet5/Agyx-Site-" target="_blank" rel="noopener" class="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 font-mono transition" title="Código Fuente en GitHub"><span>💻 GitHub</span></a>
-        </div>
-        <button id="btn-toggle-view" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs shadow-sm transition active:scale-95" title="Alternar entre consola de escritorio y vista smartphone para video demo">
+        <a href="/solicitar" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-950/50 transition active:scale-95 flex items-center gap-1.5" title="Abrir el formulario de solicitud en vivo que usa el cliente externo">
+          <span>🌐 Abrir Formulario Cliente (/solicitar)</span>
+        </a>
+        <button id="btn-open-share-modal" type="button" class="px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-mono font-bold text-xs transition active:scale-95 flex items-center gap-1.5" title="Compartir link o código QR para que otra persona envíe una solicitud en vivo">
+          <span>📲 Compartir Link / QR</span>
+        </button>
+        <button id="btn-toggle-evaluator-drawer" type="button" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-mono text-xs transition active:scale-95 flex items-center gap-1.5" title="Mostrar u ocultar herramientas de evaluación de rúbrica y PDFs del Certamen 2">
+          <span>🎓 Modo Evaluador</span>
+        </button>
+        <button id="btn-toggle-view" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs shadow-sm transition active:scale-95" title="Alternar entre consola de escritorio y vista smartphone">
           <span id="toggle-icon">📱</span>
-          <span id="toggle-label">Modo Terreno (Móvil)</span>
+          <span id="toggle-label">Vista Móvil</span>
         </button>
       </div>
 
@@ -117,57 +104,94 @@
     <!-- DESKTOP MODE CONTAINER (Default wide layout) -->
     <div id="desktop-view-container" class="w-full max-w-7xl mx-auto flex flex-col gap-5">
 
-      <!-- Guía Rápida para el Evaluador (Tour en 10 Segundos) -->
-      <section class="bg-slate-900/90 border border-teal-500/30 rounded-2xl p-3.5 shadow-lg flex flex-col lg:flex-row items-center justify-between gap-3 text-xs">
-        <div class="flex items-center gap-2.5">
-          <span class="px-2 py-0.5 rounded-md bg-teal-500/20 text-teal-300 font-mono font-bold text-[11px] border border-teal-500/40">🎯 TOUR EVALUADOR 10s</span>
-          <span class="text-slate-300 font-medium">Pruebe las 3 capacidades clave del Certamen 2 en un clic:</span>
-        </div>
-        <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-          <button type="button" onclick="setRadarScenario('CASO-3-V1'); document.getElementById('tactical-command-radar')?.scrollIntoView({ behavior: 'smooth' });" class="px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 font-mono font-medium transition active:scale-95">
-            1. Ver Infracción Diurna (Caso 3 v1)
-          </button>
-          <button type="button" onclick="setRadarScenario('CASO-3-V2'); document.getElementById('tactical-command-radar')?.scrollIntoView({ behavior: 'smooth' });" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-mono font-medium transition active:scale-95">
-            2. Ver Corrección 21:30 (Caso 3 v2)
-          </button>
-          <button type="button" onclick="document.querySelector('[data-tab=&quot;tab-c3-demo&quot;]')?.click(); document.getElementById('tab-c3-demo')?.scrollIntoView({ behavior: 'smooth' });" class="px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-mono font-medium transition active:scale-95">
-            3. Ver Ciclo Memoria Viva
-          </button>
-        </div>
-      </section>
-
-      <!-- Inactivity Safeguard Banner & Proof of Zero Auto-Approval -->
-      <section id="inactivity-safeguard-panel" class="bg-gradient-to-r from-slate-900 via-amber-950/20 to-slate-900 border border-amber-500/30 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
-        <div class="flex items-start gap-3">
-          <div class="p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
+      <!-- LIVE INCOMING CUSTOMER ORDER BANNER (Triggered automatically when someone submits from /solicitar) -->
+      <section id="live-incoming-alert" class="hidden bg-gradient-to-r from-emerald-950/90 via-sky-950/90 to-slate-900 border-2 border-emerald-400/70 rounded-2xl p-4 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4 animate-pulse">
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-2xl">
+            🔔
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h2 class="text-sm font-bold text-amber-300 tracking-wide uppercase">Salvaguarda de Inactividad R4R (Human-in-the-Loop)</h2>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-mono">Cero Auto-Aprobación</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-mono font-black text-[10px] uppercase">NUEVA SOLICITUD DE CLIENTE EN VIVO</span>
+              <span id="live-alert-id" class="font-mono font-bold text-sky-300 text-xs">SOL-0000</span>
             </div>
-            <p class="text-xs text-slate-300 mt-0.5">
-              Si el operador no actúa, la propuesta permanece en estado <strong>R4R</strong> indefinidamente. El paso del tiempo <strong>NUNCA</strong> auto-aprueba despachos (<code class="bg-slate-800 px-1 py-0.5 rounded text-amber-400">auto_approved == false</code>).
-            </p>
+            <h3 id="live-alert-title" class="text-sm font-bold text-white mt-0.5">Cliente externo ha enviado un nuevo pedido</h3>
+            <p id="live-alert-detail" class="text-xs text-slate-300"></p>
           </div>
         </div>
-
-        <div class="flex items-center gap-3 w-full md:w-auto justify-end">
-          <div class="text-right">
-            <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Tiempo Inactivo en Sesión</span>
-            <span id="inactivity-timer" class="font-mono text-lg font-bold text-amber-400">00:00:00</span>
-          </div>
-          <button id="btn-simulate-inactivity" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 text-xs font-medium transition active:scale-95 flex items-center gap-1.5 whitespace-nowrap">
-            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
-            <span>Simular Inactividad (60 min)</span>
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="btn-live-alert-review" type="button" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg transition">
+            ✍️ Revisar y Firmar Ahora
+          </button>
+          <button type="button" onclick="document.getElementById('live-incoming-alert').classList.add('hidden')" class="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">
+            ✕
           </button>
         </div>
       </section>
+
+      <!-- COLLAPSIBLE EVALUATOR / CERTAMEN 2 DRAWER (Hidden by default so main UI is 100% real operational system) -->
+      <div id="evaluator-rubric-drawer" class="hidden flex flex-col gap-4 bg-slate-900/95 border border-indigo-500/40 rounded-2xl p-4 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-mono font-bold text-xs border border-indigo-500/40">🎓 PANEL EVALUADOR CERTAMEN 2</span>
+            <span class="text-xs text-slate-300">Accesos directos a entregables oficiales, simulación de inactividad y casos de rúbrica:</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-1.5 text-xs">
+            <a href="/entregables/mini_landing_flujo_agentico.pdf" target="_blank" rel="noopener" class="px-2.5 py-1 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 font-mono font-bold transition">🚀 Landing PDF</a>
+            <a href="/entregables/ficha_diseno_certamen2.pdf" target="_blank" rel="noopener" class="px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-mono font-bold transition">📋 Ficha PDF (4p)</a>
+            <a href="/entregables/matriz_6_pruebas.pdf" target="_blank" rel="noopener" class="px-2.5 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 font-mono transition">📊 Matriz 6 Pruebas PDF</a>
+            <a href="/entregables/guia_readme.pdf" target="_blank" rel="noopener" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 font-mono transition">📘 Guía PDF</a>
+            <a href="https://github.com/nicogouet5/Agyx-Site-" target="_blank" rel="noopener" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 font-mono transition">💻 GitHub</a>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex items-center gap-2">
+            <span id="engine-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>Motor Activo: <strong class="text-white" id="engine-name-label">Híbrido IA + Reglas Deterministas</strong></span>
+            </span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="setRadarScenario('CASO-3-V1')" class="px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 font-mono transition">
+              1. Ver Infracción Diurna (Caso 3 v1)
+            </button>
+            <button type="button" onclick="setRadarScenario('CASO-3-V2')" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-mono transition">
+              2. Ver Corrección 21:30 (Caso 3 v2)
+            </button>
+            <button type="button" onclick="document.querySelector('[data-tab=&quot;tab-case3&quot;]')?.click()" class="px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-mono transition">
+              3. Ejecutar Paso a Paso v1➔v2
+            </button>
+          </div>
+        </div>
+
+        <!-- Inactivity Safeguard Panel (Kept inside Evaluator Drawer) -->
+        <section id="inactivity-safeguard-panel" class="bg-slate-950/90 border border-amber-500/30 rounded-xl p-3.5 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="p-2 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300">
+              ⏱️
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-xs font-bold text-amber-300 uppercase">Salvaguarda de Inactividad R4R (Human-in-the-Loop)</h2>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-mono">auto_approved == false</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">
+                Si el supervisor no firma, la propuesta permanece retenida en <strong>R4R</strong> indefinidamente.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <div class="text-right">
+              <span class="text-[10px] text-slate-400 uppercase block">Tiempo en Sesión</span>
+              <span id="inactivity-timer" class="font-mono text-sm font-bold text-amber-400">00:00:00</span>
+            </div>
+            <button id="btn-simulate-inactivity" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 text-xs font-medium transition">
+              ⚡ Simular Inactividad (60m)
+            </button>
+          </div>
+        </section>
+      </div>
 
       <!-- ======================================================================
            DISPATCH TACTICAL COMMAND RADAR (INSPIRED BY "DISPATCH" GAME UI)
@@ -872,17 +896,32 @@
         </div>
       </section>
 
-      <!-- TAB 5: FLOTA & RESTRICCIONES URBANAS -->
+      <!-- TAB 5: FLOTA, BASES DE GUARDA & RESTRICCIONES URBANAS -->
       <section id="tab-fleet" class="tab-content hidden flex flex-col gap-6">
+
+        <!-- Physical Depot Bases ("Lugares donde se guardan") -->
+        <div class="bg-slate-900 border border-sky-500/30 rounded-2xl p-5 shadow-lg">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div>
+              <span class="text-[10px] font-mono uppercase tracking-wider text-sky-400 block">INFRAESTRUCTURA LOGÍSTICA RM</span>
+              <h3 class="text-sm font-bold text-white">Bases Operativas y Recintos de Guarda de Flota (4 Patios)</h3>
+              <p class="text-xs text-slate-400">Ubicación física donde se estacionan, mantienen y despachan los camiones en tiempo real</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-lg bg-sky-500/15 text-sky-300 border border-sky-500/30 font-mono">Sincronizado con Mapa GPS</span>
+          </div>
+          <div id="bases-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </div>
         
         <!-- Fleet Status Cards -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <h3 class="text-sm font-bold text-white">Estado de Flota de Camiones (7 Vehículos)</h3>
-              <p class="text-xs text-slate-400">Verifique capacidades, ubicaciones y bloqueos críticos de mantenimiento</p>
+              <h3 class="text-sm font-bold text-white">Estado en Vivo de Unidades (7 Camiones)</h3>
+              <p class="text-xs text-slate-400">Al aprobar una solicitud en R4R, el camión asignado sale de su base y pasa automáticamente a EN RUTA</p>
             </div>
-            <span class="text-xs px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-mono">CAM-04: Falla Frenos</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-mono">CAM-04: Bloqueado en Renca</span>
           </div>
           <div id="fleet-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <!-- Dynamically populated via JS -->
@@ -1014,6 +1053,40 @@
 
   </main>
 
+  <!-- SHARE CLIENT PORTAL LINK + QR MODAL (#share-client-modal) -->
+  <div id="share-client-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div class="w-full max-w-md bg-slate-900 border border-sky-500/40 rounded-2xl shadow-2xl p-5 flex flex-col gap-4 text-slate-100">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">INTERACCIÓN MULTI-USUARIO EN VIVO</span>
+          <h3 class="text-base font-bold text-white mt-1">Compartir Formulario de Clientes</h3>
+        </div>
+        <button id="btn-close-share-modal" type="button" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">✕</button>
+      </div>
+
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Envía este enlace o escanea el código QR desde otro celular o computador. Cuando la otra persona envíe su pedido, llegará <strong>en tiempo real</strong> a este Centro de Control.
+      </p>
+
+      <div class="bg-white p-3 rounded-xl flex justify-center items-center self-center shadow-lg">
+        <img id="share-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://agyx-fletes.vercel.app/solicitar" alt="QR Portal de Clientes Agyx" class="w-40 h-40">
+      </div>
+
+      <div class="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl p-2">
+        <input id="share-portal-url" type="text" readonly value="https://agyx-fletes.vercel.app/solicitar" class="w-full bg-transparent text-xs font-mono text-sky-300 focus:outline-none px-2">
+        <button id="btn-copy-portal-url" type="button" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shrink-0 transition">
+          📋 Copiar Link
+        </button>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <a href="/solicitar" target="_blank" rel="noopener" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs text-center transition">
+          ↗ Abrir Portal de Clientes en Nueva Pestaña
+        </a>
+      </div>
+    </div>
+  </div>
+
   <!-- HUMAN REVIEW MODAL (#review-modal)
        Enforces mandatory non-empty rejected_reason and digital signature -->
   <div id="review-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -1095,6 +1168,6 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-2" role="status" aria-live="polite" aria-atomic="false"></div>
 
   <!-- App Main JavaScript Controller -->
-  <script src="/static/js/app.js?v=8"></script>
+  <script src="/static/js/app.js?v=9"></script>
 </body>
 </html>

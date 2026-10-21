@@ -17,12 +17,16 @@ document.addEventListener('DOMContentLoaded', () => {
     r4rQueue: [],
     memoryRules: [],
     fleet: [],
+    bases: [],
     restrictions: [],
     selectedProposal: null,
     modalReturnFocus: null,
     queueFilter: 'ALL',
     memoryFilter: 'ALL',
     case3Step: 1, // 1: pre-iteration, 2: human reject, 3: post-iteration
+    lastSyncOrderId: null,
+    lastSyncPendingCount: null,
+    syncInitialized: false,
   };
 
   // --- DOM ELEMENT REFERENCES ---
@@ -93,7 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSeedStgoRule: document.getElementById('btn-seed-stgo-rule'),
     btnResetMemory: document.getElementById('btn-reset-memory'),
 
-    // Fleet & Restrictions
+    // Fleet, Bases & Restrictions
+    basesCardsGrid: document.getElementById('bases-cards-grid'),
     fleetCardsGrid: document.getElementById('fleet-cards-grid'),
     restrictionsCardsGrid: document.getElementById('restrictions-cards-grid'),
 
@@ -110,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial data fetch
     await refreshAllData();
+    startLiveSyncLoop();
   }
 
   // --- DATA FETCHING & API INTEGRATION ---
@@ -117,9 +123,25 @@ document.addEventListener('DOMContentLoaded', () => {
     await Promise.all([
       fetchQueue(),
       fetchMemoryRules(),
+      fetchBases(),
       fetchFleet(),
       fetchRestrictions(),
     ]);
+    const timeSelect = document.getElementById('radar-time-select');
+    await fetchTacticalNetwork(timeSelect ? timeSelect.value : '11:30');
+  }
+
+  async function fetchBases() {
+    try {
+      const res = await fetch('/api/bases');
+      if (res.ok) {
+        const data = await res.json();
+        state.bases = Array.isArray(data) ? data : (data.bases || []);
+        renderBases();
+      }
+    } catch (err) {
+      console.warn('Bases fetch offline', err);
+    }
   }
 
   async function fetchQueue() {
@@ -158,6 +180,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         // Defensive unpack: handles both {total, trucks: [...]} and plain array
         state.fleet = Array.isArray(data) ? data : (data.trucks || []);
+        if (Array.isArray(data.bases) && data.bases.length > 0) {
+          state.bases = data.bases;
+          renderBases();
+        }
         renderFleet();
       } else {
         state.fleet = [];
@@ -353,11 +379,84 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function focusProposalOnRadar(prop) {
+    if (!prop) return;
+    const cid = String(prop.case_id || '').toUpperCase();
+    if (cid === 'CASO-1') { setRadarScenario('CASO-1'); return; }
+    if (cid === 'CASO-2') { setRadarScenario('CASO-2'); return; }
+    if (cid === 'CASO-4') { setRadarScenario('CASO-4'); return; }
+    if (cid === 'CASO-5') { setRadarScenario('CASO-5'); return; }
+    if (cid === 'CASO-6') { setRadarScenario('CASO-6'); return; }
+    if (cid.includes('LIRA')) { setRadarScenario('LIRA-953'); return; }
+    if (cid === 'CASO-3') { setRadarScenario('CASO-3-V2'); return; }
+
+    // Custom / Live Client Order Route Plotting on Real Map + HUD
+    const trucks = Array.isArray(prop.camiones) && prop.camiones.length ? prop.camiones.join(' + ') : 'Sin asignar';
+    const totalCLP = Number(prop.total_clp || prop.tarifa_total_clp || 0).toLocaleString('es-CL');
+    const distKm = prop.distance_km || 14.5;
+    const etaMin = prop.eta_minutes || 25;
+    const setText = (id, val) => {
+      const node = document.getElementById(id);
+      if (node) node.textContent = val;
+    };
+
+    setText('hud-case-id', `${prop.case_id} ${prop.cliente_nombre ? '· ' + prop.cliente_nombre : '(Pedido en Vivo)'}`);
+    setText('hud-route-distance', `${prop.origen || 'Origen'} ➔ ${prop.destino || 'Destino'} (${distKm} km)`);
+    setText('hud-eta', `${etaMin} min estimados`);
+    setText('hud-trucks', trucks);
+    setText('hud-schedule', `${prop.fecha_hora_programada || 'Hoy'} (SLA ${prop.sla_horas || 2.0}h)`);
+    setText('hud-tariff', `$${totalCLP} CLP`);
+    setText('hud-alert-title', prop.es_pedido_cliente ? `⚡ PEDIDO EN VIVO · ${prop.cliente_nombre || 'Cliente Externo'}` : `📦 ORDEN ${prop.case_id}`);
+    setText('hud-alert-desc', prop.observaciones || `Carga de ${(prop.peso_kg || 0).toLocaleString('es-CL')} kg desde ${prop.origen} hacia ${prop.destino}.`);
+
+    const statusBadge = document.getElementById('hud-status-badge');
+    if (statusBadge) statusBadge.outerHTML = `<span id="hud-status-badge">${getStatusBadge(prop.estado)}</span>`;
+
+    if (leafletMap && typeof L !== 'undefined') {
+      const orig = Array.isArray(prop.origin_coords) && prop.origin_coords.length === 2
+        ? prop.origin_coords
+        : [-33.3600, -70.6900];
+      const dest = Array.isArray(prop.destination_coords) && prop.destination_coords.length === 2
+        ? prop.destination_coords
+        : [-33.4503, -70.6441];
+      const pts = Array.isArray(prop.waypoints) && prop.waypoints.length >= 2
+        ? prop.waypoints
+        : [orig, dest];
+
+      if (activeRouteLine) leafletMap.removeLayer(activeRouteLine);
+      if (activeSecondaryRouteLine) {
+        leafletMap.removeLayer(activeSecondaryRouteLine);
+        activeSecondaryRouteLine = null;
+      }
+
+      const routeColor = prop.estado === 'BLOQUEADO_RIESGO' || prop.estado === 'REJECTED'
+        ? '#ef4444'
+        : (prop.estado === 'APPROVED' ? '#10b981' : '#38bdf8');
+
+      activeRouteLine = L.polyline(pts, {
+        color: routeColor,
+        weight: 5,
+        opacity: 0.95,
+        dashArray: prop.estado === 'APPROVED' ? null : '10, 6',
+      }).addTo(leafletMap);
+
+      leafletMap.fitBounds(L.latLngBounds(pts), { padding: [45, 45], maxZoom: 14 });
+
+      const btnGmaps = document.getElementById('btn-open-google-maps');
+      if (btnGmaps) {
+        btnGmaps.href = `https://www.google.com/maps/dir/?api=1&origin=${orig[0]},${orig[1]}&destination=${dest[0]},${dest[1]}&travelmode=driving`;
+      }
+    }
+  }
+
   function createProposalCard(prop) {
     const card = document.createElement('div');
-    card.className = 'bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between shadow-md hover:border-slate-700 transition';
+    const isClientLive = Boolean(prop.es_pedido_cliente || String(prop.case_id || '').startsWith('PED-'));
+    card.className = isClientLive
+      ? 'bg-slate-900/95 border-2 border-emerald-500/50 rounded-xl p-4 flex flex-col justify-between shadow-lg hover:border-emerald-400 transition'
+      : 'bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between shadow-md hover:border-slate-700 transition';
 
-    const trucks = Array.isArray(prop.camiones) ? prop.camiones.join(', ') : (prop.camiones || 'Sin camión');
+    const trucks = Array.isArray(prop.camiones) && prop.camiones.length ? prop.camiones.join(', ') : (prop.camiones || 'Sin camión');
     const totalCLP = (prop.total_clp || prop.tarifa_total_clp || 0).toLocaleString('es-CL');
     const sla = prop.sla_horas || 2.0;
 
@@ -368,13 +467,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
           </svg>
-          <span>Revisar y Firmar</span>
+          <span>Revisar y Firmar Despacho</span>
         </button>
       `;
     } else if (prop.estado === 'APPROVED') {
       actionButton = `
         <div class="mt-3 p-2 rounded-lg bg-emerald-950/20 border border-emerald-500/30 text-[11px] text-emerald-300">
-          <strong>Nombre declarado:</strong> ${escapeHtml(prop.human_signature || 'Sin nombre')}
+          <strong>✅ Despachado por:</strong> ${escapeHtml(prop.human_signature || 'Supervisor')}
         </div>
       `;
     } else if (prop.estado === 'REJECTED') {
@@ -385,8 +484,16 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }
 
+    const clientBanner = isClientLive ? `
+      <div class="mb-2 px-2 py-1 rounded bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-between text-[10px]">
+        <span class="font-mono font-bold text-emerald-300">⚡ SOLICITUD CLIENTE EN VIVO</span>
+        <span class="text-slate-300 truncate max-w-[140px]">${escapeHtml(prop.cliente_nombre || 'Portal /solicitar')}</span>
+      </div>
+    ` : '';
+
     card.innerHTML = `
       <div>
+        ${clientBanner}
         <div class="flex items-center justify-between mb-2">
           <span class="font-mono font-bold text-xs text-sky-400">${escapeHtml(prop.case_id)}</span>
           ${getStatusBadge(prop.estado)}
@@ -394,6 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="text-sm font-bold text-white mb-1">
           ${escapeHtml(prop.origen || 'Quilicura')} &rarr; ${escapeHtml(prop.destino || 'Destino')}
         </div>
+        ${prop.peso_kg ? `<div class="text-[11px] text-slate-400 mb-1">Carga: <strong class="text-slate-200">${Number(prop.peso_kg).toLocaleString('es-CL')} kg</strong> ${prop.fecha_hora_programada ? `· Salida: <strong class="text-amber-300">${escapeHtml(prop.fecha_hora_programada)}</strong>` : ''}</div>` : ''}
         <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 my-2 pt-2 border-t border-slate-800/80">
           <div>Flota: <strong class="text-slate-200">${escapeHtml(trucks)}</strong></div>
           <div>SLA: <strong class="text-slate-200">${sla} hrs</strong></div>
@@ -410,14 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     card.querySelector('[data-radar-focus]')?.addEventListener('click', () => {
-      const cid = String(prop.case_id || '').toUpperCase();
-      if (cid.includes('CASO-1')) setRadarScenario('CASO-1');
-      else if (cid.includes('CASO-2')) setRadarScenario('CASO-2');
-      else if (cid.includes('CASO-4')) setRadarScenario('CASO-4');
-      else if (cid.includes('CASO-5')) setRadarScenario('CASO-5');
-      else if (cid.includes('CASO-6')) setRadarScenario('CASO-6');
-      else if (cid.includes('LIRA')) setRadarScenario('LIRA-953');
-      else setRadarScenario('CASO-3-V2');
+      focusProposalOnRadar(prop);
       document.getElementById('tactical-command-radar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     card.querySelector('[data-review-action]')?.addEventListener('click', () => window.openReviewModal(prop.case_id));
@@ -456,9 +557,13 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="font-mono font-bold text-sky-400 text-xs">${escapeHtml(prop.case_id)}</span>
         <span class="text-amber-400 font-mono text-[10px]">auto_approved: False</span>
       </div>
+      ${prop.cliente_nombre ? `<div class="text-xs text-emerald-300 font-medium">👤 Cliente: <strong>${escapeHtml(prop.cliente_nombre)}</strong> ${prop.cliente_contacto ? `(${escapeHtml(prop.cliente_contacto)})` : ''}</div>` : ''}
       <div class="text-white font-semibold">${escapeHtml(prop.origen)} &rarr; ${escapeHtml(prop.destino)}</div>
       <div class="text-slate-400 text-[11px]">
         Camión sugerido: <strong class="text-slate-200">${escapeHtml(trucks)}</strong> | Tarifa estimada: <strong class="text-emerald-400">$${totalCLP} CLP</strong>
+      </div>
+      <div class="text-[10px] text-sky-300 bg-sky-950/30 border border-sky-500/30 rounded p-1.5 mt-1">
+        🚚 Al <strong>Aprobar</strong>, la unidad <strong>${escapeHtml(trucks)}</strong> saldrá de su Base Operativa a estado <strong>EN_RUTA</strong> en el mapa y el cliente recibirá confirmación en vivo.
       </div>
     `;
 
@@ -896,7 +1001,96 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- FLEET & RESTRICTIONS RENDERING ---
+  // --- BASES (LUGARES DE GUARDA), FLEET & RESTRICTIONS RENDERING ---
+  function renderBases() {
+    if (!el.basesCardsGrid) return;
+    el.basesCardsGrid.innerHTML = '';
+
+    if (!Array.isArray(state.bases) || state.bases.length === 0) {
+      el.basesCardsGrid.innerHTML = `
+        <div class="col-span-full py-6 text-center text-slate-500 text-xs">
+          Cargando patios y bases operativas...
+        </div>
+      `;
+      return;
+    }
+
+    state.bases.forEach(base => {
+      const card = document.createElement('div');
+      const isTaller = String(base.id_base || '').includes('TALLER');
+      const borderClass = isTaller ? 'border-rose-500/40 bg-rose-950/15' : 'border-emerald-500/30 bg-slate-950';
+      const parkedList = Array.isArray(base.camiones_en_base) ? base.camiones_en_base : [];
+
+      const parkedHtml = parkedList.length > 0
+        ? parkedList.map(c => {
+            const isBlk = c.bloqueado || c.estado === 'EN_MANTENIMIENTO';
+            const isRuta = c.estado === 'EN_RUTA';
+            const badgeCls = isBlk
+              ? 'bg-rose-950 text-rose-300 border-rose-500/50'
+              : (isRuta ? 'bg-amber-950 text-amber-300 border-amber-500/50' : 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40');
+            return `<span class="px-1.5 py-0.5 rounded border font-mono text-[10px] ${badgeCls}" title="${escapeHtml(c.modelo)}">🚛 ${escapeHtml(c.id_camion)} (${escapeHtml(c.estado)})</span>`;
+          }).join(' ')
+        : '<span class="text-[11px] text-slate-500 italic">Sin unidades estacionadas actualmente en este patio</span>';
+
+      card.className = `p-3.5 rounded-xl border ${borderClass} flex flex-col justify-between text-xs shadow`;
+      card.innerHTML = `
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <strong class="font-mono text-emerald-400 text-xs flex items-center gap-1.5">
+              <span>${isTaller ? '🔧' : '🏭'}</span>
+              <span>${escapeHtml(base.nombre)}</span>
+            </strong>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-300 font-mono">
+              ${parkedList.length} / ${base.capacidad_patio || 4} en patio
+            </span>
+          </div>
+          <div class="text-[11px] text-slate-300 font-medium">${escapeHtml(base.tipo || 'Base Operativa')} · <span class="text-sky-300">${escapeHtml(base.comuna)}</span></div>
+          <div class="text-[11px] text-slate-400 mt-0.5">📍 ${escapeHtml(base.direccion || '')}</div>
+          <div class="mt-2.5 pt-2 border-t border-slate-800/80">
+            <span class="text-[10px] text-slate-400 uppercase font-mono block mb-1">Unidades Guardadas / Asignadas:</span>
+            <div class="flex flex-wrap gap-1.5">${parkedHtml}</div>
+          </div>
+        </div>
+        <button type="button" class="mt-3 w-full py-1.5 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sky-300 font-mono text-[10px] transition flex items-center justify-center gap-1" data-focus-base>
+          🎯 Ver Ubicación en Mapa (${Number(base.lat).toFixed(3)}, ${Number(base.lng).toFixed(3)})
+        </button>
+      `;
+
+      card.querySelector('[data-focus-base]')?.addEventListener('click', () => {
+        if (leafletMap && typeof base.lat === 'number' && typeof base.lng === 'number') {
+          leafletMap.flyTo([base.lat, base.lng], 14, { duration: 1.1 });
+          document.getElementById('tactical-command-radar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const insp = document.getElementById('radar-inspector-text');
+          if (insp) {
+            insp.innerHTML = `🏭 <strong>${escapeHtml(base.nombre)}</strong> (${escapeHtml(base.direccion)}) — ${parkedList.length} camiones en guarda.`;
+          }
+        }
+      });
+
+      el.basesCardsGrid.appendChild(card);
+    });
+  }
+
+  window.returnTruckToBase = async function(truckId) {
+    try {
+      showToast(`Retornando unidad ${truckId} a su base de guarda...`, 'info');
+      const res = await fetch(`/api/fleet/${encodeURIComponent(truckId)}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'DISPONIBLE' }),
+      });
+      if (res.ok) {
+        showToast(`✅ Unidad ${truckId} estacionada en su Base Operativa (DISPONIBLE).`, 'success');
+        await refreshAllData();
+      } else {
+        const err = await res.json();
+        showToast(`Error: ${err.detail || 'No se pudo actualizar estado'}`, 'error');
+      }
+    } catch (e) {
+      showToast('Error de red al actualizar estado del camión.', 'error');
+    }
+  };
+
   function renderFleet() {
     if (!el.fleetCardsGrid) return;
     el.fleetCardsGrid.innerHTML = '';
@@ -904,24 +1098,46 @@ document.addEventListener('DOMContentLoaded', () => {
     state.fleet.forEach(truck => {
       const card = document.createElement('div');
       const isMaint = truck.mantenimiento_bloqueo || truck.estado_operativo === 'EN_MANTENIMIENTO';
-      const borderClass = isMaint ? 'border-rose-500/60 bg-rose-950/20' : 'border-slate-800 bg-slate-950';
+      const isEnRuta = truck.estado_operativo === 'EN_RUTA';
+      const borderClass = isMaint
+        ? 'border-rose-500/60 bg-rose-950/20'
+        : (isEnRuta ? 'border-amber-500/50 bg-amber-950/15' : 'border-slate-800 bg-slate-950');
+
+      const badgeClass = isMaint
+        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+        : (isEnRuta ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40');
 
       card.className = `p-3 rounded-xl border ${borderClass} flex flex-col justify-between text-xs`;
       card.innerHTML = `
         <div>
           <div class="flex items-center justify-between mb-1">
-            <strong class="font-mono text-sky-400">${escapeHtml(truck.id_camion)}</strong>
-            <span class="text-[10px] px-1.5 py-0.2 rounded font-mono ${isMaint ? 'bg-rose-500/20 text-rose-300' : 'bg-slate-800 text-slate-300'}">
+            <strong class="font-mono text-sky-400 text-sm">${escapeHtml(truck.id_camion)}</strong>
+            <span class="text-[10px] px-2 py-0.5 rounded font-mono ${badgeClass}">
               ${escapeHtml(truck.estado_operativo)}
             </span>
           </div>
           <div class="text-white font-medium">${escapeHtml(truck.modelo)}</div>
           <div class="text-[11px] text-slate-400 mt-1">
-            Cap: ${(truck.capacidad_kg || 0).toLocaleString()} kg / ${truck.capacidad_m3} m³
+            Capacidad: <strong class="text-slate-200">${(truck.capacidad_kg || 0).toLocaleString('es-CL')} kg</strong> / ${truck.capacidad_m3} m³
+          </div>
+          <div class="mt-2 pt-2 border-t border-slate-800/80 space-y-1 text-[11px]">
+            <div class="text-slate-300">🏠 <strong>Lugar de Guarda:</strong> <span class="text-emerald-300">${escapeHtml(truck.base_guarda || 'Hub Central Quilicura')}</span></div>
+            <div class="text-slate-400">📍 <strong>Posición Actual:</strong> <span class="text-sky-300">${escapeHtml(truck.ubicacion_actual || truck.ubicacion_base || 'Quilicura')}</span></div>
+            ${truck.active_order_id ? `<div class="text-amber-300 font-mono text-[10px]">📦 Orden activa: <strong>${escapeHtml(truck.active_order_id)}</strong></div>` : ''}
           </div>
         </div>
-        ${isMaint ? `<div class="mt-2 text-[10px] text-rose-400 font-bold">⚠️ ${escapeHtml(truck.mantenimiento_detalle || 'Falla de frenos')}</div>` : ''}
+        ${isMaint ? `<div class="mt-2 p-1.5 rounded bg-rose-950/60 border border-rose-500/40 text-[10px] text-rose-300 font-bold">⛔ BLOQUEO TALLER: ${escapeHtml(truck.mantenimiento_detalle || 'Falla de frenos')}</div>` : ''}
+        ${(!isMaint && isEnRuta) ? `
+          <button type="button" class="mt-2.5 w-full py-1.5 px-2.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold transition" data-return-base>
+            ↩️ Retornar Camión a Lugar de Guarda
+          </button>
+        ` : ''}
       `;
+
+      card.querySelector('[data-return-base]')?.addEventListener('click', () => {
+        window.returnTruckToBase(truck.id_camion);
+      });
+
       el.fleetCardsGrid.appendChild(card);
     });
   }
@@ -951,10 +1167,154 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- REAL-TIME CLIENT ORDER SYNC LOOP (POLLING EVERY 3.5s) ---
+  function playIncomingOrderChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(880.0, ctx.currentTime + 0.14); // A5
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.45);
+    } catch (e) {
+      // Audio autoplay might be blocked if user hasn't clicked yet
+    }
+  }
+
+  function startLiveSyncLoop() {
+    const pollSync = async () => {
+      try {
+        const res = await fetch('/api/live/sync');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (!state.syncInitialized) {
+          state.lastSyncOrderId = data.latest_order_id;
+          state.lastSyncPendingCount = data.pending_r4r_count;
+          state.syncInitialized = true;
+          return;
+        }
+
+        const hasNewOrder = data.latest_order_id && data.latest_order_id !== state.lastSyncOrderId;
+        const pendingChanged = data.pending_r4r_count !== state.lastSyncPendingCount;
+
+        if (hasNewOrder || pendingChanged) {
+          state.lastSyncOrderId = data.latest_order_id;
+          state.lastSyncPendingCount = data.pending_r4r_count;
+
+          await refreshAllData();
+
+          if (hasNewOrder && data.latest_order) {
+            const ord = data.latest_order;
+            playIncomingOrderChime();
+            showToast(
+              `🚨 NUEVA SOLICITUD EN VIVO (${ord.case_id}): ${ord.origen} ➔ ${ord.destino} (${(ord.peso_kg || 0).toLocaleString('es-CL')} kg)`,
+              'success',
+              8000
+            );
+
+            // Show live incoming banner
+            const banner = document.getElementById('live-incoming-alert');
+            const detail = document.getElementById('live-incoming-detail');
+            const btnRev = document.getElementById('btn-live-alert-review');
+            if (banner && detail) {
+              detail.textContent = `${ord.case_id} · Cliente: ${ord.cliente_nombre || 'Portal Web'} · ${ord.origen} ➔ ${ord.destino} (${(ord.peso_kg || 0).toLocaleString('es-CL')} kg) · Tarifa IA: $${Number(ord.total_clp || 0).toLocaleString('es-CL')} CLP`;
+              banner.classList.remove('hidden');
+            }
+            if (btnRev) {
+              btnRev.onclick = () => {
+                focusProposalOnRadar(ord);
+                if (ord.estado === 'R4R') {
+                  window.openReviewModal(ord.case_id);
+                } else {
+                  switchTab('tab-queue');
+                }
+              };
+            }
+            // Automatically plot new customer order route on map
+            focusProposalOnRadar(ord);
+          }
+        }
+      } catch (err) {
+        // Silent retry on next interval
+      }
+    };
+
+    pollSync();
+    setInterval(pollSync, 3500);
+  }
+
   // --- PRESETS & DISPATCH FORM ---
   function setupEventListeners() {
     // View Switcher
     if (el.btnToggleView) el.btnToggleView.addEventListener('click', toggleViewMode);
+
+    // Evaluator Mode Drawer Toggle
+    const btnEvalDrawer = document.getElementById('btn-toggle-evaluator-drawer');
+    const btnCloseEvalDrawer = document.getElementById('btn-close-evaluator-drawer');
+    const evalDrawer = document.getElementById('evaluator-drawer-panel');
+    if (btnEvalDrawer && evalDrawer) {
+      btnEvalDrawer.addEventListener('click', () => {
+        evalDrawer.classList.toggle('hidden');
+      });
+    }
+    if (btnCloseEvalDrawer && evalDrawer) {
+      btnCloseEvalDrawer.addEventListener('click', () => {
+        evalDrawer.classList.add('hidden');
+      });
+    }
+
+    // Share Client Portal Modal (/solicitar QR & Link)
+    const btnOpenShare = document.getElementById('btn-open-share-modal');
+    const btnCloseShare = document.getElementById('btn-close-share-modal');
+    const shareModal = document.getElementById('share-client-modal');
+    const shareInput = document.getElementById('share-portal-url-input');
+    const shareQrImg = document.getElementById('share-qr-img');
+    const btnCopyUrl = document.getElementById('btn-copy-portal-url');
+
+    if (btnOpenShare && shareModal) {
+      btnOpenShare.addEventListener('click', () => {
+        const portalUrl = `${window.location.origin}/solicitar`;
+        if (shareInput) shareInput.value = portalUrl;
+        if (shareQrImg) {
+          shareQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(portalUrl)}`;
+        }
+        shareModal.classList.remove('hidden');
+      });
+    }
+    if (btnCloseShare && shareModal) {
+      btnCloseShare.addEventListener('click', () => shareModal.classList.add('hidden'));
+      shareModal.addEventListener('click', (e) => {
+        if (e.target === shareModal) shareModal.classList.add('hidden');
+      });
+    }
+    if (btnCopyUrl && shareInput) {
+      btnCopyUrl.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(shareInput.value);
+          showToast('📋 Link del Portal de Clientes (/solicitar) copiado al portapapeles.', 'success');
+        } catch (e) {
+          shareInput.select();
+          document.execCommand('copy');
+          showToast('📋 Link copiado.', 'success');
+        }
+      });
+    }
+
+    // Dismiss Live Alert Banner
+    const btnDismissAlert = document.getElementById('btn-dismiss-live-alert');
+    const liveAlertBanner = document.getElementById('live-incoming-alert');
+    if (btnDismissAlert && liveAlertBanner) {
+      btnDismissAlert.addEventListener('click', () => liveAlertBanner.classList.add('hidden'));
+    }
 
     // Inactivity Simulation
     if (el.btnSimulateInactivity) el.btnSimulateInactivity.addEventListener('click', simulateInactivityProof);

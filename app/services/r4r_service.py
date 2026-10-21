@@ -120,8 +120,10 @@ class R4RService:
 
         results = []
         for r in rows:
+            pdata = json.loads(r[13]) if r[13] else {}
             results.append({
                 "proposal_id": r[0],
+                "propuesta_id": r[0],
                 "case_id": r[1],
                 "created_at": r[2],
                 "origen": r[3],
@@ -134,7 +136,18 @@ class R4RService:
                 "human_signature": r[10],
                 "review_timestamp": r[11],
                 "rejected_reason": r[12],
-                "proposal_data": json.loads(r[13]) if r[13] else {},
+                "proposal_data": pdata,
+                "cliente_nombre": pdata.get("cliente_nombre"),
+                "cliente_contacto": pdata.get("cliente_contacto"),
+                "es_pedido_cliente": bool(pdata.get("is_live_order") or str(r[1]).startswith("SOL-") or str(r[1]).startswith("PED-")),
+                "peso_kg": pdata.get("peso_kg") or pdata.get("cargo_weight_kg"),
+                "fecha_hora_programada": pdata.get("fecha_hora_programada"),
+                "observaciones": pdata.get("observaciones"),
+                "origin_coords": pdata.get("origin_coords"),
+                "destination_coords": pdata.get("destination_coords"),
+                "waypoints": pdata.get("waypoints"),
+                "distance_km": pdata.get("distance_km"),
+                "eta_minutes": pdata.get("eta_minutes"),
             })
         return results
 
@@ -157,8 +170,10 @@ class R4RService:
         if not row:
             return None
 
+        pdata = json.loads(row[13]) if row[13] else {}
         return {
             "propuesta_id": row[0],
+            "proposal_id": row[0],
             "case_id": row[1],
             "created_at": row[2],
             "origen": row[3],
@@ -171,8 +186,35 @@ class R4RService:
             "human_signature": row[10],
             "review_timestamp": row[11],
             "rejected_reason": row[12],
-            "proposal_data": json.loads(row[13]) if row[13] else {},
+            "proposal_data": pdata,
+            "cliente_nombre": pdata.get("cliente_nombre"),
+            "cliente_contacto": pdata.get("cliente_contacto"),
+            "es_pedido_cliente": bool(pdata.get("is_live_order") or str(row[1]).startswith("SOL-") or str(row[1]).startswith("PED-")),
+            "peso_kg": pdata.get("peso_kg") or pdata.get("cargo_weight_kg"),
+            "fecha_hora_programada": pdata.get("fecha_hora_programada"),
+            "observaciones": pdata.get("observaciones"),
+            "origin_coords": pdata.get("origin_coords"),
+            "destination_coords": pdata.get("destination_coords"),
+            "waypoints": pdata.get("waypoints"),
+            "distance_km": pdata.get("distance_km"),
+            "eta_minutes": pdata.get("eta_minutes"),
         }
+
+    def enrich_proposal_metadata(self, case_id: str, extra_data: Dict[str, Any]) -> None:
+        """Persists extended live customer metadata and tactical route coords into proposal_data."""
+        proposal = self.get_proposal(case_id)
+        if not proposal:
+            return
+        merged = dict(proposal.get("proposal_data") or {})
+        merged.update(extra_data)
+        conn = sqlite3.connect(self.db_path)
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE r4r_proposals SET proposal_data = ? WHERE proposal_id = ?",
+            (json.dumps(merged, ensure_ascii=False), proposal["propuesta_id"]),
+        )
+        conn.commit()
+        conn.close()
 
     def review_proposal(
         self,
@@ -213,7 +255,26 @@ class R4RService:
             new_status = "APPROVED"
             human_sig = req.supervisor_name.strip()
             final_reason = None
-            msg = f"Propuesta aprobada exitosamente por {human_sig}. Despacho autorizado."
+            msg = f"Propuesta aprobada exitosamente por {human_sig}. Despacho autorizado y camión en ruta."
+            try:
+                from app.services.fleet_service import FleetService
+                from app.services.geo_service import geocode_santiago_address
+                pdata = proposal.get("proposal_data") or {}
+                dest_coords = pdata.get("destination_coords")
+                if isinstance(dest_coords, list) and len(dest_coords) == 2:
+                    d_lat, d_lng = float(dest_coords[0]), float(dest_coords[1])
+                else:
+                    g = geocode_santiago_address(proposal.get("destino", "Santiago"))
+                    d_lat, d_lng = g["lat"], g["lng"]
+                FleetService(db_path=self.db_path).dispatch_trucks_for_order(
+                    truck_ids=proposal.get("camiones", []),
+                    case_id=proposal["case_id"],
+                    destino=proposal.get("destino", "Santiago"),
+                    dest_lat=d_lat,
+                    dest_lng=d_lng,
+                )
+            except Exception:
+                pass
         else:
             new_status = "REJECTED"
             human_sig = req.supervisor_name.strip()

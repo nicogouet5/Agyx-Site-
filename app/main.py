@@ -1,10 +1,10 @@
 """
 app/main.py
-FastAPI application layer for Agyx Logistics Copilot (Pymes-Fletes Grupo 2).
+FastAPI application layer for Agyx Live Dispatch OS (Pymes-Fletes Grupo 2).
 Provides:
 - FastAPI instance with OpenAPI documentation, CORS middleware, and lifespan event.
-- Static files mounting (/static) and Jinja2 templates mounting (/templates).
-- Modular REST API routers: /api/dispatch, /api/r4r, /api/memory, /api/fleet, /api/demo.
+- Static files mounting (/static) and templates mounting (/templates: index.html, solicitar.html).
+- Modular REST API routers: /api/dispatch, /api/live, /api/r4r, /api/memory, /api/fleet, /api/demo.
 - Dual execution resilience: native uvicorn execution and Python stdlib HTTP fallback.
 """
 import os
@@ -23,7 +23,11 @@ from app.services.db_service import init_db
 from app.api.dependencies import ServiceContainer, get_services
 
 # Route controller imports (framework-agnostic)
-from app.api.routes_dispatch import evaluate_dispatch_controller
+from app.api.routes_dispatch import (
+    evaluate_dispatch_controller,
+    submit_live_order_controller,
+    get_live_sync_controller,
+)
 from app.api.routes_r4r import (
     get_queue_controller,
     get_proposal_controller,
@@ -37,6 +41,8 @@ from app.api.routes_memory import (
 )
 from app.api.routes_fleet import (
     get_fleet_controller,
+    get_bases_controller,
+    update_truck_status_controller,
     get_truck_controller,
     get_restrictions_controller,
     get_zone_restriction_controller,
@@ -64,25 +70,22 @@ try:
     @asynccontextmanager
     async def lifespan(app_instance: FastAPI):
         """Startup and shutdown lifecycle manager."""
-        # Ensure SQLite database and seed data are initialized
         init_db(SQLITE_DB_PATH)
         ServiceContainer.get_instance()
         yield
 
     app = FastAPI(
-        title="Agyx — Token-Optimized Operational AI Agent (Pymes-Fletes Grupo 2)",
+        title="Agyx Live Dispatch OS — Operational AI Agent (Pymes-Fletes Grupo 2)",
         description=(
-            "Operational AI Agent prototype for SME logistics in Santiago de Chile. "
-            "Evaluates dispatch feasibility, fleet maintenance locks, urban daytime bans, "
-            "enforces a strict R4R (Ready for Review) state machine with zero auto-approval "
-            "on inactivity, and captures mandatory rejection reasons into a persistent Living Memory."
+            "Operational AI Agent for SME logistics in Santiago de Chile. "
+            "Includes Live Client Order Portal (/solicitar), real-time 3s sync, "
+            "Google Maps tactical dispatch radar, physical depot bases, strict R4R governance "
+            "(auto_approved=False), and Living Memory rule distillation."
         ),
-        version="1.0.0",
+        version="2.0.0",
         lifespan=lifespan,
     )
 
-    # CORS Middleware configuration
-    # Local academic use stays simple. Production must explicitly opt in to browser origins.
     allowed_origins = list(CORS_ORIGINS) or ([] if APP_ENV == "production" else ["*"])
     app.add_middleware(
         CORSMiddleware,
@@ -127,7 +130,24 @@ try:
     app.include_router(fleet_router)
     app.include_router(demo_router)
 
-    # The UI is a static HTML document; no template rendering is required.
+    # Direct Live API aliases (/api/live/orders and /api/live/sync)
+    @app.post("/api/live/orders")
+    async def live_orders_alias(request: Request, services: ServiceContainer = Depends(get_services)):
+        try:
+            body = await request.json()
+        except Exception:
+            raise HTTPException(status_code=400, detail="Malformed JSON body")
+        status_code, data = submit_live_order_controller(body, services=services)
+        if status_code >= 400:
+            raise HTTPException(status_code=status_code, detail=data.get("detail", data.get("error", "Error")))
+        return JSONResponse(status_code=status_code, content=data)
+
+    @app.get("/api/live/sync")
+    async def live_sync_alias(services: ServiceContainer = Depends(get_services)):
+        status_code, data = get_live_sync_controller(services=services)
+        return JSONResponse(status_code=status_code, content=data)
+
+    # Supervisor Control Center (/)
     @app.get("/", response_class=HTMLResponse)
     @app.get("/index.html", response_class=HTMLResponse)
     async def serve_index(request: Request):
@@ -139,19 +159,33 @@ try:
             status_code=200,
         )
 
+    # External Client Live Order Portal (/solicitar, /cliente, /pedido)
+    @app.get("/solicitar", response_class=HTMLResponse)
+    @app.get("/solicitar/", response_class=HTMLResponse)
+    @app.get("/cliente", response_class=HTMLResponse)
+    @app.get("/pedido", response_class=HTMLResponse)
+    async def serve_solicitar(request: Request):
+        solicitar_file = TEMPLATES_DIR / "solicitar.html"
+        if solicitar_file.exists():
+            return HTMLResponse(content=solicitar_file.read_text(encoding="utf-8"), status_code=200)
+        return HTMLResponse(
+            content="<h1>Agyx Portal de Clientes</h1><p>Template solicitar.html not found.</p>",
+            status_code=200,
+        )
+
     @app.get("/health")
     @app.get("/api/health")
     def health_check():
         return {
             "status": "OK",
             "app": "Agyx Operational AI Agent",
-            "version": "1.0.0",
+            "version": "2.0.0",
             "server": "FastAPI",
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "engine_default": "local_zero_token",
             "environment": APP_ENV,
             "demo_admin_actions_enabled": demo_admin_actions_enabled(),
-            "data_mode": "simulated_academic_dataset",
+            "data_mode": "live_interactive_dispatch",
         }
 
     # Ensure DB is initialized on serverless cold start even if lifespan is not invoked
@@ -165,7 +199,7 @@ except ImportError:
     class FallbackApp:
         """Lightweight proxy object so `from app.main import app` works without FastAPI."""
         title = "Agyx Operational AI Agent (Fallback Mode)"
-        version = "1.0.0"
+        version = "2.0.0"
 
         def __call__(self, scope, receive, send):
             pass
@@ -190,7 +224,7 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
     def _send_cors_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-Agyx-Demo-Token")
 
     def _send_json(self, status_code: int, data: Any):
         payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
@@ -216,13 +250,13 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
             self._send_json(200, {
                 "status": "OK",
                 "app": "Agyx Operational AI Agent",
-                "version": "1.0.0",
+                "version": "2.0.0",
                 "server": "Python stdlib HTTP Fallback",
                 "timestamp": datetime.utcnow().isoformat() + "Z",
             })
             return
 
-        # Web UI Index
+        # Supervisor Control Center (/)
         if path in ("/", "/index.html"):
             index_path = TEMPLATES_DIR / "index.html"
             if index_path.exists():
@@ -244,13 +278,28 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
                 self.wfile.write(fallback_html)
             return
 
+        # External Client Live Order Portal (/solicitar, /cliente, /pedido)
+        if path in ("/solicitar", "/solicitar/", "/cliente", "/pedido"):
+            sol_path = TEMPLATES_DIR / "solicitar.html"
+            if sol_path.exists():
+                with open(sol_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(content)
+            else:
+                self._send_json(404, {"error": "PORTAL_TEMPLATE_NOT_FOUND"})
+            return
+
         # Static files (/static/...)
         if path.startswith("/static/"):
             clean_rel = urllib.parse.unquote(path[len("/static/"):].lstrip("/"))
             file_path = (STATIC_DIR / clean_rel).resolve()
             static_root = STATIC_DIR.resolve()
 
-            # Path traversal containment check
             try:
                 is_safe = file_path.is_relative_to(static_root)
             except AttributeError:
@@ -298,6 +347,12 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(content)
             return
 
+        # API Routes: Live Sync
+        if path in ("/api/live/sync", "/api/dispatch/live-sync"):
+            code, res = get_live_sync_controller()
+            self._send_json(code, res)
+            return
+
         # API Routes: R4R
         if path == "/api/r4r/queue":
             code, res = get_queue_controller()
@@ -316,10 +371,14 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
             self._send_json(code, res)
             return
 
-        # API Routes: Fleet, Tactical Network & Restrictions
+        # API Routes: Fleet, Bases, Tactical Network & Restrictions
         if path in ("/api/tactical-network", "/api/tactical-network/"):
             hora = query.get("hora", ["14:00"])[0]
             code, res = get_tactical_network_controller(hora=hora)
+            self._send_json(code, res)
+            return
+        if path == "/api/bases":
+            code, res = get_bases_controller()
             self._send_json(code, res)
             return
         if path == "/api/fleet":
@@ -353,7 +412,6 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
 
-        # Read JSON body, with a hard cap to keep the fallback server resilient.
         try:
             content_length = int(self.headers.get("Content-Length", 0))
         except ValueError:
@@ -371,9 +429,22 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json(400, {"error": "MALFORMED_JSON", "detail": "Invalid JSON body payload"})
                 return
 
+        # API Route: Live Order Submission (/api/live/orders or /api/dispatch/live-order)
+        if path in ("/api/live/orders", "/api/live/orders/", "/api/dispatch/live-order", "/api/dispatch/live-order/"):
+            code, res = submit_live_order_controller(body)
+            self._send_json(code, res)
+            return
+
         # API Route: Dispatch Evaluate
         if path in ("/api/dispatch/evaluate", "/api/dispatch/evaluate/"):
             code, res = evaluate_dispatch_controller(body)
+            self._send_json(code, res)
+            return
+
+        # API Route: Live Fleet Truck Status Update
+        if path.startswith("/api/fleet/") and path.endswith("/status"):
+            mid = path[len("/api/fleet/"):-len("/status")].strip("/")
+            code, res = update_truck_status_controller(mid, body)
             self._send_json(code, res)
             return
 
@@ -419,7 +490,6 @@ class AgyxFallbackHTTPHandler(BaseHTTPRequestHandler):
         self._send_json(404, {"error": "ENDPOINT_NOT_FOUND", "path": path})
 
     def log_message(self, format, *args):
-        # Keep console output clean
         sys.stderr.write(f"[AGYX HTTP] {self.address_string()} - {format % args}\n")
 
 
@@ -443,7 +513,6 @@ def main():
     host = os.environ.get("HOST", "0.0.0.0")
     port = int(os.environ.get("PORT", "8000"))
 
-    # Attempt uvicorn first
     try:
         import uvicorn
         print(f"[AGYX SERVER] Starting with Uvicorn ASGI server on http://{host}:{port}...")

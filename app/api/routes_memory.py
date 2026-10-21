@@ -77,9 +77,13 @@ def reset_memory_controller(
         return 403, error
     container = services or ServiceContainer.get_instance()
     container.memory_service.reset_memory()
+    try:
+        container.fleet_service.reset_live_fleet()
+    except Exception:
+        pass
     return 200, {
         "status": "OK",
-        "message": "Memoria Viva reseteada a estado limpio sin reglas previas.",
+        "message": "Memoria Viva y estado de flota reseteados a estado limpio sin reglas previas.",
         "active_rules_count": 0,
     }
 
