@@ -109,12 +109,13 @@
 
       <!-- Interactive View Toggle & Deliverables Quick Links -->
       <div class="flex flex-wrap items-center gap-2">
-        <div class="hidden xl:flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-lg px-2 py-1 text-[11px]">
-          <span class="text-slate-400 font-semibold mr-1">📄 Entregables:</span>
-          <a href="/entregables/ficha_diseno_certamen2.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded bg-teal-500/15 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 font-mono transition" title="Ficha de Diseño Certamen 2 (PDF <= 4 págs)">Ficha PDF</a>
-          <a href="/entregables/matriz_6_pruebas.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded bg-sky-500/15 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 font-mono transition" title="Matriz de 6 Casos de Prueba (PDF)">Matriz PDF</a>
-          <a href="/entregables/guia_readme.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 font-mono transition" title="Guía Operativa & README (PDF)">Guía PDF</a>
-          <a href="/entregables/matriz_6_pruebas.html" target="_blank" rel="noopener" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-mono transition" title="Matriz Interactiva HTML">Matriz Web</a>
+        <div class="hidden md:flex items-center gap-1.5 bg-slate-950/90 border border-slate-700/80 rounded-xl px-2.5 py-1 text-xs shadow-inner">
+          <span class="text-slate-400 font-semibold text-[11px] uppercase tracking-wider mr-1">📄 Rúbrica:</span>
+          <a href="/entregables/mini_landing_flujo_agentico.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 font-mono font-bold transition flex items-center gap-1" title="Mini Landing Page & Flujo Agéntico (PDF 1 pág)"><span>🚀 Landing PDF</span></a>
+          <a href="/entregables/ficha_diseno_certamen2.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-mono font-bold transition flex items-center gap-1" title="Ficha Oficial de Diseño (Exactamente 4 páginas A4)"><span>📋 Ficha PDF (4p)</span></a>
+          <a href="/entregables/matriz_6_pruebas.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 font-mono transition flex items-center gap-1" title="Matriz de 6 Pruebas + Repetición Caso 3 (PDF)"><span>📊 Matriz PDF</span></a>
+          <a href="/entregables/guia_readme.pdf" target="_blank" rel="noopener" class="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 font-mono transition flex items-center gap-1" title="Guía de Uso README (PDF 1 pág)"><span>📘 Guía PDF</span></a>
+          <a href="https://github.com/nicogouet5/Agyx-Site-" target="_blank" rel="noopener" class="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 font-mono transition" title="Código Fuente en GitHub"><span>💻 GitHub</span></a>
         </div>
         <button id="btn-toggle-view" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs shadow-sm transition active:scale-95" title="Alternar entre consola de escritorio y vista smartphone para video demo">
           <span id="toggle-icon">📱</span>
@@ -130,6 +131,25 @@
     
     <!-- DESKTOP MODE CONTAINER (Default wide layout) -->
     <div id="desktop-view-container" class="w-full max-w-7xl mx-auto flex flex-col gap-5">
+
+      <!-- Guía Rápida para el Evaluador (Tour en 10 Segundos) -->
+      <section class="bg-slate-900/90 border border-teal-500/30 rounded-2xl p-3.5 shadow-lg flex flex-col lg:flex-row items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2.5">
+          <span class="px-2 py-0.5 rounded-md bg-teal-500/20 text-teal-300 font-mono font-bold text-[11px] border border-teal-500/40">🎯 TOUR EVALUADOR 10s</span>
+          <span class="text-slate-300 font-medium">Pruebe las 3 capacidades clave del Certamen 2 en un clic:</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          <button type="button" onclick="setRadarScenario('CASO-3-V1'); document.getElementById('tactical-command-radar')?.scrollIntoView({ behavior: 'smooth' });" class="px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 font-mono font-medium transition active:scale-95">
+            1. Ver Infracción Diurna (Caso 3 v1)
+          </button>
+          <button type="button" onclick="setRadarScenario('CASO-3-V2'); document.getElementById('tactical-command-radar')?.scrollIntoView({ behavior: 'smooth' });" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-mono font-medium transition active:scale-95">
+            2. Ver Corrección 21:30 (Caso 3 v2)
+          </button>
+          <button type="button" onclick="document.querySelector('[data-tab=&quot;tab-c3-demo&quot;]')?.click(); document.getElementById('tab-c3-demo')?.scrollIntoView({ behavior: 'smooth' });" class="px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-mono font-medium transition active:scale-95">
+            3. Ver Ciclo Memoria Viva
+          </button>
+        </div>
+      </section>
 
       <!-- Inactivity Safeguard Banner & Proof of Zero Auto-Approval -->
       <section id="inactivity-safeguard-panel" class="bg-gradient-to-r from-slate-900 via-amber-950/20 to-slate-900 border border-amber-500/30 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
@@ -748,44 +768,28 @@
           </form>
         </div>
 
-        <section class="dispatch-map bg-slate-900 border border-slate-700 rounded-2xl p-4 md:p-5 shadow-lg" aria-labelledby="dispatch-map-title">
-          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <section class="bg-gradient-to-r from-slate-900 via-sky-950/20 to-slate-900 border border-sky-500/30 rounded-2xl p-4 md:p-5 shadow-lg" aria-labelledby="dispatch-radar-link-title">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div class="flex items-center gap-2">
-                <span class="dispatch-map__live-dot" aria-hidden="true"></span>
-                <p class="text-[10px] uppercase tracking-[0.18em] text-sky-300 font-bold">Dispatch map · simulación operativa</p>
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
+                <p class="text-[10px] uppercase tracking-[0.18em] text-sky-300 font-bold">Centro de Comando & Radar Táctico Metropolitano</p>
               </div>
-              <h3 id="dispatch-map-title" class="text-sm font-bold text-white mt-1">Ruta de factibilidad · Lira 953</h3>
-              <p class="text-xs text-slate-400 mt-1">Panel de despacho: origen, corredor de acceso y control de zona urbana.</p>
+              <h3 id="dispatch-radar-link-title" class="text-sm font-bold text-white mt-1">Simulación Integrada de Rutas y Restricciones Urbanas</h3>
+              <p class="text-xs text-slate-300 mt-1 max-w-2xl">
+                El mapa dinámico estilo <em>"Dispatch"</em> está ubicado en el encabezado principal: monitorea los 7 nodos viales de Santiago, el bloqueo por falla de frenos en Taller Renca (<span class="font-mono text-rose-300 font-bold">CAM-04</span>) y la geocerca de Santiago Centro (<span class="font-mono text-amber-300 font-bold">&gt;5.000 kg prohibido 07:30–21:00</span>).
+              </p>
             </div>
-            <button type="button" id="btn-map-example" class="px-3 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium shadow-lg shadow-sky-950/50">Cargar misión Lira 953</button>
-          </div>
-
-          <div class="dispatch-map__layout">
-            <div class="dispatch-map__board" role="img" aria-label="Mapa de despacho simulado desde Quilicura hacia Lira 953 en Santiago Centro">
-              <div class="dispatch-map__grid" aria-hidden="true"></div>
-              <div class="dispatch-map__district dispatch-map__district--north">QUILICURA</div>
-              <div class="dispatch-map__district dispatch-map__district--center">ZONA URBANA<br><strong>SANTIAGO CENTRO</strong></div>
-              <div class="dispatch-map__road dispatch-map__road--one" aria-hidden="true"></div>
-              <div class="dispatch-map__road dispatch-map__road--two" aria-hidden="true"></div>
-              <div class="dispatch-map__route" aria-hidden="true"><span></span></div>
-              <div class="dispatch-map__marker dispatch-map__marker--origin"><span>🚚</span><b>ORIGEN</b><small>Quilicura</small></div>
-              <div class="dispatch-map__marker dispatch-map__marker--destination"><span>⌖</span><b>DESTINO</b><small>Lira 953</small></div>
-              <div class="dispatch-map__checkpoint"><span>!</span><small>CONTROL<br>07:30–21:00</small></div>
-              <div class="dispatch-map__legend"><i></i> Corredor sugerido <em></em> Zona con control</div>
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <button type="button" id="btn-map-example" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-md shadow-sky-950/40 transition active:scale-95 flex items-center gap-1.5">
+                <span>📍 Cargar Misión Lira 953</span>
+              </button>
+              <button type="button" onclick="document.getElementById('tactical-command-radar')?.scrollIntoView({ behavior: 'smooth' })" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30 text-xs font-semibold transition active:scale-95 flex items-center gap-1.5">
+                <span>🛰️ Ver Radar en Vivo ↑</span>
+              </button>
             </div>
-            <aside class="dispatch-map__telemetry" aria-label="Telemetría de misión">
-              <div class="dispatch-map__status"><span>ESTADO DE RUTA</span><strong>REVISIÓN R4R</strong></div>
-              <dl>
-                <div><dt>CARGA</dt><dd>9.500 kg</dd></div>
-                <div><dt>VENTANA</dt><dd>11:30 → <b>21:30</b></dd></div>
-                <div><dt>DESTINO</dt><dd>Lira 953</dd></div>
-                <div><dt>RIESGO</dt><dd class="dispatch-map__risk">RESTRICCIÓN DIURNA</dd></div>
-              </dl>
-              <div class="dispatch-map__mission-note">El agente detecta una carga superior a 5 t en Santiago Centro y propone la ventana nocturna. La aprobación final sigue en manos del coordinador.</div>
-            </aside>
           </div>
-          <p id="map-result" class="text-xs text-slate-400 mt-3">Misión de referencia lista. Carga Lira 953 para evaluar la propuesta nocturna en R4R.</p>
+          <p id="map-result" class="text-xs text-slate-400 mt-2.5 font-mono">Presione "Cargar Misión Lira 953" para precargar los datos de 9.500 kg hacia Santiago Centro y sincronizar el Radar Táctico.</p>
         </section>
 
       </section>

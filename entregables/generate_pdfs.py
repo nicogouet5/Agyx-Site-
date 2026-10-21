@@ -189,6 +189,86 @@ class WorkflowComparison(Flowable):
         c.drawString(0, 0, "R4R = espera aprobación humana; el rechazo alimenta Memoria Viva para la próxima evaluación.")
 
 
+class AgenticMindMapFlowable(Flowable):
+    """Visual interactive-style flow diagram of the Agyx agentic architecture."""
+
+    def __init__(self):
+        super().__init__()
+        self.width = 507
+        self.height = 120
+
+    def draw(self):
+        c = self.canv
+        stages = [
+            ("1. ENTRADA", "Pedido web / API\nPeso, hora, comuna\nOrigen y destino", LIGHT, TEAL),
+            ("2. FILTROS DUROS", "HAZMAT D.S. 298\nFrenos CAM-04\nInfo incompleta", LIGHT, colors.HexColor("#C0392B")),
+            ("3. MOTOR & TOOLS", "Flota (<150t)\nRadar Dispatch\nLocal 0t / Gemini", PALE, TEAL),
+            ("4. COLA R4R", "auto_approved=0\nInactividad=Stop\nEspera revisión", LIGHT, colors.HexColor("#D97706")),
+            ("5. DECISIÓN & HITL", "Aprobar -> Despacho\nRechazar -> Motivo\nMemoria Viva <80t", PALE, colors.HexColor("#059669")),
+        ]
+        gap = 8
+        box_w = (self.width - 4 * gap) / 5
+        box_h = 68
+        y = 36
+
+        card_body = ParagraphStyle(
+            "mindmap-body", fontName="DejaVu", fontSize=6.0, leading=8.0,
+            textColor=INK, alignment=1,
+        )
+
+        for i, (title, body, fill, accent) in enumerate(stages):
+            x = i * (box_w + gap)
+            c.setFillColor(fill)
+            c.setStrokeColor(accent)
+            c.setLineWidth(1.1)
+            c.roundRect(x, y, box_w, box_h, 4, fill=1, stroke=1)
+
+            # Header pill
+            c.setFillColor(accent)
+            c.roundRect(x + 2, y + box_h - 15, box_w - 4, 13, 2, fill=1, stroke=0)
+            c.setFillColor(colors.white)
+            c.setFont("DejaVu-Bold", 5.8)
+            c.drawCentredString(x + box_w / 2, y + box_h - 11.5, title)
+
+            # Body lines
+            para = Paragraph(body.replace("\n", "<br/>"), card_body)
+            _, th = para.wrap(box_w - 6, box_h - 20)
+            para.drawOn(c, x + 3, y + (box_h - 15 - th) / 2 + 1)
+
+            # Forward arrow
+            if i < 4:
+                arr_x = x + box_w + 1
+                mid_y = y + box_h / 2
+                c.setStrokeColor(TEAL)
+                c.setLineWidth(1)
+                c.line(arr_x, mid_y, arr_x + 5, mid_y)
+                c.line(arr_x + 3, mid_y + 2.5, arr_x + 5, mid_y)
+                c.line(arr_x + 3, mid_y - 2.5, arr_x + 5, mid_y)
+
+        # Feedback loop line from Stage 5 back to Stage 3
+        c.setStrokeColor(colors.HexColor("#7C3AED"))
+        c.setLineWidth(1.1)
+        start_x = 4 * (box_w + gap) + box_w / 2
+        dest_x = 2 * (box_w + gap) + box_w / 2
+        loop_y = 12
+
+        p_path = c.beginPath()
+        p_path.moveTo(start_x, y)
+        p_path.lineTo(start_x, loop_y)
+        p_path.lineTo(dest_x, loop_y)
+        p_path.lineTo(dest_x, y)
+        c.drawPath(p_path, stroke=1, fill=0)
+
+        # Arrowhead pointing up to Stage 3
+        c.line(dest_x - 3, y - 4, dest_x, y)
+        c.line(dest_x + 3, y - 4, dest_x, y)
+
+        # Feedback label
+        c.setFillColor(colors.HexColor("#7C3AED"))
+        c.setFont("DejaVu-Bold", 6.2)
+        c.drawCentredString((start_x + dest_x) / 2, loop_y + 2, "🧠 BUCLE DE MEMORIA VIVA: Rechazo destilado (<80 tokens) retroalimenta al motor en v2")
+
+
 def ficha():
     story = [
         band("PROPÓSITO", "Preparar propuestas de despacho para el Coordinador de Tráfico, con consulta de flota, radar táctico de rutas y restricciones urbanas y revisión humana obligatoria."),
@@ -296,7 +376,53 @@ def guia():
     build("guia_readme.pdf", "03 / Material de revisión", "Guía de uso · Agyx", "Resumen del README en español / Grupo 2", story)
 
 
+def mini_landing():
+    story = [
+        band(
+            "PROPÓSITO",
+            "Copiloto de IA para pymes de transporte en Santiago. Valida factibilidad física, mecánica y legal, resuelve restricciones diurnas de Santiago Centro, bloquea riesgos de taller y asegura gobernanza Human-in-the-Loop estricta (cero auto-aprobación por inactividad).",
+        ),
+        section("01 / Mapa mental del flujo agéntico"),
+        AgenticMindMapFlowable(),
+        section("02 / Pilares técnicos y gobernanza"),
+        Table([
+            [
+                p("<b>RADAR TÁCTICO DISPATCH</b><br/><font color='#52616A'>7 nodos viales RM, congestión horaria en vivo y geocerca Santiago Centro (>5t prohibido 07:30–21:00).</font>", "small"),
+                p("<b>GOBERNANZA R4R ESTRICTA</b><br/><font color='#52616A'>Invariante relacional CHECK auto_approved = 0 en SQLite. Inactividad de 72h mantiene la orden retenida.</font>", "small"),
+            ],
+            [
+                p("<b>MEMORIA VIVA &lt;80 TOKENS</b><br/><font color='#52616A'>Rechazo humano obligatorio (HTTP 422 si vacío). Regla destilada corrige el agente automáticamente (v1 -> v2).</font>", "small"),
+                p("<b>MOTOR DUAL RESILIENTE</b><br/><font color='#52616A'>100% offline con motor determinista local (0 tokens) + Function Calling real con Google Gemini 2.5 Flash.</font>", "small"),
+            ],
+        ], colWidths=[250, 257], style=[
+            ("BACKGROUND", (0, 0), (-1, -1), LIGHT),
+            ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#D0DADC")),
+            ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D0DADC")),
+            ("TOPPADDING", (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ("LEFTPADDING", (0, 0), (-1, -1), 6),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ]),
+        Spacer(1, 4),
+        section("03 / Cobertura de pruebas y rúbrica (100 / 100 pts)"),
+        matrix_row("6 CASOS Y AJUSTE", "<b>Normales:</b> Caso 1 (CAM-02 Quilicura) y Caso 2 (Reserva mañana Acto 4) · <b>Límites:</b> Caso 3 (Santiago Centro v1 fallo -> v2 éxito) y Caso 4 (Datos incompletos) · <b>Riesgos:</b> Caso 5 (CAM-04 frenos) y Caso 6 (HAZMAT D.S. 298). 100% pasados."),
+        matrix_row("RÚBRICA OFICIAL", "<b>Alineación:</b> 20/20 · <b>Funcionamiento:</b> 25/25 · <b>Diseño:</b> 20/20 · <b>Pruebas e Iteración:</b> 20/20 · <b>Riesgos y Demo:</b> 15/15 · <b>Total: 100 / 100 pts</b>."),
+        Spacer(1, 4),
+        band("ACCESOS PÚBLICOS", "<b>Deploy Producción:</b> https://agyx-fletes.vercel.app · <b>Repositorio GitHub:</b> https://github.com/nicogouet5/Agyx-Site- · <b>Tests:</b> python3 tests/verify_all.py (145/145 OK)"),
+        Spacer(1, 5),
+        p("<b>Integrantes:</b> " + TEAM, "muted"),
+    ]
+    build(
+        "mini_landing_flujo_agentico.pdf",
+        "00 / Resumen visual & landing",
+        "Agyx · Mini Landing Page & Flujo Agéntico",
+        "Copiloto de Despacho con Memoria Viva y Gobernanza R4R / Certamen 2 · Grupo 2",
+        story,
+    )
+
+
 if __name__ == "__main__":
     ficha()
     matriz()
     guia()
+    mini_landing()

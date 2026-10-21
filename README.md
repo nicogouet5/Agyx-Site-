@@ -6,6 +6,87 @@ Prototipo funcional desarrollado para el **Certamen 2** del proyecto semestral i
 
 ---
 
+## 🎯 Acceso Rápido y Entregables del Certamen 2
+
+- 🌐 **Deploy Público en Producción (Vercel):** [**`https://agyx-fletes.vercel.app`**](https://agyx-fletes.vercel.app)
+- 💻 **Repositorio GitHub:** [**`https://github.com/nicogouet5/Agyx-Site-`**](https://github.com/nicogouet5/Agyx-Site-)
+- 🚀 **Mini Landing Page & Flujo Agéntico (PDF 1 pág):** [`entregables/mini_landing_flujo_agentico.pdf`](entregables/mini_landing_flujo_agentico.pdf)
+- 📋 **Ficha de Diseño Oficial (Exactamente 4 págs PDF):** [`entregables/ficha_diseno_certamen2.pdf`](entregables/ficha_diseno_certamen2.pdf)
+- 📊 **Matriz de las 6 Pruebas + Iteración (PDF):** [`entregables/matriz_6_pruebas.pdf`](entregables/matriz_6_pruebas.pdf)
+- 📘 **Guía de Uso README (PDF 1 pág):** [`entregables/guia_readme.pdf`](entregables/guia_readme.pdf)
+
+---
+
+## 🗺️ Flujo Agéntico y Mapa Mental del Sistema (Comprensión en 10 Segundos)
+
+### Diagrama de Flujo del Bucle Agéntico con Memoria Viva
+
+```mermaid
+flowchart TD
+    classDef input fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef engine fill:#0f172a,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
+    classDef safeguard fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#fca5a5;
+    classDef r4r fill:#451a03,stroke:#f59e0b,stroke-width:2px,color:#fcd34d;
+    classDef human fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#6ee7b7;
+    classDef memory fill:#312e81,stroke:#a855f7,stroke-width:2px,color:#e9d5ff;
+
+    In["📦 1. Pedido Entrante<br/>(Origen, Destino, Peso kg, Hora)"]:::input --> Val{"2. ¿Carga Segura<br/>y Datos Válidos?"}:::engine
+
+    Val -- "Falta peso/dirección/hora" --> Inc["⚠️ R4R_INFO_INCOMPLETA<br/>(Pide 3 datos faltantes)"]:::r4r
+    Val -- "Ácido Sulfúrico (D.S. 298)<br/>o Falla Frenos (CAM-04)" --> Bloq["⛔ BLOQUEADO_RIESGO<br/>(Bloqueo estricto taller/legal)"]:::safeguard
+
+    Val -- "Datos Válidos" --> Geo["🛰️ 3. Radar Táctico Santiago<br/>(7 Nodos, Congestión, Restricción Centro >5t)"]:::engine
+    
+    Geo --> Engine["🤖 Motor Agyx (Dual)<br/>(0 Tokens Local / Gemini 2.5 Flash)"]:::engine
+
+    Engine --> R4R["🔒 4. COLA R4R (Ready for Review)<br/>Salvaguarda: Inactividad = BLOQUEO ACTIVO<br/>auto_approved = False"]:::r4r
+
+    R4R --> Rev{"👤 5. Revisión Humana<br/>(Coordinador de Tráfico)"}:::human
+
+    Rev -- "✅ APROBAR" --> Disp["🚚 Despacho Hoy o Reserva Mañana<br/>(Hoja de Ruta Oficial)"]:::human
+
+    Rev -- "❌ RECHAZAR" --> Reason["📝 Motivo Obligatorio<br/>(rejected_reason)"]:::safeguard
+
+    Reason --> Mem["🧠 MEMORIA VIVA (&lt;80 Tokens)<br/>Destila Regla Operacional en JSON"]:::memory
+
+    Mem -. "Retroalimenta al motor<br/>en próxima evaluación (v1 ➔ v2)" .-> Engine
+```
+
+### Mapa Mental Sinóptico de la Solución
+
+```mermaid
+mindmap
+  root((🚀 AGYX LOGÍSTICA))
+    🛰️ Radar Táctico "Dispatch"
+      Red Vial RM 7 Nodos
+      Corredores de Autopistas Urbanas
+      Congestión Horaria Dinámica
+      Geocerca Santiago Centro Ordenanza >5t
+      Flota CAM-01 a 07 con Bloqueo Frenos
+    🛡️ Gobernanza R4R
+      Cero Auto-Aprobación por Inactividad
+      Estados: R4R, INFO_INCOMPLETA, BLOQUEADO
+      Firma Digital Declarada
+      Rechazo con Motivo Obligatorio
+    🧠 Memoria Viva
+      Destilación Compacta &lt;80 Tokens
+      Bitácora JSON y Base SQLite
+      Iteración Caso 3: v1 Naive ➔ v2 Adaptativo
+      Soporte Multizona y Taller
+    📱 Experiencia Multiplataforma
+      Consola Web de Despacho
+      Simulador Móvil en Terreno PWA
+      Cero Dependencias Fallback HTTP
+    📄 Entregables Certamen 2
+      Mini Landing Page 1 página PDF
+      Ficha de Diseño 4 páginas PDF
+      Matriz de 6 Pruebas Oficial PDF
+      Guía One-Pager PDF
+      145 Tests Automatizados verify_all.py
+```
+
+---
+
 ## 1. Características Principales y Cumplimiento de Rúbrica (100 pts)
 
 1. **Alineación Directa con los Actos 3 y 4:**
@@ -52,11 +133,11 @@ En el panel superior **Dispatch Tactical Radar** (o pulsando **“Cargar misión
 
 ## 3. Estructura de Entregables del Certamen 2 (`entregables/`)
 
-| Entregable | Archivo en el Repositorio | Descripción |
-|---|---|---|
-| **A. Ficha de Diseño (<= 4 páginas PDF)** | `entregables/ficha_diseno_certamen2.pdf` (`.html` / `.md`) | Documento oficial de **exactamente 4 páginas A4** con identidad visual SimpleTech, diagrama de flujo comparativo, arquitectura, capturas y límites abiertos. |
-| **B. Matriz de las 6 Pruebas + Iteración** | `entregables/matriz_6_pruebas.pdf` (`.csv` / `.html`) | Matriz completa con las 7 columnas oficiales de la rúbrica, los 6 casos distintos (`v1`), la repetición verificada del Caso 3 (`v2`) y la conclusión general. |
-| **C. Guía de Uso / Resumen README** | `entregables/guia_readme.pdf` | Guía rápida en PDF de 1 página con instrucciones de instalación, ejecución, Radar Táctico y validación. |
-| **D. Guion para el Video de Ejecución Real** | `entregables/guion_video_demo.md` | Guion cronometrado (3 min 30 seg) indicando qué clic hacer y qué explicar en cada sección de la rúbrica. |
-| **E. Pack para Google AI Studio / Dify** | `entregables/google_ai_studio_pack/` | Instrucciones del sistema (`v1` y `v2`), declaraciones OpenAPI de herramientas (`function_declarations.json`) y prompts de los 6 casos. |
+| **A. Mini Landing & Flujo Agéntico (PDF 1 pág)** | `entregables/mini_landing_flujo_agentico.pdf` | Resumen ejecutivo visual en **1 página A4** con mapa mental del flujo agéntico, pilares técnicos y scorecard 100/100. |
+| **B. Ficha de Diseño Oficial (<= 4 páginas PDF)** | `entregables/ficha_diseno_certamen2.pdf` (`.html` / `.md`) | Documento oficial de **exactamente 4 páginas A4** con identidad visual SimpleTech, diagrama de flujo comparativo, arquitectura, capturas y límites abiertos. |
+| **C. Matriz de las 6 Pruebas + Iteración** | `entregables/matriz_6_pruebas.pdf` (`.csv` / `.html`) | Matriz completa con las 7 columnas oficiales de la rúbrica, los 6 casos distintos (`v1`), la repetición verificada del Caso 3 (`v2`) y la conclusión general. |
+| **D. Guía de Uso / Resumen README** | `entregables/guia_readme.pdf` | Guía rápida en PDF de 1 página con instrucciones de instalación, ejecución, Radar Táctico y validación. |
+| **E. Guion para el Video de Ejecución Real** | `entregables/guion_video_demo.md` | Guion cronometrado (3 min 30 seg) indicando qué clic hacer y qué explicar en cada sección de la rúbrica. |
+| **F. Pack para Google AI Studio / Dify** | `entregables/google_ai_studio_pack/` | Instrucciones del sistema (`v1` y `v2`), declaraciones OpenAPI de herramientas (`function_declarations.json`) y prompts de los 6 casos. |
+
 

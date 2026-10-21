@@ -1010,8 +1010,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('input-peso').value = '9500';
         document.getElementById('input-hora').value = '11:30';
         document.querySelector('input[name="version-mode"][value="v2"]').checked = true;
-        el.mapResult.textContent = 'Ejemplo cargado: 9.500 kg a Lira 953 a las 11:30. Evalúa para ver la propuesta nocturna en R4R.';
+        if (el.mapResult) {
+          el.mapResult.textContent = 'Misión Lira 953 cargada: 9.500 kg hacia Santiago Centro. Radar táctico sincronizado con geocerca diurna.';
+        }
         setRadarScenario('LIRA-953');
+        document.getElementById('tactical-command-radar')?.scrollIntoView({ behavior: 'smooth' });
       });
     }
 
