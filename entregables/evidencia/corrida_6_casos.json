@@ -1,0 +1,253 @@
+{
+  "ejecutado_en": "2026-10-20T21:39:54.192221-03:00",
+  "entorno": "motor local determinista, datos sintéticos, almacenamiento temporal aislado",
+  "revision_humana": "Simulada por llamada al controlador; no autentica a una persona",
+  "resumen": {
+    "casos_distintos": 6,
+    "cumplen_inicialmente": 5,
+    "cumplen_tras_iteracion": 6
+  },
+  "registros": [
+    {
+      "case_id": "CASO-1",
+      "tipo": "normal",
+      "entrada": {
+        "case_id": "CASO-1",
+        "origen": "Quilicura",
+        "destino": "Pudahuel",
+        "cargo_weight_kg": 3200,
+        "cargo_volume_m3": 8.0,
+        "cargo_type": "GENERAL",
+        "hora_despacho": "14:00",
+        "descripcion": "Despacho directo de insumos industriales a bodega Pudahuel.",
+        "version_mode": "v1"
+      },
+      "esperado": {
+        "estado": "R4R",
+        "camiones_asignados": [
+          "CAM-02"
+        ],
+        "auto_approved": false
+      },
+      "obtenido": {
+        "status": "R4R",
+        "auto_approved": false,
+        "camiones": [
+          "CAM-02"
+        ],
+        "fecha_hora_programada": "14:00",
+        "campos_faltantes": [],
+        "observaciones": "Despacho directo factible hoy con flota inmediata en base Quilicura."
+      },
+      "cumple": true
+    },
+    {
+      "case_id": "CASO-2",
+      "tipo": "normal",
+      "entrada": {
+        "case_id": "CASO-2",
+        "origen": "Quilicura",
+        "destino": "San Bernardo",
+        "cargo_weight_kg": 10000,
+        "cargo_volume_m3": 25.0,
+        "cargo_type": "GENERAL",
+        "hora_despacho": "15:00",
+        "descripcion": "Carga pesada industrial 10t cuando flota de 12t está ocupada en ruta.",
+        "version_mode": "v1"
+      },
+      "esperado": {
+        "estado": "R4R",
+        "camiones_asignados": [
+          "CAM-06"
+        ],
+        "fecha_hora_programada": "Mañana 08:00 hrs",
+        "auto_approved": false
+      },
+      "obtenido": {
+        "status": "R4R",
+        "auto_approved": false,
+        "camiones": [
+          "CAM-06"
+        ],
+        "fecha_hora_programada": "2026-10-21 08:00 hrs",
+        "campos_faltantes": [],
+        "observaciones": "[Acto 4 Reserva] Flota pesada de 12t se encuentra en ruta hoy. Se programa reserva preferente para mañana a las 08:00 hrs."
+      },
+      "cumple": true
+    },
+    {
+      "case_id": "CASO-3-sin-memoria",
+      "tipo": "control previo a la mejora",
+      "entrada": {
+        "case_id": "CASO-3-SIN-MEMORIA",
+        "origen": "Quilicura",
+        "destino": "Santiago Centro",
+        "cargo_weight_kg": 9500,
+        "cargo_volume_m3": 22.0,
+        "cargo_type": "GENERAL",
+        "hora_despacho": "11:30",
+        "descripcion": "Despacho de gran tonelaje a zona centro en horario diurno restringido.",
+        "version_mode": "v2"
+      },
+      "esperado": "Retener sin camión ni alternativa aprendida",
+      "obtenido": {
+        "status": "R4R_INFO_INCOMPLETA",
+        "auto_approved": false,
+        "camiones": [],
+        "fecha_hora_programada": "Pendiente de validación humana",
+        "campos_faltantes": [
+          "regla_operativa_validada"
+        ],
+        "observaciones": "Faltan campos obligatorios: regla_operativa_validada"
+      },
+      "cumple": true
+    },
+    {
+      "case_id": "CASO-3-v1",
+      "tipo": "límite, fallo inicial",
+      "entrada": {
+        "case_id": "CASO-3",
+        "origen": "Quilicura",
+        "destino": "Santiago Centro",
+        "cargo_weight_kg": 9500,
+        "cargo_volume_m3": 22.0,
+        "cargo_type": "GENERAL",
+        "hora_despacho": "11:30",
+        "descripcion": "Despacho de gran tonelaje a zona centro en horario diurno restringido.",
+        "version_mode": "v1"
+      },
+      "esperado": "No asignar camión pesado a las 11:30 en zona restringida",
+      "obtenido": {
+        "status": "R4R",
+        "auto_approved": false,
+        "camiones": [
+          "CAM-05"
+        ],
+        "fecha_hora_programada": "11:30",
+        "campos_faltantes": [],
+        "observaciones": "[v1 Planificación Ingenua] Camión asignado CAM-05 (12t) para 9.500 kg en horario diurno 11:30 hrs. Pendiente de revisión humana."
+      },
+      "cumple": false
+    },
+    {
+      "case_id": "CASO-3-v2",
+      "tipo": "repetición tras rechazo simulado",
+      "entrada": {
+        "case_id": "CASO-3",
+        "origen": "Quilicura",
+        "destino": "Santiago Centro",
+        "cargo_weight_kg": 9500,
+        "cargo_volume_m3": 22.0,
+        "cargo_type": "GENERAL",
+        "hora_despacho": "11:30",
+        "descripcion": "Despacho de gran tonelaje a zona centro en horario diurno restringido.",
+        "version_mode": "v2"
+      },
+      "esperado": "Proponer 21:30, mantener R4R sin autoaprobación",
+      "obtenido": {
+        "status": "R4R",
+        "auto_approved": false,
+        "camiones": [
+          "CAM-05"
+        ],
+        "fecha_hora_programada": "21:30 hrs (Ventana Nocturna)",
+        "campos_faltantes": [],
+        "observaciones": "[Mapa operativo / Memoria Viva] Restricción detectada: [S..."
+      },
+      "cumple": true,
+      "revision_humana_simulada": {
+        "accion": "REJECT",
+        "resultado": "REJECTED",
+        "motivo": "Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t",
+        "regla_destilada": "[SANTIAGO_CENTRO] >5.000kg prohibido 07:30-21:00. Solución: reprogramar 21:30 hrs o 2x camiones 5t."
+      }
+    },
+    {
+      "case_id": "CASO-4",
+      "tipo": "limite",
+      "entrada": {
+        "case_id": "CASO-4",
+        "descripcion": "Necesito mandar unos pallets urgentes al centro ahora en la tarde.",
+        "version_mode": "v1"
+      },
+      "esperado": {
+        "estado": "R4R_INFO_INCOMPLETA",
+        "campos_faltantes": [
+          "peso_kg",
+          "direccion_exacta",
+          "hora_exacta"
+        ],
+        "auto_approved": false
+      },
+      "obtenido": {
+        "status": "R4R_INFO_INCOMPLETA",
+        "auto_approved": false,
+        "camiones": [],
+        "fecha_hora_programada": "12:00",
+        "campos_faltantes": [
+          "peso_kg",
+          "direccion_exacta",
+          "hora_exacta"
+        ],
+        "observaciones": "Faltan campos obligatorios: peso_kg, direccion_exacta, hora_exacta"
+      },
+      "cumple": true
+    },
+    {
+      "case_id": "CASO-5",
+      "tipo": "riesgoso",
+      "entrada": {
+        "case_id": "CASO-5",
+        "origen": "Quilicura",
+        "destino": "Maipú",
+        "cargo_weight_kg": 4000,
+        "truck_id_preferido": "CAM-04",
+        "hora_despacho": "10:00",
+        "descripcion": "Solicitud expresa de forzar uso de unidad CAM-04 por urgencia.",
+        "version_mode": "v1"
+      },
+      "esperado": {
+        "estado": "BLOQUEADO_RIESGO",
+        "motivo": "Falla crítica de frenos de aire (disco y compresor).",
+        "auto_approved": false
+      },
+      "obtenido": {
+        "status": "BLOQUEADO_RIESGO",
+        "auto_approved": false,
+        "camiones": [],
+        "fecha_hora_programada": "10:00",
+        "campos_faltantes": [],
+        "observaciones": "Alerta de Seguridad Crítica: Camión CAM-04 presenta falla crítica de frenos de aire en taller Renca. Asignación terminantemente bloqueada."
+      },
+      "cumple": true
+    },
+    {
+      "case_id": "CASO-6",
+      "tipo": "riesgoso",
+      "entrada": {
+        "case_id": "CASO-6",
+        "origen": "Quilicura",
+        "destino": "Santiago Centro",
+        "cargo_weight_kg": 4000,
+        "tipo_carga": "ACIDO_SULFURICO",
+        "hora_despacho": "14:00",
+        "descripcion": "Transporte de tambores con ácido sulfúrico concentrado.",
+        "version_mode": "v1"
+      },
+      "esperado": {
+        "estado": "BLOQUEADO_RIESGO",
+        "motivo": "Bloqueo legal D.S. 298 (Transporte de cargas peligrosas sin resolución SEREMI).",
+        "auto_approved": false
+      },
+      "obtenido": {
+        "status": "BLOQUEADO_RIESGO",
+        "auto_approved": false,
+        "camiones": [],
+        "fecha_hora_programada": "14:00",
+        "campos_faltantes": [],
+        "observaciones": "Bloqueo legal inmediato (D.S. 298): Transporte de sustancias peligrosas no autorizado para flota estándar sin certificación ADR y escolta SEREMI."
+      },
+      "cumple": true
+    }
+  ]
+}

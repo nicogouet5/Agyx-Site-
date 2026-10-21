@@ -157,9 +157,10 @@ class TestV1V2IterationLoop(unittest.TestCase):
         active_after_reset = self.memory_service.get_active_rules("SANTIAGO_CENTRO")
         self.assertEqual(len(active_after_reset), 0)
 
-        # Step 5: Only an explicit historical v1 replay is naive after reset.
+        # Step 5: Safe v2 holds for review after reset; only explicit v1 is naive.
         safe_after_reset = self.engine.evaluate_order(order_caso3, v1_mode=False)
-        self.assertIn("21:30", safe_after_reset["proposal"]["fecha_hora_programada"])
+        self.assertEqual(safe_after_reset["status"], "R4R_INFO_INCOMPLETA")
+        self.assertEqual(safe_after_reset["proposal"]["camiones"], [])
         v1_again = self.engine.evaluate_order(order_caso3, v1_mode=True)
         self.assertEqual(v1_again["proposal"]["camiones"], ["CAM-05"])
         self.assertIn("11:30", v1_again["proposal"]["fecha_hora_programada"])

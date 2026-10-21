@@ -6,6 +6,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from app.api.routes_dispatch import evaluate_dispatch_controller
+from app.api.dependencies import ServiceContainer
 from app.services.r4r_service import R4RService
 from app.tools.callable_tools import consultar_flota_disponible, verificar_factibilidad_ruta_urbana
 
@@ -27,9 +28,12 @@ class DeliveryHardeningTests(unittest.TestCase):
                 service.review_proposal("INCOMPLETE", "APPROVE", "Nombre declarado")
 
     def test_default_version_is_safe(self):
-        code, result = evaluate_dispatch_controller({"case_id": "DEFAULT-V2", "destino": "Santiago Centro", "cargo_weight_kg": 9500, "hora_despacho": "11:30"})
-        self.assertEqual(code, 200)
-        self.assertIn("21:30", result["proposal"]["fecha_hora_programada"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            services = ServiceContainer(db_path=str(Path(temp_dir) / "demo.db"), memory_path=str(Path(temp_dir) / "memory.json"))
+            code, result = evaluate_dispatch_controller({"case_id": "DEFAULT-V2", "destino": "Santiago Centro", "cargo_weight_kg": 9500, "hora_despacho": "11:30"}, services=services)
+            self.assertEqual(code, 200)
+            self.assertEqual(result["status"], "R4R_INFO_INCOMPLETA")
+            self.assertEqual(result["proposal"]["camiones"], [])
 
     def test_invalid_hour_is_not_factible(self):
         result = verificar_factibilidad_ruta_urbana("Quilicura", "Santiago Centro", 9500, "25:99")

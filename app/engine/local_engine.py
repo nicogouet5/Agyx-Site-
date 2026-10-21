@@ -253,8 +253,31 @@ class LocalAgentEngine(BaseAgentEngine):
                     "tokens_billed": 0,
                 }
             else:
-                # v2: Living Memory rule is active and daytime requested! Proposes compliant night window (21:30 hrs)
-                distilled_lesson = active_memory[0]["distilled_rule"] if active_memory else "Referencia Lira 953 ubicada en zona Santiago Centro: revisar restricción diurna para carga >5t."
+                # The map flags the daytime conflict, but only validated feedback supplies
+                # the specific alternative. Without it, hold for human review.
+                if not active_memory:
+                    proposal = self.r4r_service.create_proposal(
+                        case_id=case_id,
+                        camiones_asignados=[],
+                        origen=origen,
+                        destino=destino,
+                        fecha_hora_programada="Pendiente de validación humana",
+                        tarifa_base_clp=0.0,
+                        estado_caso="R4R_INFO_INCOMPLETA",
+                        observaciones="Restricción diurna para camión >5t detectada en Santiago Centro. Sin regla operativa validada en Memoria Viva, derivar al coordinador; no asignar camión ni horario.",
+                        campos_faltantes=["regla_operativa_validada"],
+                    )
+                    return {
+                        "case_id": case_id,
+                        "status": "R4R_INFO_INCOMPLETA",
+                        "auto_approved": False,
+                        "proposal": proposal,
+                        "message": "Despacho retenido: falta una regla operativa validada para proponer una alternativa.",
+                        "tokens_billed": 0,
+                    }
+
+                # After rejection, the distilled rule supplies the night alternative.
+                distilled_lesson = active_memory[0]["distilled_rule"]
                 proposal = self.r4r_service.create_proposal(
                     case_id=case_id,
                     camiones_asignados=["CAM-05"],

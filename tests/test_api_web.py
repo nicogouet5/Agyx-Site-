@@ -384,7 +384,8 @@ class TestAgyxWebAPI(unittest.TestCase):
     def test_review_rejection_valid_flow(self):
         """POST /api/r4r/review with valid reason sets REJECTED, distills rule, auto_approved=False."""
         self.client.post("/api/dispatch/evaluate", json_data={
-            "case_id": "CASO-REJ-VALID", "cargo_weight_kg": 9500, "destino": "Santiago Centro"
+            "case_id": "CASO-REJ-VALID", "cargo_weight_kg": 9500, "destino": "Santiago Centro",
+            "hora_despacho": "11:30", "version_mode": "v1"
         })
 
         reason = "Ordenanza Santiago Centro prohíbe camiones >5.000 kg entre 07:30 y 21:00 hrs. Reprogramar a ventana nocturna (21:30/06:00) o subdividir en 2 camiones de 5t"
