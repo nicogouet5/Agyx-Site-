@@ -3,11 +3,11 @@
  * Agyx PWA Service Worker — Network-First with Offline Fallback
  */
 
-const CACHE_NAME = 'agyx-v7-google-realmap';
+const CACHE_NAME = 'agyx-v8-accessible-offline';
 const STATIC_ASSETS = [
   '/',
-  '/static/css/app.css?v=7',
-  '/static/js/app.js?v=7',
+  '/static/css/app.css?v=8',
+  '/static/js/app.js?v=8',
   '/static/manifest.json',
   '/static/icons/icon-192.svg',
   '/static/icons/icon-512.svg',
@@ -54,7 +54,7 @@ self.addEventListener('fetch', (event) => {
             message: 'Conexión sin red. Los datos se sincronizarán al recuperar conectividad.',
           }),
           {
-            status: 200,
+            status: 503,
             headers: { 'Content-Type': 'application/json' },
           }
         );

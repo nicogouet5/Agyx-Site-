@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fleet: [],
     restrictions: [],
     selectedProposal: null,
+    modalReturnFocus: null,
     queueFilter: 'ALL',
     memoryFilter: 'ALL',
     case3Step: 1, // 1: pre-iteration, 2: human reject, 3: post-iteration
@@ -62,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnModalApprove: document.getElementById('btn-modal-approve'),
     btnModalReject: document.getElementById('btn-modal-reject'),
     btnCloseModal: document.getElementById('btn-close-modal'),
+    modalDialog: document.querySelector('#review-modal > div'),
 
     // Case 3 Step-by-Step Controller
     step1Card: document.getElementById('step-1-card'),
@@ -444,6 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!prop) return;
 
     state.selectedProposal = prop;
+    state.modalReturnFocus = document.activeElement;
 
     const trucks = Array.isArray(prop.camiones) ? prop.camiones.join(', ') : (prop.camiones || 'Asignado');
     const totalCLP = (prop.total_clp || prop.tarifa_total_clp || 0).toLocaleString('es-CL');
@@ -472,11 +475,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     el.reviewModal.classList.remove('hidden');
+    window.setTimeout(() => el.modalSupervisorName?.focus(), 0);
   };
 
   function closeModal() {
     el.reviewModal.classList.add('hidden');
     state.selectedProposal = null;
+    const returnFocus = state.modalReturnFocus;
+    state.modalReturnFocus = null;
+    if (returnFocus && typeof returnFocus.focus === 'function') returnFocus.focus();
+  }
+
+  function handleModalKeyboard(event) {
+    if (el.reviewModal.classList.contains('hidden')) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeModal();
+      return;
+    }
+    if (event.key !== 'Tab' || !el.modalDialog) return;
+    const focusable = [...el.modalDialog.querySelectorAll(
+      'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+    )].filter(node => !node.hidden && node.offsetParent !== null);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   async function handleApprove() {
@@ -2004,12 +2034,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     toast.className = `p-3 rounded-xl border shadow-xl text-xs flex items-center justify-between gap-3 pointer-events-auto backdrop-blur-sm toast-enter ${colors[type] || colors.info}`;
-    toast.innerHTML = `
-      <div class="flex items-center gap-2">
-        <span>${message}</span>
-      </div>
-      <button class="text-slate-400 hover:text-white" onclick="this.parentElement.remove()">✕</button>
-    `;
+    const content = document.createElement('div');
+    content.className = 'flex items-center gap-2';
+    const text = document.createElement('span');
+    text.textContent = message;
+    content.appendChild(text);
+    const closeButton = document.createElement('button');
+    closeButton.className = 'text-slate-400 hover:text-white';
+    closeButton.type = 'button';
+    closeButton.setAttribute('aria-label', 'Cerrar notificación');
+    closeButton.textContent = '✕';
+    closeButton.addEventListener('click', () => toast.remove());
+    toast.append(content, closeButton);
 
     el.toastContainer.appendChild(toast);
 
@@ -2018,6 +2054,11 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => toast.remove(), 250);
     }, duration);
   }
+
+  document.addEventListener('keydown', handleModalKeyboard);
+  el.reviewModal?.addEventListener('click', event => {
+    if (event.target === el.reviewModal) closeModal();
+  });
 
   // --- SERVICE WORKER REGISTRATION (PWA) ---
   function registerServiceWorker() {

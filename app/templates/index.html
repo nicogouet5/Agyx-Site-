@@ -50,30 +50,10 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
   <!-- Comprehensive Local CSS Fallback (active if CDN is unavailable or offline) -->
-  <link rel="stylesheet" href="/static/css/app.css?v=7">
+  <link rel="stylesheet" href="/static/css/app.css?v=8">
   <script>
-    // Purge legacy Cache-First Service Worker cache ('agyx-v1-cache') so the Dispatch Map is always visible
-    if ('caches' in window) {
-      caches.keys().then(function(names) {
-        var purged = false;
-        names.forEach(function(name) {
-          if (name === 'agyx-v1-cache') {
-            caches.delete(name);
-            purged = true;
-          }
-        });
-        if (purged && !sessionStorage.getItem('agyx_sw_purged')) {
-          sessionStorage.setItem('agyx_sw_purged', '1');
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(regs) {
-              Promise.all(regs.map(function(r) { return r.unregister(); })).then(function() {
-                window.location.reload();
-              });
-            });
-          }
-        }
-      });
-    }
+    // The current service worker removes obsolete caches during activation.
+    // Do not unregister it here: that would disable PWA updates after every cache migration.
   </script>
 </head>
 <body class="min-h-full flex flex-col bg-slate-950 font-sans antialiased text-slate-100 selection:bg-sky-500 selection:text-white">
@@ -1112,9 +1092,9 @@
   </div>
 
   <!-- FLOATING TOAST NOTIFICATION CONTAINER -->
-  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-2"></div>
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-2" role="status" aria-live="polite" aria-atomic="false"></div>
 
   <!-- App Main JavaScript Controller -->
-  <script src="/static/js/app.js?v=7"></script>
+  <script src="/static/js/app.js?v=8"></script>
 </body>
 </html>
