@@ -282,10 +282,10 @@ def guia():
         Spacer(1, 6),
         band("VALIDAR", "Ejecutar .venv/bin/python tests/verify_all.py. También comprobar /health y una evaluación de despacho por la interfaz."),
         section("03 / Ejemplo Lira 953"),
-        p("En el formulario, pulsar <b>Usar Lira 953 como destino</b>. Se cargan 9.500 kg, 11:30 y v2. Al evaluar, la propuesta debe permanecer en R4R y desplazarse a 21:30. La respuesta API incluye el campo mapa con la zona; la ruta exacta y permisos requieren revisión del Coordinador."),
+        p("En el formulario, pulsar <b>Usar Lira 953 como destino</b>. Se cargan 9.500 kg, 11:30 y v2. Con memoria limpia, la orden queda retenida sin camión; tras registrar el rechazo humano del Caso 3 y activar la regla, v2 propone 21:30 en R4R. La API devuelve la zona; ruta y permisos requieren revisión."),
         section("04 / Archivos y entrega"),
         p("<b>app/</b>: motor, API y web. <b>data/</b>: flota, restricciones y estado de demostración. <b>tests/</b>: verificación. <b>entregables/</b>: ficha, matriz, pack de instrucciones y guion de video."),
-        p("El video y los enlaces públicos aún deben añadirse y probarse. El motor operativo demostrado es local; Gemini es opcional y no constituye la ejecución validada.", "muted"),
+        p("El enlace temporal de revisión se entrega por separado en Canvas; el video real sigue pendiente. El motor operativo demostrado es local; Gemini es opcional y no constituye la ejecución validada.", "muted"),
         Spacer(1, 9),
         p("<b>Integrantes:</b> " + TEAM, "muted"),
     ]
