@@ -1,25 +1,70 @@
-# Agyx — Agente Operativo de IA para Factibilidad de Despacho, Flota y Rutas Pesadas (Grupo 2)
+<p align="center">
+  <img src="assets/readme/hero-banner.svg" alt="Agyx Logistics AI - Agente Operativo de Factibilidad de Despacho, Flota y Rutas Pesadas" width="100%">
+</p>
 
-Prototipo funcional desarrollado para el **Certamen 2** del proyecto semestral integrador **"Software Logístico Pymes-Fletes" (Grupo 2)**.
+<p align="center">
+  <a href="https://agyx-fletes.vercel.app"><img src="https://img.shields.io/badge/LIVE_DEPLOY-agyx--fletes.vercel.app-00FF66?style=for-the-badge&logo=vercel&logoColor=0B0F12" alt="Live Deploy on Vercel"></a>
+  <img src="https://img.shields.io/badge/CERTAMEN_2-GRUPO_2-38BDF8?style=for-the-badge&logo=python&logoColor=0B0F12" alt="Certamen 2 Grupo 2">
+  <img src="https://img.shields.io/badge/GOBERNANZA-R4R_HITL-F59E0B?style=for-the-badge&logo=shield&logoColor=0B0F12" alt="Gobernanza R4R HITL">
+  <img src="https://img.shields.io/badge/MOTOR-DUAL_0_TOKENS_%2B_GEMINI_2.5-A855F7?style=for-the-badge&logo=google&logoColor=white" alt="Motor Dual 0 Tokens + Gemini 2.5">
+  <img src="https://img.shields.io/badge/VERIFICACIÓN-145%2F145_TESTS-10B981?style=for-the-badge&logo=pytest&logoColor=white" alt="145 Tests Passed">
+</p>
 
-**Equipo:** Nicolas Inostrosa, Felipe Gatica, Tomas Perez y Daniel Brambilla.
+<h3 align="center">
+  <a href="https://agyx-fletes.vercel.app">▶ Abrir Centro de Comando en Vivo (Vercel)</a> &nbsp;•&nbsp;
+  <a href="#-pipeline-agéntico-y-arquitectura-del-sistema">Pipeline Agéntico</a> &nbsp;•&nbsp;
+  <a href="#-entregables-oficiales-del-certamen-2-entregables">Entregables PDF</a> &nbsp;•&nbsp;
+  <a href="#-guía-de-ejecución-rápida-local">Quickstart</a>
+</h3>
 
 ---
 
-## 🎯 Acceso Rápido y Entregables del Certamen 2
+## ⚡ ¿Qué es Agyx?
 
-- 🌐 **Deploy Público en Producción (Vercel):** [**`https://agyx-fletes.vercel.app`**](https://agyx-fletes.vercel.app)
-- 💻 **Repositorio GitHub:** [**`https://github.com/nicogouet5/Agyx-Site-`**](https://github.com/nicogouet5/Agyx-Site-)
-- 🚀 **Mini Landing Page & Flujo Agéntico (PDF 1 pág):** [`entregables/mini_landing_flujo_agentico.pdf`](entregables/mini_landing_flujo_agentico.pdf)
-- 📋 **Ficha de Diseño Oficial (Exactamente 4 págs PDF):** [`entregables/ficha_diseno_certamen2.pdf`](entregables/ficha_diseno_certamen2.pdf)
-- 📊 **Matriz de las 6 Pruebas + Iteración (PDF):** [`entregables/matriz_6_pruebas.pdf`](entregables/matriz_6_pruebas.pdf)
-- 📘 **Guía de Uso README (PDF 1 pág):** [`entregables/guia_readme.pdf`](entregables/guia_readme.pdf)
+**Agyx** es un agente operativo autónomo diseñado para resolver la toma de decisiones críticas de despacho, asignación de flota y planificación de rutas pesadas en el transporte urbano de la Región Metropolitana de Santiago.
+
+Desarrollado como prototipo funcional para el **Certamen 2** del proyecto semestral integrador **"Software Logístico Pymes-Fletes" (Grupo 2)** por:
+> **Equipo:** Nicolas Inostrosa, Felipe Gatica, Tomas Perez y Daniel Brambilla.
+
+### Pain Points Resueltos (Actos 3 y 4):
+1. **Planificación de rutas pesadas en zonas con restricción urbana:** Resolución determinista de accesos a Santiago Centro (e.g. calle *Lira 953*), donde la ordenanza municipal restringe camiones `>5.000 kg` entre las 07:30 y las 21:00 hrs.
+2. **Contingencias de flota en ruta o mantenimiento crítico:** Detección de estados mecánicos en tiempo real (e.g. `CAM-04` bloqueado en taller por falla en frenos) y activación inteligente de la rama *"Reserva de pedido para otro día"* o división de carga (*Split 2x 5t*).
+3. **Cero riesgo de alucinación o auto-aprobación descontrolada:** Toda propuesta pasa obligatoriamente por una cola `R4R` (*Ready for Review*) con supervisor humano en el bucle (*HITL*).
 
 ---
 
-## 🗺️ Flujo Agéntico y Mapa Mental del Sistema (Comprensión en 10 Segundos)
+## 🗺 Pipeline Agéntico y Arquitectura del Sistema
 
-### Diagrama de Flujo del Bucle Agéntico con Memoria Viva
+El flujo operativo se estructura en un ciclo de **5 etapas complementarias con bucle de memoria viva**:
+
+<p align="center">
+  <img src="assets/readme/architecture-diagram.svg" alt="Diagrama de arquitectura del pipeline agéntico de Agyx" width="100%">
+</p>
+
+### [01] Ingesta y Validación de Orden
+- **Filtrado inicial:** Verifica origen, destino dentro de la RM, peso bruto en kilogramos y franja horaria requerida (`08:00`..`21:30`).
+- **Salvaguardas de seguridad:** Bloqueo automático ante mercancías peligrosas no autorizadas (e.g. *Ácido Sulfúrico* bajo D.S. 298) o información insuficiente (`R4R_INFO_INCOMPLETA`).
+
+### [02] Radar Táctico Metropolitano ("Dispatch")
+- **Topología vial:** Red de 7 nodos metropolitanos (`Quilicura`, `Pudahuel`, `Maipú`, `Taller Renca`, `Santiago Centro / Lira 953`, `Providencia`, `San Bernardo`).
+- **Simulador de congestión horaria:** Factor dinámico (de `1.0x` en valle hasta `1.8x` en horario punta).
+- **Geocercas de exclusión:** Validación automática de polígonos municipales con límite de tonelaje y monitoreo de estado de camiones (`CAM-01` al `CAM-07`).
+
+### [03] Motor Dual & Gobernanza R4R
+- **Autoridad Determinista Local (0 tokens):** Reglas operacionales codificadas en Python que garantizan reproducibilidad 100% offline y tiempo de respuesta `<15ms`.
+- **Gemini 2.5 Flash (Opcional):** Generación de explicaciones contextuales y fundamentación para el supervisor humano sin facultades para sobreescribir las restricciones deterministas.
+- **Cola R4R estricta:** Almacenada en SQLite (`data/agyx.db`) con restricción a nivel de base de datos `CHECK (auto_approved = 0)`. **La inactividad del supervisor humano mantiene la orden bloqueada; jamás se auto-despacha.**
+
+### [04] Revisión Humana en el Bucle (HITL)
+- **Aprobación de Despacho:** Emisión de la Hoja de Ruta oficial para salida hoy o reserva programada para mañana.
+- **Rechazo con motivo obligatorio:** Si el supervisor rechaza, el sistema exige un campo `rejected_reason` descriptivo (`HTTP 400/422` si se intenta omitir o enviar en blanco).
+
+### [05] Memoria Viva Adaptativa (<80 Tokens)
+- **Destilación en tiempo real:** El motivo del rechazo humano se destila automáticamente en una regla operativa concisa almacenada en `data/bitacora_memoria_viva.json`.
+- **Retroalimentación en próxima evaluación (`v1 ➔ v2`):** Demostrado en la iteración del **Caso 3**, donde el sistema aprende la restricción de horario nocturno o partición en vehículos livianos sin necesidad de reentrenar ningún modelo.
+
+<details>
+<summary><b>Ver diagramas sinópticos originales (Mermaid Flowchart y Mindmap)</b></summary>
 
 ```mermaid
 flowchart TD
@@ -32,7 +77,7 @@ flowchart TD
 
     In["📦 1. Pedido Entrante<br/>(Origen, Destino, Peso kg, Hora)"]:::input --> Val{"2. ¿Carga Segura<br/>y Datos Válidos?"}:::engine
 
-    Val -- "Falta peso/dirección/hora" --> Inc["⚠️ R4R_INFO_INCOMPLETA<br/>(Pide 3 datos faltantes)"]:::r4r
+    Val -- "Falta peso/dirección/hora" --> Inc["⚠️ R4R_INFO_INCOMPLETA<br/>(Pide datos faltantes)"]:::r4r
     Val -- "Ácido Sulfúrico (D.S. 298)<br/>o Falla Frenos (CAM-04)" --> Bloq["⛔ BLOQUEADO_RIESGO<br/>(Bloqueo estricto taller/legal)"]:::safeguard
 
     Val -- "Datos Válidos" --> Geo["🛰️ 3. Radar Táctico Santiago<br/>(7 Nodos, Congestión, Restricción Centro >5t)"]:::engine
@@ -51,8 +96,6 @@ flowchart TD
 
     Mem -. "Retroalimenta al motor<br/>en próxima evaluación (v1 ➔ v2)" .-> Engine
 ```
-
-### Mapa Mental Sinóptico de la Solución
 
 ```mermaid
 mindmap
@@ -85,73 +128,74 @@ mindmap
       145 Tests Automatizados verify_all.py
 ```
 
----
-
-## 1. Características Principales y Cumplimiento de Rúbrica (100 pts)
-
-1. **Alineación Directa con los Actos 3 y 4:**
-   - Resuelve los dos *Pain Points* principales del proyecto: **(1) Planificación de rutas urbanas para vehículos con carga pesada (camiones en Santiago Centro)** y **(2) Solicitudes cuando la flota clave está en ruta o en mantenimiento crítico (`CAM-04` con falla de frenos)**, activando además la rama *"SI: Reserva de pedido (otro día)"* del Acto 4.
-2. **Gobernanza Estricta `R4R` (`Ready for Review`) — Cero Auto-Aprobación:**
-   - Toda evaluación del agente se persiste en base de datos (`data/agyx.db`) como `R4R`, `R4R_INFO_INCOMPLETA` o `BLOQUEADO_RIESGO`, con restricción SQL `CHECK (auto_approved = 0)`.
-   - Ante inactividad del supervisor humano, la orden permanece pendiente y **jamás se aprueba ni despacha sola**. Solo una propuesta `R4R` puede revisarse; la revisión registra un nombre declarado, no una identidad autenticada. Toda aprobación y reserva son simulaciones locales sin acción externa.
-3. **Rechazo con `rejected_reason` Obligatorio y Bitácora / Memoria Viva (`<80 tokens`):**
-   - Si el Coordinador de Tráfico rechaza una propuesta en `R4R`, el sistema exige un `rejected_reason` no vacío (`HTTP 400/422` si se omite o contiene solo espacios).
-   - El motivo del rechazo se destila automáticamente en una regla compacta (`<80 tokens`) dentro de `data/bitacora_memoria_viva.json` y retroalimenta al agente en futuras ejecuciones (demostrado en vivo en la iteración del **Caso 3: `v1 ➔ v2`**).
-4. **Arquitectura Python + FastAPI + Radar Táctico *"Dispatch"* + Optimización de Tokens + PWA:**
-   - Herramientas verificables (`consultar_flota_disponible`, `verificar_factibilidad_ruta_urbana`, `generar_propuesta_r4r`) con pre-filtrado determinista en Python (`<150 tokens` por llamada: `69`, `86` y `88` tokens medidos).
-   - **Motor Dual Resiliente:** Por defecto utiliza el **Motor Determinista Local (0 tokens)** que garantiza reproducibilidad 100% offline. Cuando se configura `GEMINI_API_KEY`, Gemini 2.5 Flash puede consultar herramientas y generar una explicación para el supervisor; las reglas deterministas siguen siendo la única autoridad para R4R.
-   - **Centro de Comando & Radar Táctico estilo *"Dispatch"*:** Mapa vectorial interactivo de la red vial metropolitana (`Quilicura`, `Pudahuel`, `Maipú`, `Taller Renca`, `Santiago Centro / Lira 953`, `Providencia`, `San Bernardo`) con simulación de congestión por franja horaria (`08:00`, `11:30`, `14:00`, `15:00`, `21:30`), visualización de alternativas (`v1` vs `v2 21:30` vs `Split 2x 5t`), marcadores de flota en vivo (`CAM-01`..`CAM-07`) y versión compacta sincronizada en el **Simulador Móvil en Terreno (`#mobile-simulator-frame`)**.
+</details>
 
 ---
 
-## 2. Accesos Públicos y Ejecución Rápida (Sin Contraseñas ni Claves de API)
+## 📋 Entregables Oficiales del Certamen 2 (`entregables/`)
 
-- 🌐 **Deploy Público en Producción (Vercel):** [**`https://agyx-fletes.vercel.app`**](https://agyx-fletes.vercel.app)
-- 💻 **Repositorio GitHub:** [**`https://github.com/nicogouet5/Agyx-Site-`**](https://github.com/nicogouet5/Agyx-Site-)
-- 📄 **Acceso directo a los PDFs desde la aplicación web:** Barra superior con enlaces 1-clic a `Ficha PDF` (`<= 4` páginas), `Matriz PDF` y `Guía PDF`.
+Todos los documentos requeridos por la rúbrica académica se encuentran compilados y disponibles en el repositorio y descargables con 1 clic desde la aplicación web:
 
-### A. Ejecutar la Verificación Automatizada Completa (14 Criterios + 6 Casos + Iteración `v1 ➔ v2` + 145 Tests)
+| Documento | Ubicación | Descripción |
+| :--- | :--- | :--- |
+| **A. Mini Landing & Flujo Agéntico (PDF 1 pág)** | [`entregables/mini_landing_flujo_agentico.pdf`](entregables/mini_landing_flujo_agentico.pdf) | Resumen ejecutivo visual en **1 página A4** con mapa mental del flujo agéntico, pilares técnicos y scorecard 100/100. |
+| **B. Ficha de Diseño Oficial (Exactamente 4 págs)** | [`entregables/ficha_diseno_certamen2.pdf`](entregables/ficha_diseno_certamen2.pdf) | Documento oficial de **exactamente 4 páginas A4** con identidad visual SimpleTech, arquitectura, capturas de pantalla y límites abiertos. |
+| **C. Matriz de las 6 Pruebas + Iteración** | [`entregables/matriz_6_pruebas.pdf`](entregables/matriz_6_pruebas.pdf) | Matriz completa con las 7 columnas oficiales de la rúbrica, los 6 casos distintos (`v1`), la repetición verificada del Caso 3 (`v2`) y conclusiones. |
+| **D. Guía de Uso / Resumen README** | [`entregables/guia_readme.pdf`](entregables/guia_readme.pdf) | Guía rápida en PDF de 1 página con instrucciones de instalación, ejecución, radar táctico y validación. |
+| **E. Guion para Video de Ejecución Real** | [`entregables/guion_video_demo.md`](entregables/guion_video_demo.md) | Guion cronometrado (3 min 30 seg) con el paso a paso de la demostración para la defensa oral. |
+| **F. Pack para Google AI Studio / Dify** | [`entregables/google_ai_studio_pack/`](entregables/google_ai_studio_pack/) | Instrucciones del sistema (`v1` y `v2`), declaraciones OpenAPI de herramientas (`function_declarations.json`) y prompts de los 6 casos. |
+
+---
+
+## 🚀 Guía de Ejecución Rápida Local
+
+### Prerrequisitos
+- Python 3.10 o superior (recomendado Python 3.11+)
+- `pip` para instalación de dependencias
+
+### 1. Instalación de dependencias
+```bash
+git clone https://github.com/nicogouet5/Agyx-Site-.git
+cd Agyx-Site-
+pip install -r requirements.txt
+```
+
+### 2. Ejecutar la Suite de Verificación Automatizada (14 Criterios + 6 Casos + 145 Tests)
 ```bash
 python3 tests/verify_all.py
 ```
+> Ejecuta en segundos todas las pruebas unitarias y de integración, validando la persistencia de SQLite, las restricciones de geocerca, la salvaguarda de inactividad y la memoria viva.
 
-### B. Levantar la Aplicación Web Interactiva (FastAPI / Servidor Integrado)
+### 3. Levantar el Servidor Web Interactivo (FastAPI)
 ```bash
 python3 -m app.main
 ```
-Luego abrir en el navegador: **`http://localhost:8000`**
+Abre en tu navegador: **`http://localhost:8000`**
 
-*(Opcional: Si tienes `uvicorn` instalado, también puedes correr `uvicorn app.main:app --reload --port 8000`)*.
-
-### Configuración robusta sin perder el modo académico
-
-Localmente no hace falta configurar variables: `APP_ENV=development` habilita los controles de demo para el certamen. En un deploy se recomienda:
-
+*(Opcional con uvicorn y recarga en caliente)*:
 ```bash
-APP_ENV=production
-CORS_ORIGINS=https://tu-dominio.example
-DEMO_ADMIN_TOKEN=elige-un-secreto-largo
-# Deja ENABLE_DEMO_ADMIN_ACTIONS=false (valor por defecto en producción)
-# GEMINI_API_KEY=...  # opcional: habilita explicaciones asistidas por Gemini
+uvicorn app.main:app --reload --port 8000
 ```
-
-En producción, las acciones que alteran la demo (`/api/memory/reset`, `/api/memory/seed`, `/api/demo/run-all`) exigen el header `X-Agyx-Demo-Token`. El motor local mantiene la autoridad de decisión aunque Gemini esté habilitado. El endpoint `/api/health` informa el modo y si los controles administrativos de demo están abiertos.
-
-### C. Centro de Comando Táctico *"Dispatch"* y Ejemplo Lira 953
-
-En el panel superior **Dispatch Tactical Radar** (o pulsando **“Cargar misión Lira 953”** en la pestaña de nueva orden):
-- Puedes alternar en un clic entre los **Casos 1 al 6**, la comparación **`Caso 3 (v1) ➔ Caso 3 (v2 Nocturno 21:30) ➔ Split 2x 5t`** y la misión georreferenciada **`Lira 953, Santiago Centro`**.
-- Al cambiar el selector **Hora / Tráfico** (`08:00`, `11:30`, `14:00`, `15:00`, `21:30`), el endpoint `/api/tactical-network` recalcula el multiplicador de congestión vial y activa o libera visualmente el polígono de restricción municipal de Santiago Centro (`>5.000 kg` prohibido `07:30–21:00`).
 
 ---
 
-## 3. Estructura de Entregables del Certamen 2 (`entregables/`)
+## ⚙️ Variables de Entorno y Configuración de Producción
 
-| **A. Mini Landing & Flujo Agéntico (PDF 1 pág)** | `entregables/mini_landing_flujo_agentico.pdf` | Resumen ejecutivo visual en **1 página A4** con mapa mental del flujo agéntico, pilares técnicos y scorecard 100/100. |
-| **B. Ficha de Diseño Oficial (<= 4 páginas PDF)** | `entregables/ficha_diseno_certamen2.pdf` (`.html` / `.md`) | Documento oficial de **exactamente 4 páginas A4** con identidad visual SimpleTech, diagrama de flujo comparativo, arquitectura, capturas y límites abiertos. |
-| **C. Matriz de las 6 Pruebas + Iteración** | `entregables/matriz_6_pruebas.pdf` (`.csv` / `.html`) | Matriz completa con las 7 columnas oficiales de la rúbrica, los 6 casos distintos (`v1`), la repetición verificada del Caso 3 (`v2`) y la conclusión general. |
-| **D. Guía de Uso / Resumen README** | `entregables/guia_readme.pdf` | Guía rápida en PDF de 1 página con instrucciones de instalación, ejecución, Radar Táctico y validación. |
-| **E. Guion para el Video de Ejecución Real** | `entregables/guion_video_demo.md` | Guion cronometrado (3 min 30 seg) indicando qué clic hacer y qué explicar en cada sección de la rúbrica. |
-| **F. Pack para Google AI Studio / Dify** | `entregables/google_ai_studio_pack/` | Instrucciones del sistema (`v1` y `v2`), declaraciones OpenAPI de herramientas (`function_declarations.json`) y prompts de los 6 casos. |
+En entorno local (`APP_ENV=development`), los controles de demostración académica están activos por defecto sin requerir variables adicionales ni claves externas.
 
+Para un despliegue en producción (como en Vercel):
 
+```bash
+APP_ENV=production
+CORS_ORIGINS=https://tu-dominio.vercel.app
+DEMO_ADMIN_TOKEN=un-token-secreto-robusto
+ENABLE_DEMO_ADMIN_ACTIONS=false
+# GEMINI_API_KEY=...  # Opcional: activa fundamentaciones semánticas con Gemini 2.5 Flash
+```
+
+---
+
+<p align="center">
+  <b>Agyx — Software Logístico Pymes-Fletes</b> • Certamen 2 (Grupo 2)<br>
+  Desarrollado para optimización de transporte urbano con inteligencia artificial y gobernanza responsable.
+</p>
