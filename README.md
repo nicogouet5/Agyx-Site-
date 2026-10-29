@@ -11,8 +11,10 @@
 </p>
 
 <h3 align="center">
-  <a href="https://agyx-fletes.vercel.app">▶ Abrir Centro de Comando en Vivo (Vercel)</a> &nbsp;•&nbsp;
+  <a href="https://agyx-fletes.vercel.app">▶ Centro de Comando en Vivo (Vercel)</a> &nbsp;•&nbsp;
   <a href="#-pipeline-agéntico-y-arquitectura-del-sistema">Pipeline Agéntico</a> &nbsp;•&nbsp;
+  <a href="#-diagrama-de-flujo-operativo-y-bucle-de-memoria-viva">Flujo Mermaid</a> &nbsp;•&nbsp;
+  <a href="#-mapa-mental-sinóptico-de-la-solución">Mapa Mental</a> &nbsp;•&nbsp;
   <a href="#-entregables-oficiales-del-certamen-2-entregables">Entregables PDF</a> &nbsp;•&nbsp;
   <a href="#-guía-de-ejecución-rápida-local">Quickstart</a>
 </h3>
@@ -41,6 +43,41 @@ El flujo operativo se estructura en un ciclo de **5 etapas complementarias con b
   <img src="assets/readme/architecture-diagram.svg" alt="Diagrama de arquitectura del pipeline agéntico de Agyx" width="100%">
 </p>
 
+### 🔄 Diagrama de Flujo Operativo y Bucle de Memoria Viva
+
+A continuación se detalla el flujo de ejecución determinista, salvaguardas y retroalimentación activa:
+
+```mermaid
+flowchart TD
+    classDef input fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef engine fill:#071a12,stroke:#00ff66,stroke-width:2px,color:#f8fafc;
+    classDef safeguard fill:#260a0a,stroke:#ef4444,stroke-width:2px,color:#fca5a5;
+    classDef r4r fill:#261805,stroke:#f59e0b,stroke-width:2px,color:#fcd34d;
+    classDef human fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#6ee7b7;
+    classDef memory fill:#1f1133,stroke:#a855f7,stroke-width:2px,color:#e9d5ff;
+
+    In["📦 1. Pedido Entrante<br/>(Origen, Destino, Peso kg, Franja Horaria)"]:::input --> Val{"⚖️ 2. ¿Carga Segura<br/>y Parámetros Válidos?"}:::engine
+
+    Val -- "Falta peso / dirección / hora" --> Inc["⚠️ R4R_INFO_INCOMPLETA<br/>(Pide 3 datos faltantes)"]:::r4r
+    Val -- "D.S. 298 (Ácido Sulfúrico)<br/>o Falla Frenos (CAM-04)" --> Bloq["⛔ BLOQUEADO_RIESGO<br/>(Bloqueo taller / legal)"]:::safeguard
+
+    Val -- "Datos Válidos" --> Geo["🛰️ 3. Radar Táctico Santiago<br/>(7 Nodos, Congestión, Restricción Centro >5t)"]:::engine
+    
+    Geo --> Engine["🤖 Motor Dual Agyx<br/>(0 Tokens Local / Gemini 2.5 Flash)"]:::engine
+
+    Engine --> R4R["🔒 4. COLA R4R (Ready for Review)<br/>Salvaguarda: auto_approved = 0<br/>Inactividad = BLOQUEO ACTIVO"]:::r4r
+
+    R4R --> Rev{"👤 5. Revisión Humana HITL<br/>(Coordinador de Tráfico)"}:::human
+
+    Rev -- "✅ APROBAR" --> Disp["🚚 Despacho Hoy o Reserva Programada<br/>(Hoja de Ruta Oficial)"]:::human
+
+    Rev -- "❌ RECHAZAR" --> Reason["📝 Motivo Obligatorio<br/>(Campo rejected_reason)"]:::safeguard
+
+    Reason --> Mem["🧠 MEMORIA VIVA (&lt;80 Tokens)<br/>Destila Regla Operacional en JSON"]:::memory
+
+    Mem -. "Retroalimenta al motor<br/>en próxima evaluación (v1 ➔ v2)" .-> Engine
+```
+
 ### [01] Ingesta y Validación de Orden
 - **Filtrado inicial:** Verifica origen, destino dentro de la RM, peso bruto en kilogramos y franja horaria requerida (`08:00`..`21:30`).
 - **Salvaguardas de seguridad:** Bloqueo automático ante mercancías peligrosas no autorizadas (e.g. *Ácido Sulfúrico* bajo D.S. 298) o información insuficiente (`R4R_INFO_INCOMPLETA`).
@@ -61,41 +98,32 @@ El flujo operativo se estructura en un ciclo de **5 etapas complementarias con b
 
 ### [05] Memoria Viva Adaptativa (<80 Tokens)
 - **Destilación en tiempo real:** El motivo del rechazo humano se destila automáticamente en una regla operativa concisa almacenada en `data/bitacora_memoria_viva.json`.
-- **Retroalimentación en próxima evaluación (`v1 ➔ v2`):** Demostrado en la iteración del **Caso 3**, donde el sistema aprende la restricción de horario nocturno o partición en vehículos livianos sin necesidad de reentrenar ningún modelo.
-
-<details>
-<summary><b>Ver diagramas sinópticos originales (Mermaid Flowchart y Mindmap)</b></summary>
+- **Retroalimentación en próxima evaluación (`v1 ➔ v2`):** Demostrado en la iteración del **Caso 3**, donde el sistema aprende la restricción de horario nocturno o partición en vehículos livianos sin necesidad de reentrenar ningún modelo:
 
 ```mermaid
-flowchart TD
-    classDef input fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef engine fill:#0f172a,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
-    classDef safeguard fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#fca5a5;
-    classDef r4r fill:#451a03,stroke:#f59e0b,stroke-width:2px,color:#fcd34d;
-    classDef human fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#6ee7b7;
-    classDef memory fill:#312e81,stroke:#a855f7,stroke-width:2px,color:#e9d5ff;
+sequenceDiagram
+    autonumber
+    actor Cliente as 📦 Pedido Entrante
+    participant Agyx as 🤖 Motor Dual Agyx
+    actor HITL as 👤 Supervisor HITL
+    participant Memoria as 🧠 Memoria Viva (&lt;80T)
 
-    In["📦 1. Pedido Entrante<br/>(Origen, Destino, Peso kg, Hora)"]:::input --> Val{"2. ¿Carga Segura<br/>y Datos Válidos?"}:::engine
-
-    Val -- "Falta peso/dirección/hora" --> Inc["⚠️ R4R_INFO_INCOMPLETA<br/>(Pide datos faltantes)"]:::r4r
-    Val -- "Ácido Sulfúrico (D.S. 298)<br/>o Falla Frenos (CAM-04)" --> Bloq["⛔ BLOQUEADO_RIESGO<br/>(Bloqueo estricto taller/legal)"]:::safeguard
-
-    Val -- "Datos Válidos" --> Geo["🛰️ 3. Radar Táctico Santiago<br/>(7 Nodos, Congestión, Restricción Centro >5t)"]:::engine
-    
-    Geo --> Engine["🤖 Motor Agyx (Dual)<br/>(0 Tokens Local / Gemini 2.5 Flash)"]:::engine
-
-    Engine --> R4R["🔒 4. COLA R4R (Ready for Review)<br/>Salvaguarda: Inactividad = BLOQUEO ACTIVO<br/>auto_approved = False"]:::r4r
-
-    R4R --> Rev{"👤 5. Revisión Humana<br/>(Coordinador de Tráfico)"}:::human
-
-    Rev -- "✅ APROBAR" --> Disp["🚚 Despacho Hoy o Reserva Mañana<br/>(Hoja de Ruta Oficial)"]:::human
-
-    Rev -- "❌ RECHAZAR" --> Reason["📝 Motivo Obligatorio<br/>(rejected_reason)"]:::safeguard
-
-    Reason --> Mem["🧠 MEMORIA VIVA (&lt;80 Tokens)<br/>Destila Regla Operacional en JSON"]:::memory
-
-    Mem -. "Retroalimenta al motor<br/>en próxima evaluación (v1 ➔ v2)" .-> Engine
+    Cliente->>Agyx: Pedido 12t Lira 953 a las 11:30 (v1 Naive)
+    Agyx->>HITL: Propuesta R4R (Alerta Ordenanza Centro >5t)
+    HITL-->>Agyx: ❌ RECHAZO (Motivo: Franja nocturna 21:30 o Split 2x5t)
+    HITL->>Memoria: Destila regla operacional compacta (&lt;80 tokens)
+    Note over Memoria,Agyx: Regla persistida en bitácora_memoria_viva.json
+    Cliente->>Agyx: Re-evaluación Orden Lira 953 (v2 Adaptativo)
+    Agyx->>Agyx: Inyecta memoria activa determinista
+    Agyx->>HITL: Propuesta R4R Optimizada (Despacho 21:30 / Split 2x5t)
+    HITL->>Agyx: ✅ APROBAR (Hoja de Ruta Oficial emitida)
 ```
+
+---
+
+## 🧠 Mapa Mental Sinóptico de la Solución
+
+Visión panorámica de las capacidades operacionales, salvaguardas y entregables del sistema:
 
 ```mermaid
 mindmap
@@ -127,8 +155,6 @@ mindmap
       Guía One-Pager PDF
       145 Tests Automatizados verify_all.py
 ```
-
-</details>
 
 ---
 
